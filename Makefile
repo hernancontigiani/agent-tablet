@@ -1,11 +1,11 @@
 # `make ci` is the gate every change passes before it is reported done. There is no hosted CI:
 # this target is the whole of it, so it has to fail on anything a reviewer would reject.
 
-PKG := claude_session_manager
+PKG := agent_tablet
 
-.PHONY: ci venv lint test fmt run clean
+.PHONY: ci venv lint test history fmt run clean
 
-ci: lint test
+ci: lint test history
 
 # --system-site-packages is not optional: PyGObject, GTK, libadwaita and VTE come from the system
 # packages, and a venv without them imports nothing of the app.
@@ -24,6 +24,10 @@ lint: venv
 # another test left behind, shows up here instead of months later.
 test: venv
 	uv run --locked pytest -q -n auto
+
+# Every line that left a decision document since HEAD is in its history (docs/history/README.md).
+history:
+	python3 docs/history/nothing_lost.py
 
 # Formats only the paths given, never the whole tree: other sessions may have files half-written.
 #   make fmt FILES="<package>/names.py tests/test_names.py"

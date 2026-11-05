@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 
 def test_roundtrip(app_state):
     state = app_state.AppState()
@@ -42,17 +44,38 @@ def test_corrupt_state_file_recovers(app_state):
     assert fresh.get_name("sid") is None
 
 
-def test_migrates_old_config_dir(app_state):
-    # state.json in the pre-rebrand dir is carried over to the new dir.
-    app_state._OLD_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    (app_state._OLD_CONFIG_DIR / "state.json").write_text(
-        json.dumps({"names": {"sid": "Carried over"}, "favorites": ["sid"]}),
-        encoding="utf-8",
+def _write_original_state(directory, names):
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "state.json").write_text(
+        json.dumps({"names": names, "favorites": list(names)}), encoding="utf-8"
     )
+
+
+@pytest.mark.parametrize("which", [0, 1], ids=["agent-session-manager", "pre-rebrand-claude-session-manager"])
+def test_imports_the_original_apps_state_once(app_state, which):
+    original = app_state._ORIGINAL_CONFIG_DIRS[which]
+    _write_original_state(original, {"sid": "Carried over"})
+    before = (original / "state.json").read_bytes()
+
     state = app_state.AppState()
     assert state.get_name("sid") == "Carried over"
     assert state.is_favorite("sid")
-    assert app_state._STATE_FILE.exists()  # copied into the new location
+    assert app_state._STATE_FILE.exists()  # copied into our own location
+    assert (original / "state.json").read_bytes() == before  # the original's file is never written
+
+
+def test_the_original_apps_current_name_wins_over_its_pre_rebrand_name(app_state):
+    newest, oldest = app_state._ORIGINAL_CONFIG_DIRS
+    _write_original_state(oldest, {"sid": "Old"})
+    _write_original_state(newest, {"sid": "New"})
+    assert app_state.AppState().get_name("sid") == "New"
+
+
+def test_own_state_is_never_replaced_by_the_original_apps(app_state):
+    _write_original_state(app_state._ORIGINAL_CONFIG_DIRS[0], {"sid": "Original"})
+    app_state._CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    app_state._STATE_FILE.write_text(json.dumps({"names": {"sid": "Ours"}}), encoding="utf-8")
+    assert app_state.AppState().get_name("sid") == "Ours"
 
 
 def test_migrates_legacy_names_file(app_state):

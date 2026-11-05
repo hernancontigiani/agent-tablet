@@ -12,20 +12,27 @@ import shutil
 from pathlib import Path
 
 _CONFIG_BASE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-_CONFIG_DIR = _CONFIG_BASE / "agent-session-manager"
-_OLD_CONFIG_DIR = _CONFIG_BASE / "claude-session-manager"  # pre-rebrand location
+_CONFIG_DIR = _CONFIG_BASE / "agent-tablet"
+# The app this was forked from, under its current and its pre-rebrand name, newest first. Its
+# state is imported once so names and favorites set there survive the switch; it is never written.
+_ORIGINAL_CONFIG_DIRS = (
+    _CONFIG_BASE / "agent-session-manager",
+    _CONFIG_BASE / "claude-session-manager",
+)
 _STATE_FILE = _CONFIG_DIR / "state.json"
-_LEGACY_NAMES_FILE = _OLD_CONFIG_DIR / "names.json"
+_LEGACY_NAMES_FILE = _CONFIG_BASE / "claude-session-manager" / "names.json"
 
 
 def _migrate_old_config() -> None:
-    """One-time: carry settings/names over from the old config dir name."""
-    if _STATE_FILE.exists() or not _OLD_CONFIG_DIR.is_dir():
+    """One-time: copy the original app's state.json when we have none of our own."""
+    if _STATE_FILE.exists():
         return
-    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    old_state = _OLD_CONFIG_DIR / "state.json"
-    if old_state.exists():
-        shutil.copy2(old_state, _STATE_FILE)
+    for old_dir in _ORIGINAL_CONFIG_DIRS:
+        old_state = old_dir / "state.json"
+        if old_state.exists():
+            _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(old_state, _STATE_FILE)
+            return
 
 DEFAULT_SETTINGS = {
     "font": "",  # empty = VTE default

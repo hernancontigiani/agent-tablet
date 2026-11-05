@@ -1,4 +1,4 @@
-from claude_session_manager.sessions import git_branch
+from agent_tablet.sessions import git_branch
 
 
 def test_git_branch_reads_head_from_any_subfolder(tmp_path):

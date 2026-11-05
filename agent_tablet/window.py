@@ -67,8 +67,8 @@ def _add_remove_button(chooser: Gtk.EmojiChooser, on_remove) -> None:
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, state: AppState, store: SessionStore, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.set_title("Agent Session Manager")
-        self.set_icon_name("io.github.r4nd3l.AgentSessionManager")
+        self.set_title("Agent Tablet")
+        self.set_icon_name("io.github.hernancontigiani.AgentTablet")
         self.set_default_size(1280, 800)
 
         self.state = state
@@ -118,7 +118,7 @@ class MainWindow(Adw.ApplicationWindow):
         app_menu.append(_("Show hidden sessions"), "win.show-hidden")
         app_menu.append(_("MCP servers"), "win.mcp-servers")
         app_menu.append(_("Preferences"), "win.preferences")
-        app_menu.append(_("About Agent Session Manager"), "win.about")
+        app_menu.append(_("About Agent Tablet"), "win.about")
 
         content_header = Adw.HeaderBar()
         self.sidebar_toggle = Gtk.ToggleButton(icon_name="sidebar-show-symbolic", active=True)
@@ -1197,18 +1197,20 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _show_about(self) -> None:
         about = Adw.AboutDialog(
-            application_name="Agent Session Manager",
-            application_icon="io.github.r4nd3l.AgentSessionManager",
-            developer_name="Máté Molnár",
+            application_name="Agent Tablet",
+            application_icon="io.github.hernancontigiani.AgentTablet",
+            developer_name="Hernan Contigiani",
             version=__version__,
             license_type=Gtk.License.GPL_3_0,
+            copyright="© 2026 Máté Molnár (Agent Session Manager)\n© 2026 Hernan Contigiani (Agent Tablet)",
             comments=(
                 _("Manage and resume your AI coding agent sessions.\n\n"
                 "Unofficial community tool — not affiliated with or endorsed by Anthropic.")
             ),
-            website="https://github.com/r4nd3l/agent-session-manager",
-            issue_url="https://github.com/r4nd3l/agent-session-manager/issues",
+            website="https://github.com/hernancontigiani/agent-tablet",
+            issue_url="https://github.com/hernancontigiani/agent-tablet/issues",
         )
+        about.add_credit_section(_("Based on"), ["Agent Session Manager by Máté Molnár https://github.com/r4nd3l/agent-session-manager"])
         about.present(self)
 
     def _quick_switch(self) -> None:

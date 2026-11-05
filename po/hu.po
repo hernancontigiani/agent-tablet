@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: claude-session-manager\n"
+"Project-Id-Version: agent-tablet\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -406,8 +406,8 @@ msgstr "Rejtett munkamenetek megjelenítése"
 msgid "MCP servers"
 msgstr "MCP-kiszolgálók"
 
-msgid "About Agent Session Manager"
-msgstr "Az Agent Session Manager névjegye"
+msgid "About Agent Tablet"
+msgstr "Az Agent Tablet névjegye"
 
 msgid "Refresh session list"
 msgstr "Munkamenetlista frissítése"

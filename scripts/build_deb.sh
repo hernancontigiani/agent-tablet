@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Build a Debian package: dist/agent-session-manager_<version>_all.deb
+# Build a Debian package: dist/agent-tablet_<version>_all.deb
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PKG="agent-session-manager"
-APP_ID="io.github.r4nd3l.AgentSessionManager"
+PKG="agent-tablet"
+APP_ID="io.github.hernancontigiani.AgentTablet"
 VERSION="$(grep -m1 '^version' "$ROOT/pyproject.toml" | cut -d'"' -f2)"
 BUILD="$ROOT/dist/deb-build"
 
@@ -12,11 +12,11 @@ rm -rf "$BUILD"
 mkdir -p "$ROOT/dist"
 
 # -- python package -----------------------------------------------------------
-SITE="$BUILD/usr/lib/python3/dist-packages/claude_session_manager"
+SITE="$BUILD/usr/lib/python3/dist-packages/agent_tablet"
 mkdir -p "$SITE"
-cp "$ROOT"/claude_session_manager/*.py "$SITE/"
-if [ -d "$ROOT/claude_session_manager/locale" ]; then
-  cp -r "$ROOT/claude_session_manager/locale" "$SITE/"
+cp "$ROOT"/agent_tablet/*.py "$SITE/"
+if [ -d "$ROOT/agent_tablet/locale" ]; then
+  cp -r "$ROOT/agent_tablet/locale" "$SITE/"
 fi
 
 # -- executable ---------------------------------------------------------------
@@ -25,7 +25,7 @@ cat > "$BUILD/usr/bin/$PKG" <<'EOF'
 #!/usr/bin/python3
 import sys
 
-from claude_session_manager.app import main
+from agent_tablet.app import main
 
 sys.exit(main())
 EOF
@@ -58,8 +58,8 @@ Architecture: all
 Depends: python3 (>= 3.10), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-vte-3.91
 Recommends: gir1.2-glib-2.0
 Installed-Size: $INSTALLED_SIZE
-Maintainer: Máté Molnár <molnar.mate@zengo.eu>
-Homepage: https://github.com/r4nd3l/agent-session-manager
+Maintainer: Hernan Contigiani <hernan4790@gmail.com>
+Homepage: https://github.com/hernancontigiani/agent-tablet
 Description: Manage and resume AI coding agent sessions (GTK4 GUI)
  Native GTK4/libadwaita desktop app for AI coding-agent CLIs such as Claude
  Code and Cursor: browse all sessions grouped by project, name and star them,

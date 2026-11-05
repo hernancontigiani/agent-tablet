@@ -1,7 +1,7 @@
 import shutil
 
-from claude_session_manager import providers
-from claude_session_manager.providers import (
+from agent_tablet import providers
+from agent_tablet.providers import (
     ClaudeProvider,
     CursorProvider,
     _decode_cursor_cwd,
@@ -9,7 +9,7 @@ from claude_session_manager.providers import (
     available_providers,
     get_provider,
 )
-from claude_session_manager.sessions import discover_sessions
+from agent_tablet.sessions import discover_sessions
 
 # -- Cursor discovery ---------------------------------------------------------
 
@@ -142,7 +142,7 @@ def test_cursor_chat_turn_command_none_when_missing(monkeypatch):
 
 
 def test_new_command_options(monkeypatch):
-    from claude_session_manager.providers import SessionOptions
+    from agent_tablet.providers import SessionOptions
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     claude = ClaudeProvider()
     opts = SessionOptions(model="opus", permission_mode="plan", add_dirs=("/extra",))

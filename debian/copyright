@@ -1,10 +1,13 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: claude-session-manager
-Upstream-Contact: Máté Molnár <molnar.mate@zengo.eu>
-Source: https://github.com/r4nd3l/claude-session-manager
+Upstream-Name: agent-tablet
+Upstream-Contact: Hernan Contigiani <hernan4790@gmail.com>
+Source: https://github.com/hernancontigiani/agent-tablet
+Comment: A modified version of Agent Session Manager by Máté Molnár
+ (https://github.com/r4nd3l/agent-session-manager), forked on 2026-11-05.
 
 Files: *
 Copyright: 2026 Máté Molnár
+           2026 Hernan Contigiani
 License: GPL-3.0-or-later
 
 License: GPL-3.0-or-later

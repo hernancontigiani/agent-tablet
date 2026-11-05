@@ -21,7 +21,6 @@ __pycache__/
 # Debian build artifacts
 .pybuild/
 debian/.debhelper/
-debian/claude-session-manager/
 debian/agent-tablet/
 debian/files
 debian/debhelper-build-stamp

@@ -295,7 +295,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         # Relaunch after a short delay so this instance fully exits and frees
         # the single-instance lock before the new one registers.
         subprocess.Popen(
-            ["sh", "-c", f"sleep 1.5; exec {shlex.quote(sys.executable)} -m claude_session_manager"],
+            ["sh", "-c", f"sleep 1.5; exec {shlex.quote(sys.executable)} -m agent_tablet"],
             start_new_session=True,
         )
         app = Gio.Application.get_default()

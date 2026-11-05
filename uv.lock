@@ -6,7 +6,7 @@ requires-python = ">=3.10"
 overrides = [{ name = "pygobject", marker = "sys_platform == 'never'" }]
 
 [[package]]
-name = "agent-session-manager-gtk"
+name = "agent-tablet"
 version = "1.1.1"
 source = { editable = "." }
 

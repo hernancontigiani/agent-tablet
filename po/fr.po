@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: claude-session-manager\n"
+"Project-Id-Version: agent-tablet\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -406,8 +406,8 @@ msgstr "Afficher les sessions masquées"
 msgid "MCP servers"
 msgstr "Serveurs MCP"
 
-msgid "About Agent Session Manager"
-msgstr "À propos d’Agent Session Manager"
+msgid "About Agent Tablet"
+msgstr "À propos d’Agent Tablet"
 
 msgid "Refresh session list"
 msgstr "Actualiser la liste des sessions"

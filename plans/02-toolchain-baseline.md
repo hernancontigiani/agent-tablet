@@ -41,7 +41,17 @@ them, before B2 of plan 01 starts writing new modules.
 - Whether the test guards from `CLAUDE.md` become tests now: an AST test forbidding
   `datetime.now()` / `time.time()` in logic, and an autouse fixture that points `HOME` and the XDG
   variables at `tmp_path` so no test can read the human's files.
+- **A whole-suite clock shift** (`time-machine` in the dev group plus a small `tests/clock_plugin.py`):
+  with `AT_TEST_CLOCK_AT=<ISO instant>` set, Python's clock is moved for the whole run, so
+  `AT_TEST_CLOCK_AT=<today 23:30 local> TZ=UTC uv run pytest -n auto` finds the tests that only pass
+  away from midnight. It earns its place once B4–B6 add timers and cost windows; decide whether it
+  lands here or with B4. It does not replace injecting the clock: it finds where someone forgot.
+- **Coverage** (`pytest-cov`) as a report, never as a threshold in the gate: a number to look at
+  when deciding what a block must test, not a target to game.
+- **xdist stays out of `addopts`**: a single file while writing a test runs without workers; the
+  gate passes `-n auto`. Record it in `CLAUDE.md` with that reason.
 - Whether B1's package rename lands before or after the format pass (both touch every file).
+  B1 goes first (decided order in `plans/00-STATUS.md`), so the format pass runs on the renamed tree.
 
 ## Out of scope
 

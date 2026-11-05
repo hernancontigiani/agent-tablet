@@ -1,6 +1,6 @@
 # Plan 01 — agent-tablet: the fork of Agent Session Manager
 
-> **Status:** B0 delivered 2026-11-05. **B1 and B2 are executable; B3–B6 are stubs** (goal, behaviour
+> **Status:** B0 delivered 2026-11-05. B1 delivered 2026-11-05 (checked by hand by the human). **B2 is executable; B3–B6 are stubs** (goal, behaviour
 > and verification, but no test named per decision): each goes through `/design-plan` before it is
 > executed.
 >
@@ -261,3 +261,28 @@ written under the final rules; `plans/00-STATUS.md` holds the order.
 - **Installation:** from source (`data/install.sh`) until a first version; the `.deb` after.
   Publishing the `.deb` is distribution, and the GPL's conditions are already met by the public
   repo.
+
+## Execution log
+
+**B1 (2026-11-05)**
+- Package renamed with `git mv`; every `claude_session_manager` reference (imports, tests, `po/`,
+  `debian/rules`, `scripts/`, `Makefile`, the `.desktop` `Exec=`) follows. The upstream commit
+  history of each file is kept by the move.
+- The state import is a rewrite of `_migrate_old_config`, not a second function: it now looks in
+  `agent-session-manager/` first and the pre-rebrand `claude-session-manager/` second, copies once,
+  and never writes there. Four tests, each seen red against an injected defect.
+- The machine has no `msgfmt`, so `po/generate.py` cannot compile. The `.mo` files were rebuilt from
+  the `.po` files with `polib` in a throwaway `uv run --with polib`; each keeps its 230 entries. The
+  new About credit ("Based on") is untranslated and falls back to English.
+- The About dialog names Hernan Contigiani as developer, keeps Máté Molnár in the copyright and adds
+  a "Based on" credit. `debian/copyright` keeps the original's line and adds ours;
+  `debian/changelog` gets an `UNRELEASED` entry, since no package is built.
+- The metainfo said "the agents' own session data is never modified", which the trash and delete
+  actions contradict; it now says the data is read, never rewritten, like the README.
+- Not changed, deliberately: the `CSM_*` development environment variables (`CSM_APP_ID`,
+  `CSM_PROJECTS_DIR`, `CSM_CLAUDE_CONFIG`) — not identity a user sees; the version stays 1.1.1;
+  `data/screenshot.png` and `data/banner.png` still show the old name (only `banner.svg` was edited).
+- `uv.lock` regenerated: the project name changed.
+- **Checked by hand by the human, 2026-11-05:** installed with `./data/install.sh` next to the
+  packaged Agent Session Manager; own entry, icon, title and About; `~/.config/agent-tablet/state.json`
+  imported with the original's 2 names.

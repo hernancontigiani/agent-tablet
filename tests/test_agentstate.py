@@ -1,4 +1,4 @@
-from claude_session_manager.agentstate import detect_state, rollup
+from agent_tablet.agentstate import detect_state, rollup
 
 CLAUDE_PERMISSION = """
  Bash command

@@ -28,6 +28,8 @@ before reading a line.
   decision looks wrong, it is a finding that cites where it is written and why the current code
   contradicts it or makes it expensive.
 - **Separate what breaks from what would be tidier.**
+- **Two versions of one fact living in the same document, or in two, is a finding** (a
+  contradiction), not history to tolerate. Which one is current is the human's call.
 - **An URGENT finding goes out immediately, not at the end**: a doc asserting a protection that does
   not exist, a write into an agent's files nobody decided, a network connection, a path that
   deletes without the user's confirmation. Tell the human — and the session that
@@ -80,8 +82,9 @@ before reading a line.
 ## The shape of the report
 
 **It goes in `plans/AUDIT-<TOPIC>.md`**, and is **ephemeral: deleted once what the human decides from
-it has been executed**, like a plan. Before deleting it, its outcome enters `plans/00-STATUS.md` §5:
-what was found, what was decided, what was left undone. No `docs/` file cites it by path.
+it has been executed**, like a plan. Before deleting it, its outcome — what was found, what was
+decided, what was left undone — goes to `docs/history/plans/00-STATUS.md`, and what is still open
+enters `plans/00-STATUS.md` §2. No `docs/` file cites it by path.
 
 At the top: the date, the commit (`git rev-parse --short HEAD`), and a note saying **which tree the
 citations are from** (HEAD, or the working tree with uncommitted changes) and that lines may shift.

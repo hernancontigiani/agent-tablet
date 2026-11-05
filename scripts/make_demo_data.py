@@ -6,7 +6,7 @@ Usage:
     XDG_CONFIG_HOME=/tmp/csm-demo/config \\
         CSM_PROJECTS_DIR=/tmp/csm-demo/projects \\
         CSM_CLAUDE_CONFIG=/tmp/csm-demo/claude.json \\
-        python3 -m claude_session_manager
+        python3 -m agent_tablet
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | N
 
 def main() -> None:
     projects_dir = ROOT / "projects"
-    config_dir = ROOT / "config" / "claude-session-manager"
+    config_dir = ROOT / "config" / "agent-tablet"
     projects_dir.mkdir(parents=True, exist_ok=True)
     config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -126,7 +126,7 @@ def main() -> None:
     print("Launch with:")
     print(
         f"  XDG_CONFIG_HOME={ROOT}/config CSM_PROJECTS_DIR={ROOT}/projects "
-        f"CSM_CLAUDE_CONFIG={ROOT}/claude.json python3 -m claude_session_manager"
+        f"CSM_CLAUDE_CONFIG={ROOT}/claude.json python3 -m agent_tablet"
     )
 
 

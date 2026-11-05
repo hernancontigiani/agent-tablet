@@ -24,7 +24,10 @@ Read, in this order, and **do not write a line of the plan until you are done**:
 Before the goal, the header declares **which file each part of the plan goes to when it is
 executed**: what the user sees to `README.md`, rules that constrain future code to `CLAUDE.md`,
 the explanation of a subsystem to its `docs/` file, what is deferred to `docs/NOT_BUILT_YET.md`,
-and the rest to `git log`.
+and the rest to `git log`. **A decision that replaces a recorded one says so in the exit**: the old
+text leaves its document for that document's history (`docs/history/README.md`) in the same change,
+and the new one is written in the present, with its date, without the story of how it was reached.
+What was rejected and why is state and stays in the document.
 
 It is not bureaucracy: **the plan is deleted on delivery**, and when the destination is decided
 that afternoon the first thing lost is the **why-not** — why the alternative was rejected, why the
@@ -75,8 +78,8 @@ number is that number. The code never documents that.
 
 ## How you start
 
-**First, take the number by creating the empty file** and updating `plans/00-STATUS.md` §4 in the
-same act (ask the orchestrator for it if one is running) — unless you are turning an existing stub
+**First, take the number by creating the empty file** (the rule is `plans/00-STATUS.md` §4; ask
+the orchestrator for it if one is running) and add the plan's row to §3 in the same act — unless you are turning an existing stub
 into a plan, which keeps its number.
 
 Before writing, return **one screen**: what you understood has to be designed, which decisions are

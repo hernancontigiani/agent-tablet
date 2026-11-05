@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.r4nd3l.AgentSessionManager</id>
+  <id>io.github.hernancontigiani.AgentTablet</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
 
-  <name>Agent Session Manager</name>
+  <name>Agent Tablet</name>
   <summary>Manage and resume your AI coding agent sessions</summary>
 
   <description>
@@ -25,19 +25,20 @@
     </ul>
     <p>
       Unofficial community tool — not affiliated with or endorsed by Anthropic.
-      The agents' own session data is never modified.
+      Based on Agent Session Manager by Máté Molnár. The agents' session data is
+      read, never rewritten.
     </p>
   </description>
 
-  <launchable type="desktop-id">io.github.r4nd3l.AgentSessionManager.desktop</launchable>
+  <launchable type="desktop-id">io.github.hernancontigiani.AgentTablet.desktop</launchable>
 
-  <developer id="io.github.r4nd3l">
-    <name>Máté Molnár</name>
+  <developer id="io.github.hernancontigiani">
+    <name>Hernan Contigiani</name>
   </developer>
 
-  <url type="homepage">https://r4nd3l.github.io/agent-session-manager/</url>
-  <url type="bugtracker">https://github.com/r4nd3l/agent-session-manager/issues</url>
-  <url type="vcs-browser">https://github.com/r4nd3l/agent-session-manager</url>
+  <url type="homepage">https://github.com/hernancontigiani/agent-tablet</url>
+  <url type="bugtracker">https://github.com/hernancontigiani/agent-tablet/issues</url>
+  <url type="vcs-browser">https://github.com/hernancontigiani/agent-tablet</url>
 
   <content_rating type="oars-1.1"/>
 
@@ -98,7 +99,7 @@
         <ul>
           <li>Waiting badge for sessions where Claude asked a question</li>
           <li>Export a session transcript as Markdown</li>
-          <li>Now on PyPI: pipx install claude-session-manager-gtk</li>
+          <li>Now on PyPI: pipx install agent-tablet-gtk</li>
         </ul>
       </description>
     </release>

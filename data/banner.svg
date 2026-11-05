@@ -15,7 +15,7 @@
         fill="#FAF7F2"/>
 
   <!-- title + subtitle -->
-  <text x="60" y="205" font-family="Cantarell, sans-serif" font-size="40" font-weight="bold" fill="#EDE9E1">Agent Session Manager</text>
+  <text x="60" y="205" font-family="Cantarell, sans-serif" font-size="40" font-weight="bold" fill="#EDE9E1">Agent Tablet</text>
   <text x="60" y="245" font-family="Cantarell, sans-serif" font-size="21" fill="#A89F93">A native Linux home for your AI coding-agent sessions</text>
 
   <!-- prompt chip -->

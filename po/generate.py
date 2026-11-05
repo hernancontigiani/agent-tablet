@@ -2,7 +2,7 @@
 """Generate per-language .po files and compile .mo into the package.
 
 Run from the repo root:  python3 po/generate.py
-Re-run after `xgettext` updates po/claude-session-manager.pot with new strings;
+Re-run after `xgettext` updates po/agent-tablet.pot with new strings;
 fill any new msgids in TRANSLATIONS below (missing ones fall back to English).
 """
 
@@ -12,8 +12,8 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOCALE = ROOT / "claude_session_manager" / "locale"
-DOMAIN = "claude-session-manager"
+LOCALE = ROOT / "agent_tablet" / "locale"
+DOMAIN = "agent-tablet"
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "hu": {
@@ -156,7 +156,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select sessions": "Munkamenetek kijelölése",
         "Show hidden sessions": "Rejtett munkamenetek megjelenítése",
         "MCP servers": "MCP-kiszolgálók",
-        "About Agent Session Manager": "Az Agent Session Manager névjegye",
+        "About Agent Tablet": "Az Agent Tablet névjegye",
         "Refresh session list": "Munkamenetlista frissítése",
         "Search sessions…": "Munkamenetek keresése…",
         "Collapse all groups": "Összes csoport összecsukása",
@@ -407,7 +407,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select sessions": "Sitzungen auswählen",
         "Show hidden sessions": "Versteckte Sitzungen anzeigen",
         "MCP servers": "MCP-Server",
-        "About Agent Session Manager": "Über Agent Session Manager",
+        "About Agent Tablet": "Über Agent Tablet",
         "Refresh session list": "Sitzungsliste aktualisieren",
         "Search sessions…": "Sitzungen suchen…",
         "Collapse all groups": "Alle Gruppen einklappen",
@@ -661,7 +661,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select sessions": "Seleccionar sesiones",
         "Show hidden sessions": "Mostrar sesiones ocultas",
         "MCP servers": "Servidores MCP",
-        "About Agent Session Manager": "Acerca de Agent Session Manager",
+        "About Agent Tablet": "Acerca de Agent Tablet",
         "Refresh session list": "Actualizar la lista de sesiones",
         "Search sessions…": "Buscar sesiones…",
         "Collapse all groups": "Contraer todos los grupos",
@@ -913,7 +913,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select sessions": "Sélectionner des sessions",
         "Show hidden sessions": "Afficher les sessions masquées",
         "MCP servers": "Serveurs MCP",
-        "About Agent Session Manager": "À propos d’Agent Session Manager",
+        "About Agent Tablet": "À propos d’Agent Tablet",
         "Refresh session list": "Actualiser la liste des sessions",
         "Search sessions…": "Rechercher des sessions…",
         "Collapse all groups": "Réduire tous les groupes",
@@ -1031,7 +1031,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 _HEADER = (
     'msgid ""\n'
     'msgstr ""\n'
-    '"Project-Id-Version: claude-session-manager\\n"\n'
+    '"Project-Id-Version: agent-tablet\\n"\n'
     '"Language: {lang}\\n"\n'
     '"MIME-Version: 1.0\\n"\n'
     '"Content-Type: text/plain; charset=UTF-8\\n"\n'

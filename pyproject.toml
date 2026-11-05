@@ -1,13 +1,13 @@
 [project]
-# PyPI distribution name ("agent-session-manager" is taken by an unrelated CLI
-# tool). The installed command is "agent-session-manager"; the import package
-# stays "claude_session_manager".
-name = "agent-session-manager-gtk"
+name = "agent-tablet"
 version = "1.1.1"
 description = "Native GTK4 terminal workspace for AI coding agents (Claude Code, Cursor)"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
-authors = [{ name = "Máté Molnár", email = "molnar.mate@zengo.eu" }]
+authors = [
+    { name = "Hernan Contigiani" },
+    { name = "Máté Molnár", email = "molnar.mate@zengo.eu" },
+]
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -22,21 +22,21 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/r4nd3l/agent-session-manager"
-Issues = "https://github.com/r4nd3l/agent-session-manager/issues"
+Homepage = "https://github.com/hernancontigiani/agent-tablet"
+Issues = "https://github.com/hernancontigiani/agent-tablet/issues"
 
 [project.scripts]
-agent-session-manager = "claude_session_manager.app:main"
+agent-tablet = "agent_tablet.app:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["claude_session_manager*"]
+include = ["agent_tablet*"]
 
 [tool.setuptools.package-data]
-claude_session_manager = ["locale/*/LC_MESSAGES/*.mo"]
+agent_tablet = ["locale/*/LC_MESSAGES/*.mo"]
 
 [tool.ruff]
 line-length = 110

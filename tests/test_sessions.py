@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from claude_session_manager.sessions import (
+from agent_tablet.sessions import (
     configured_mcp_servers,
     discover_sessions,
     export_markdown,
@@ -44,7 +44,7 @@ def test_session_from_file_missing(tmp_path):
 def _isolate_claude(monkeypatch):
     """These are Claude-discovery tests: force Claude available regardless of
     PATH, and keep Cursor from scanning the real ~/.cursor."""
-    import claude_session_manager.providers as providers_mod
+    import agent_tablet.providers as providers_mod
 
     monkeypatch.setattr(providers_mod.ClaudeProvider, "available", lambda self: True)
     monkeypatch.setattr(providers_mod.CursorProvider, "available", lambda self: False)
@@ -119,7 +119,7 @@ def test_parse_details_counts_mcp_tools(tmp_path):
 
 
 def test_configured_mcp_servers(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     config = tmp_path / "claude.json"
     config.write_text(
@@ -138,7 +138,7 @@ def test_configured_mcp_servers(monkeypatch, tmp_path):
 
 
 def test_read_mcp_config(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     config = tmp_path / "claude.json"
     config.write_text(
@@ -167,21 +167,21 @@ def test_read_mcp_config(monkeypatch, tmp_path):
 
 
 def test_read_mcp_config_missing_file(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     monkeypatch.setattr(sessions_mod, "CLAUDE_CONFIG", tmp_path / "nope.json")
     assert read_mcp_config().is_empty
 
 
 def test_configured_mcp_servers_missing_file(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     monkeypatch.setattr(sessions_mod, "CLAUDE_CONFIG", tmp_path / "nope.json")
     assert configured_mcp_servers("/whatever") == []
 
 
 def test_tail_state_waiting(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     root = tmp_path / "projects" / "-home-u-proj"
     root.mkdir(parents=True)
@@ -210,7 +210,7 @@ def test_tail_state_waiting(monkeypatch, tmp_path):
 
 
 def test_tail_state_interrupted(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     root = tmp_path / "projects" / "-home-u-proj"
     root.mkdir(parents=True)
@@ -229,7 +229,7 @@ def test_tail_state_interrupted(monkeypatch, tmp_path):
 
 
 def test_tail_state_user_replied_after_question(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     root = tmp_path / "projects" / "-home-u-proj"
     root.mkdir(parents=True)
@@ -266,7 +266,7 @@ def test_parse_details_handles_garbage(tmp_path):
 
 
 def test_discover_handles_missing_dir(monkeypatch, tmp_path):
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.sessions as sessions_mod
 
     monkeypatch.setattr(sessions_mod, "CLAUDE_PROJECTS_DIR", tmp_path / "nope")
     assert discover_sessions() == []

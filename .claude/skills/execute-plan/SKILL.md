@@ -68,7 +68,10 @@ found in the code that contradicts the plan**. Only then start.
 - **The execution log at the end of the plan is part of the work**: deviations from the plan and
   why, and what you found that the plan did not anticipate.
 - **The plan is deleted on delivery**, after each part has moved to the destination **the plan's own
-  header declares**. `plans/00-STATUS.md` §5 gets **one short line**, and §3 is updated.
+  header declares**. The plan's row leaves `plans/00-STATUS.md` §3 and its closing note goes to
+  `docs/history/plans/00-STATUS.md`; what it left open enters §2 in one line.
+- **A rule your exit replaces leaves verbatim for its history** (`docs/history/README.md`) in the
+  same change; `make ci` fails while a removed line has not reached it.
 - **If a declared destination does not exist yet, the plan is not deleted.** It stays alive holding
   that part; say so in its header with the reason, so it does not read as forgotten.
 - **Mind the log: it dies with the file that holds it.** If the plan is deleted in the same tree

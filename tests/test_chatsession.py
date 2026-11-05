@@ -1,14 +1,14 @@
 import io
 import json
 
-from claude_session_manager.chatsession import (
+from agent_tablet.chatsession import (
     ChatSession,
     CursorStreamParser,
     SpawnResumeChatSession,
     StreamParser,
     make_chat_session,
 )
-from claude_session_manager.providers import ChatVariant
+from agent_tablet.providers import ChatVariant
 
 
 def _feed(parser, *entries):

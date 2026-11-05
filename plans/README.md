@@ -27,7 +27,7 @@ identical for every plan and would otherwise be repeated in every one-shot promp
 ## Numbering
 
 A plan's number is taken **by creating the empty file**, not by choosing it and writing later, and
-`00-STATUS.md` is updated in the same act. If an orchestrator session is running, ask it for the
+its row enters `00-STATUS.md` §3 in the same act. If an orchestrator session is running, ask it for the
 number. Two plans collide when the gap between choosing and creating is left unwatched.
 
 ## The shape of a plan
@@ -69,6 +69,9 @@ file each part moves to) · which plan it replaces or modifies, if any.
   say which part is and which part is not.
 - **Discussing the design in the session is fine, but capture it in a file as you go.** If the
   context fills up, what is lost is the conversation, not the document.
+- **What stops being true leaves verbatim for its history in `docs/history/`, in the same
+  change** — a superseded rule, a closed row of the index, a plan's closing note. Nobody loads the
+  history; it exists for the day someone asks why. `make ci` checks no line is lost on the way.
 - **Sessions do not commit** (`CLAUDE.md`, "Git and the shared tree").
 
 ## Rules that already cost something

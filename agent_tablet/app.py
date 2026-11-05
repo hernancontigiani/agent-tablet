@@ -130,7 +130,7 @@ row.session-child:hover {
 """
 
 
-APP_ID = "io.github.r4nd3l.AgentSessionManager"
+APP_ID = "io.github.hernancontigiani.AgentTablet"
 
 
 class App(Adw.Application):

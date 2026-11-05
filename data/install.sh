@@ -3,7 +3,7 @@
 set -euo pipefail
 
 DATA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_ID="io.github.r4nd3l.AgentSessionManager"
+APP_ID="io.github.hernancontigiani.AgentTablet"
 
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 ACTION_ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/actions"

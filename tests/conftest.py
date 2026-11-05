@@ -72,8 +72,8 @@ def projects_dir(tmp_path, monkeypatch):
     (root / "-home-user-alpha" / "not-a-session.jsonl").write_text("{}", encoding="utf-8")
     (root / "-home-user-alpha" / f"{uuid.uuid4()}.jsonl").write_text("", encoding="utf-8")
 
-    import claude_session_manager.providers as providers_mod
-    import claude_session_manager.sessions as sessions_mod
+    import agent_tablet.providers as providers_mod
+    import agent_tablet.sessions as sessions_mod
 
     monkeypatch.setattr(sessions_mod, "CLAUDE_PROJECTS_DIR", root)
     # Isolate discovery to Claude: force it available regardless of PATH, and
@@ -116,7 +116,7 @@ def cursor_projects_dir(tmp_path, monkeypatch):
         "two": write_session("home-user-bar", "Fix bar", "Which file?"),  # ends with "?" -> waiting
     }
 
-    import claude_session_manager.providers as providers_mod
+    import agent_tablet.providers as providers_mod
 
     monkeypatch.setattr(providers_mod, "CURSOR_PROJECTS_DIR", root)
     monkeypatch.setattr(providers_mod.CursorProvider, "available", lambda self: True)
@@ -127,12 +127,13 @@ def cursor_projects_dir(tmp_path, monkeypatch):
 @pytest.fixture
 def app_state(tmp_path, monkeypatch):
     """AppState isolated to a temp config dir."""
-    import claude_session_manager.state as state_mod
+    import agent_tablet.state as state_mod
 
     config_dir = tmp_path / "config"
-    old_dir = tmp_path / "old_config"  # isolated; pre-rebrand location
+    original_dir = tmp_path / "agent-session-manager"  # the original app's config, isolated
+    prerebrand_dir = tmp_path / "claude-session-manager"
     monkeypatch.setattr(state_mod, "_CONFIG_DIR", config_dir)
-    monkeypatch.setattr(state_mod, "_OLD_CONFIG_DIR", old_dir)
+    monkeypatch.setattr(state_mod, "_ORIGINAL_CONFIG_DIRS", (original_dir, prerebrand_dir))
     monkeypatch.setattr(state_mod, "_STATE_FILE", config_dir / "state.json")
-    monkeypatch.setattr(state_mod, "_LEGACY_NAMES_FILE", old_dir / "names.json")
+    monkeypatch.setattr(state_mod, "_LEGACY_NAMES_FILE", prerebrand_dir / "names.json")
     return state_mod

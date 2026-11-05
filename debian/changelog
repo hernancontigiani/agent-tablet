@@ -1,3 +1,10 @@
+agent-tablet (1.1.1) UNRELEASED; urgency=medium
+
+  * Fork of Agent Session Manager 1.1.1 as Agent Tablet: new name, icon, app
+    id and config directory; the original's state is imported once.
+
+ -- Hernan Contigiani <hernan4790@gmail.com>  Thu, 05 Nov 2026 19:00:00 -0300
+
 agent-session-manager (1.1.1) noble; urgency=medium
 
   * Notifications like herdr's: a sound when an unwatched agent finishes or

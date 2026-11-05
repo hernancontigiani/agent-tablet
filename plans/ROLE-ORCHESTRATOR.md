@@ -33,7 +33,9 @@ Read, in this order, and **touch nothing until you are done**:
   wrong"**: the concrete traps you already know in that terrain, and what was added to the plan
   after it was written. The session deletes the prompt when it closes its work, never earlier.
 - **Closing a delivered plan**: delete it after each part has moved to the destination its header
-  declares. `00-STATUS.md` §5 gets **one short line**, not the plan.
+  declares. **Its row leaves `00-STATUS.md` §3 and its closing note goes to
+  `docs/history/plans/00-STATUS.md`**; what it left open enters §2 in one line; what it decided goes
+  to the document that owns it. The index never accumulates one entry per event.
 - **Fixing dangling references** to the deleted file in the same pass — and sweeping its **name**,
   not only its path.
 - **Closing questions OPEN IN OTHER files that the delivered work just answered.** It is the step
@@ -46,8 +48,9 @@ Read, in this order, and **touch nothing until you are done**:
   wrong.
 - **On a file clash between two sessions, ask who OWNS the data before negotiating the file.**
   Negotiating the file shares out turns; moving the owner removes the turn.
-- **Keeping `00-STATUS.md` current.** If you end a session without touching it, you probably did
-  not orchestrate.
+- **Keeping `00-STATUS.md` current, as a live index of 300 lines at most.** If you end a session
+  without touching it, you probably did not orchestrate. Whatever you take out of it — a closed row,
+  a superseded decision — goes verbatim to its history in the same change; `make ci` checks it.
 
 ## Why you verify what is reported, even when you trust it
 

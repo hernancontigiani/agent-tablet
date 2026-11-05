@@ -1,4 +1,4 @@
-from claude_session_manager.themes import effective_theme, tui_css
+from agent_tablet.themes import effective_theme, tui_css
 
 
 def test_default_theme_resolves_per_style_and_scheme():

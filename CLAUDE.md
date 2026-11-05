@@ -26,6 +26,7 @@ what matters from being lost when a plan is deleted.
 | How a subsystem is built and why that way | With the code it describes | `docs/<subsystem>.md`, one row in the table below |
 | What is deliberately deferred, with its trigger | When the trigger fires | `docs/NOT_BUILT_YET.md` |
 | What is decided, open, and in flight | Kept current, never a narrative | `plans/00-STATUS.md` |
+| Text that stopped being true: a previous rule, a closing note | Never; it only grows | `docs/history/`, never loaded |
 | How something will be built | **When it is executed** | `plans/NN-*.md` |
 | How a plan is written, executed and closed | Never | `plans/README.md`, `plans/ROLE-*.md` |
 
@@ -90,7 +91,9 @@ Each one is broken by an ordinary-looking line of code.
 ## Local CI
 
 **There is no hosted CI, and that is a decision: no `.github/workflows/`.** `make ci` is the gate,
-and a change is not done until it passes: `ruff check` and `pytest -n auto`. Report the result with
+and a change is not done until it passes: `ruff check`, `pytest -n auto`, and
+`docs/history/nothing_lost.py` (no line left a decision document without reaching its history).
+Report the result with
 its output when a change is reported done; a skipped step is said to be skipped.
 
 `make fmt FILES="..."` formats only the paths given (see the shared-tree rules below).
@@ -123,6 +126,9 @@ with a skill rather than pasted by hand, so it cannot drift from what is version
 - **A number written in prose is asserted by a test or not written.** Prose has no way to go red.
 - **An enum that crosses a boundary has a parity test** — between what a statusline script writes
   and what the app reads, between a category list and the rules that assign it.
+- **A session sees its own UI change through Playwright, never the Chrome MCP tool and never the
+  human's running instance** (decided 2026-11-05): an unattended, isolated run is reproducible and
+  costs a fraction; the human's Chrome is theirs. How: plan 03 (`plans/00-STATUS.md`).
 - **The human tests by hand, with their own data.** Their config, their sessions and their
   `~/.claude` are not touched to set up a test or a demo; ask first.
 
@@ -182,8 +188,12 @@ Consequences:
   thing lost is the why-not.
 - **A doc never cites a plan by path**, because plan paths die on delivery. It says the topic has a
   plan and that `plans/00-STATUS.md` names it.
-- **Decisions are written as current state with a date.** The why-not is state and stays; the
-  sequence (what was decided first and later reversed) is `git log`.
+- **Decisions are written as current state with a date, in every document.** The why-not is state
+  and stays: what was rejected and why describes what the system is not, and cannot be rebuilt.
+  **The sequence is not written** — what was decided first and later reversed, "corrected on…", a
+  struck-out item: **it goes verbatim to the document's history in `docs/history/`, in the same
+  change**, and `make ci` checks no line is lost. Two versions of one fact living in one document
+  is a contradiction, not history.
 - **This file holds only what constrains code that doesn't exist yet, and stays under 300 lines.**
   Before adding a paragraph, ask what breaks if it is deleted. "Someone would undo a deliberate
   decision" → keep it, **phrased as a rule, not as the story of how we got there**. "Someone

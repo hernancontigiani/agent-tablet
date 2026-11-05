@@ -17,933 +17,933 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: claude_session_manager/chatsessionview.py:73
+#: agent_tablet/chatsessionview.py:73
 msgid "Continuing the previous session — earlier messages aren't shown here."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:86
+#: agent_tablet/chatsessionview.py:86
 #, python-brace-format
 msgid "Read-only chat with {name} — analyses and answers, never edits."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:88
+#: agent_tablet/chatsessionview.py:88
 #, python-brace-format
 msgid ""
 "Chat with {name} — every file edit and command asks your permission first."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:91
+#: agent_tablet/chatsessionview.py:91
 #, python-brace-format
 msgid ""
 "Chat with {name} — ⚠ runs edits and commands automatically, without asking."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:103
+#: agent_tablet/chatsessionview.py:103
 #, python-brace-format
 msgid "Ask {name}…"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:106
+#: agent_tablet/chatsessionview.py:106
 msgid "Send"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:109
+#: agent_tablet/chatsessionview.py:109
 msgid "Stop"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:160
+#: agent_tablet/chatsessionview.py:160
 msgid "Rate limited — try again later."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:164
+#: agent_tablet/chatsessionview.py:164
 #, python-brace-format
 msgid "Error: {msg}"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:170
+#: agent_tablet/chatsessionview.py:170
 msgid "Session ended."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:193
+#: agent_tablet/chatsessionview.py:193
 #, python-brace-format
 msgid "Auto-allowed {tool}"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:206
+#: agent_tablet/chatsessionview.py:206
 #, python-brace-format
 msgid "{name} wants to use {tool}"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:221
+#: agent_tablet/chatsessionview.py:221
 msgid "Deny"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:223
+#: agent_tablet/chatsessionview.py:223
 #, python-brace-format
 msgid "Always allow {tool}"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:225
+#: agent_tablet/chatsessionview.py:225
 msgid "Allow once"
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:241
+#: agent_tablet/chatsessionview.py:241
 msgid "The user declined this action."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:249
+#: agent_tablet/chatsessionview.py:249
 #, python-brace-format
 msgid "Always allowing {tool}."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:251
+#: agent_tablet/chatsessionview.py:251
 #, python-brace-format
 msgid "Allowed {tool}."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:253
+#: agent_tablet/chatsessionview.py:253
 #, python-brace-format
 msgid "Denied {tool}."
 msgstr ""
 
-#: claude_session_manager/chatsessionview.py:288
+#: agent_tablet/chatsessionview.py:288
 #, python-brace-format
 msgid "{name} is thinking…"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:26 claude_session_manager/sidebar.py:138
+#: agent_tablet/dialogs.py:26 agent_tablet/sidebar.py:138
 msgid "Rename session"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:27
+#: agent_tablet/dialogs.py:27
 msgid "Custom name"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:30 claude_session_manager/dialogs.py:49
-#: claude_session_manager/dialogs.py:112
+#: agent_tablet/dialogs.py:30 agent_tablet/dialogs.py:49
+#: agent_tablet/dialogs.py:112
 msgid "Cancel"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:31
+#: agent_tablet/dialogs.py:31
 msgid "Save"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:62 claude_session_manager/window.py:961
+#: agent_tablet/dialogs.py:62 agent_tablet/window.py:961
 msgid "OK"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:72
+#: agent_tablet/dialogs.py:72
 #, python-brace-format
 msgid "New {name} session"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:73
+#: agent_tablet/dialogs.py:73
 msgid "Optional flags for this session."
 msgstr ""
 
-#: claude_session_manager/dialogs.py:79
+#: agent_tablet/dialogs.py:79
 msgid "Model"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:80 claude_session_manager/dialogs.py:86
+#: agent_tablet/dialogs.py:80 agent_tablet/dialogs.py:86
 msgid "Default"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:85
+#: agent_tablet/dialogs.py:85
 msgid "Permission mode"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:91
+#: agent_tablet/dialogs.py:91
 msgid "Extra directory"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:91 claude_session_manager/sidebar.py:568
+#: agent_tablet/dialogs.py:91 agent_tablet/sidebar.py:568
 msgid "None"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:92
+#: agent_tablet/dialogs.py:92
 msgid "Choose…"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:95
+#: agent_tablet/dialogs.py:95
 msgid "Choose a directory"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:113
+#: agent_tablet/dialogs.py:113
 msgid "Start"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:148
+#: agent_tablet/dialogs.py:148
 msgid "No MCP servers configured"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:153
+#: agent_tablet/dialogs.py:153
 msgid "Global"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:153
+#: agent_tablet/dialogs.py:153
 msgid "Available to every project"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:165 claude_session_manager/dialogs.py:170
+#: agent_tablet/dialogs.py:165 agent_tablet/dialogs.py:170
 msgid "MCP Servers"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:165
+#: agent_tablet/dialogs.py:165
 msgid "Read-only"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:183
+#: agent_tablet/dialogs.py:183
 msgid "Reading transcript…"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:197
+#: agent_tablet/dialogs.py:197
 msgid "Session details"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:212
+#: agent_tablet/dialogs.py:212
 msgid "Agent"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:213
+#: agent_tablet/dialogs.py:213
 msgid "Session ID"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:214
+#: agent_tablet/dialogs.py:214
 msgid "Directory"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:214
+#: agent_tablet/dialogs.py:214
 msgid "unknown"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:217
+#: agent_tablet/dialogs.py:217
 msgid "Created"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:219
+#: agent_tablet/dialogs.py:219
 msgid "Last activity"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:220
+#: agent_tablet/dialogs.py:220
 msgid "Messages"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:222
+#: agent_tablet/dialogs.py:222
 msgid "Tool calls"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:224
+#: agent_tablet/dialogs.py:224
 msgid "Models"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:227
+#: agent_tablet/dialogs.py:227
 msgid "Tokens"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:232
+#: agent_tablet/dialogs.py:232
 msgid "Transcript size"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:236
+#: agent_tablet/dialogs.py:236
 msgid "MCP"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:244
+#: agent_tablet/dialogs.py:244
 msgid "Available to this project"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:249
+#: agent_tablet/dialogs.py:249
 msgid "Tools used in this session"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:253
+#: agent_tablet/dialogs.py:253
 msgid "Recent activity"
 msgstr ""
 
-#: claude_session_manager/dialogs.py:256
+#: agent_tablet/dialogs.py:256
 msgid "You"
 msgstr ""
 
-#: claude_session_manager/prefs.py:60
+#: agent_tablet/prefs.py:60
 msgid "Follow system"
 msgstr ""
 
-#: claude_session_manager/prefs.py:61
+#: agent_tablet/prefs.py:61
 msgid "Light"
 msgstr ""
 
-#: claude_session_manager/prefs.py:62
+#: agent_tablet/prefs.py:62
 msgid "Dark"
 msgstr ""
 
-#: claude_session_manager/prefs.py:67
+#: agent_tablet/prefs.py:67
 msgid "Terminal workspace"
 msgstr ""
 
-#: claude_session_manager/prefs.py:68
+#: agent_tablet/prefs.py:68
 msgid "Classic (Adwaita)"
 msgstr ""
 
-#: claude_session_manager/prefs.py:84 claude_session_manager/window.py:120
+#: agent_tablet/prefs.py:84 agent_tablet/window.py:120
 msgid "Preferences"
 msgstr ""
 
-#: claude_session_manager/prefs.py:88
+#: agent_tablet/prefs.py:88
 msgid "General"
 msgstr ""
 
-#: claude_session_manager/prefs.py:90
+#: agent_tablet/prefs.py:90
 msgid "Terminal"
 msgstr ""
 
-#: claude_session_manager/prefs.py:92
+#: agent_tablet/prefs.py:92
 msgid "Font"
 msgstr ""
 
-#: claude_session_manager/prefs.py:92
+#: agent_tablet/prefs.py:92
 msgid "Applies to all terminal tabs"
 msgstr ""
 
-#: claude_session_manager/prefs.py:102
+#: agent_tablet/prefs.py:102
 msgid "Reset to default font"
 msgstr ""
 
-#: claude_session_manager/prefs.py:108
+#: agent_tablet/prefs.py:108
 msgid "Scrollback lines"
 msgstr ""
 
-#: claude_session_manager/prefs.py:115
+#: agent_tablet/prefs.py:115
 msgid "Appearance"
 msgstr ""
 
-#: claude_session_manager/prefs.py:116
+#: agent_tablet/prefs.py:116
 msgid "Color scheme"
 msgstr ""
 
-#: claude_session_manager/prefs.py:127
+#: agent_tablet/prefs.py:127
 msgid "Interface style"
 msgstr ""
 
-#: claude_session_manager/prefs.py:147
+#: agent_tablet/prefs.py:147
 msgid "Color theme"
 msgstr ""
 
-#: claude_session_manager/prefs.py:166
+#: agent_tablet/prefs.py:166
 msgid "Sidebar"
 msgstr ""
 
-#: claude_session_manager/prefs.py:166
+#: agent_tablet/prefs.py:166
 msgid "Which sections the sidebar shows"
 msgstr ""
 
-#: claude_session_manager/prefs.py:169
+#: agent_tablet/prefs.py:169
 msgid "Spaces"
 msgstr ""
 
-#: claude_session_manager/prefs.py:169
+#: agent_tablet/prefs.py:169
 msgid "Project folders with open tabs"
 msgstr ""
 
-#: claude_session_manager/prefs.py:170
+#: agent_tablet/prefs.py:170
 msgid "Agents"
 msgstr ""
 
-#: claude_session_manager/prefs.py:170
+#: agent_tablet/prefs.py:170
 msgid "Every running agent, across spaces"
 msgstr ""
 
-#: claude_session_manager/prefs.py:171
+#: agent_tablet/prefs.py:171
 msgid "History"
 msgstr ""
 
-#: claude_session_manager/prefs.py:171
+#: agent_tablet/prefs.py:171
 msgid "Past sessions, with search and favorites"
 msgstr ""
 
-#: claude_session_manager/prefs.py:180
+#: agent_tablet/prefs.py:180
 msgid "Show folder path"
 msgstr ""
 
-#: claude_session_manager/prefs.py:181
+#: agent_tablet/prefs.py:181
 msgid "Show each session's project folder path in the sidebar"
 msgstr ""
 
-#: claude_session_manager/prefs.py:193 claude_session_manager/prefs.py:199
+#: agent_tablet/prefs.py:193 agent_tablet/prefs.py:199
 msgid "Language"
 msgstr ""
 
-#: claude_session_manager/prefs.py:193
+#: agent_tablet/prefs.py:193
 msgid "Restart to apply"
 msgstr ""
 
-#: claude_session_manager/prefs.py:194
+#: agent_tablet/prefs.py:194
 msgid "Restart now"
 msgstr ""
 
-#: claude_session_manager/prefs.py:216
+#: agent_tablet/prefs.py:216
 msgid "Notifications"
 msgstr ""
 
-#: claude_session_manager/prefs.py:218
+#: agent_tablet/prefs.py:218
 msgid "Notify about background agents"
 msgstr ""
 
-#: claude_session_manager/prefs.py:220
+#: agent_tablet/prefs.py:220
 msgid ""
 "Desktop notification when an agent you are not watching finishes or needs "
 "your input"
 msgstr ""
 
-#: claude_session_manager/promptcard.py:43
+#: agent_tablet/promptcard.py:43
 msgid "Question"
 msgstr ""
 
-#: claude_session_manager/promptcard.py:45
+#: agent_tablet/promptcard.py:45
 #, python-brace-format
 msgid "{n} questions"
 msgstr ""
 
-#: claude_session_manager/promptcard.py:62
+#: agent_tablet/promptcard.py:62
 msgid "This prompt needs the terminal to answer."
 msgstr ""
 
-#: claude_session_manager/promptcard.py:66
+#: agent_tablet/promptcard.py:66
 msgid "Answer in terminal"
 msgstr ""
 
-#: claude_session_manager/replayview.py:60
+#: agent_tablet/replayview.py:60
 msgid "Previous"
 msgstr ""
 
-#: claude_session_manager/replayview.py:62
+#: agent_tablet/replayview.py:62
 msgid "Play"
 msgstr ""
 
-#: claude_session_manager/replayview.py:64
+#: agent_tablet/replayview.py:64
 msgid "Next"
 msgstr ""
 
-#: claude_session_manager/replayview.py:66
+#: agent_tablet/replayview.py:66
 msgid "Show all"
 msgstr ""
 
-#: claude_session_manager/replayview.py:146
+#: agent_tablet/replayview.py:146
 msgid "Nothing to replay yet."
 msgstr ""
 
-#: claude_session_manager/sidebar.py:183 claude_session_manager/sidebar.py:523
+#: agent_tablet/sidebar.py:183 agent_tablet/sidebar.py:523
 msgid "Remove from favorites"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:183 claude_session_manager/sidebar.py:523
+#: agent_tablet/sidebar.py:183 agent_tablet/sidebar.py:523
 msgid "Add to favorites"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:222
+#: agent_tablet/sidebar.py:222
 msgid "Claude is waiting for your reply"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:227
+#: agent_tablet/sidebar.py:227
 msgid "You interrupted Claude here"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:271
+#: agent_tablet/sidebar.py:271
 msgid "Main menu"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:280
+#: agent_tablet/sidebar.py:280
 msgid "Select sessions"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:285
+#: agent_tablet/sidebar.py:285
 msgid "Refresh session list"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:292
+#: agent_tablet/sidebar.py:292
 msgid "history"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:297
+#: agent_tablet/sidebar.py:297
 msgid "Search sessions…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:302
+#: agent_tablet/sidebar.py:302
 msgid "Collapse all groups"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:307
+#: agent_tablet/sidebar.py:307
 msgid "Expand all groups"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:331
+#: agent_tablet/sidebar.py:331
 msgid "No sessions found"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:332
+#: agent_tablet/sidebar.py:332
 msgid ""
 "Run claude in a project directory first — sessions will appear here "
 "automatically."
 msgstr ""
 
-#: claude_session_manager/sidebar.py:377
+#: agent_tablet/sidebar.py:377
 #, python-brace-format
 msgid "{n} sessions"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:378
+#: agent_tablet/sidebar.py:378
 #, python-brace-format
 msgid "{n} projects"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:382
+#: agent_tablet/sidebar.py:382
 #, python-brace-format
 msgid "{n} open"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:422
+#: agent_tablet/sidebar.py:422
 msgid "Favorites"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:504
+#: agent_tablet/sidebar.py:504
 msgid "Open"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:506
+#: agent_tablet/sidebar.py:506
 msgid "Open in Ghostty"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:508
+#: agent_tablet/sidebar.py:508
 msgid "Fork session"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:511
+#: agent_tablet/sidebar.py:511
 #, python-brace-format
 msgid "Continue in chat ({mode})"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:513
+#: agent_tablet/sidebar.py:513
 msgid "Continue in chat"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:521 claude_session_manager/window.py:102
+#: agent_tablet/sidebar.py:521 agent_tablet/window.py:102
 msgid "Rename…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:526
+#: agent_tablet/sidebar.py:526
 msgid "Details…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:527
+#: agent_tablet/sidebar.py:527
 msgid "Replay…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:528 claude_session_manager/window.py:105
+#: agent_tablet/sidebar.py:528 agent_tablet/window.py:105
 msgid "Copy session ID"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:529
+#: agent_tablet/sidebar.py:529
 msgid "Export as Markdown…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:530
+#: agent_tablet/sidebar.py:530
 msgid "Reveal transcript"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:533
+#: agent_tablet/sidebar.py:533
 msgid "Unhide session"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:533
+#: agent_tablet/sidebar.py:533
 msgid "Hide session"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:535
+#: agent_tablet/sidebar.py:535
 msgid "Move transcript to trash…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:536
+#: agent_tablet/sidebar.py:536
 msgid "Delete permanently…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:562
+#: agent_tablet/sidebar.py:562
 msgid "All"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:564
+#: agent_tablet/sidebar.py:564
 msgid "Select all (filtered) sessions"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:570
+#: agent_tablet/sidebar.py:570
 msgid "Clear selection"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:575
+#: agent_tablet/sidebar.py:575
 msgid "Move selected transcripts to trash…"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:576
+#: agent_tablet/sidebar.py:576
 msgid "Hide selected"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:577
+#: agent_tablet/sidebar.py:577
 msgid "Remove selected from favorites"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:578
+#: agent_tablet/sidebar.py:578
 msgid "Add selected to favorites"
 msgstr ""
 
-#: claude_session_manager/sidebar.py:579
+#: agent_tablet/sidebar.py:579
 msgid "Open selected in tabs"
 msgstr ""
 
-#: claude_session_manager/spaces.py:131
+#: agent_tablet/spaces.py:131
 msgid "New space: start an agent in a folder"
 msgstr ""
 
-#: claude_session_manager/spaces.py:133
+#: agent_tablet/spaces.py:133
 msgid "spaces"
 msgstr ""
 
-#: claude_session_manager/spaces.py:141
+#: agent_tablet/spaces.py:141
 msgid "agents"
 msgstr ""
 
-#: claude_session_manager/spaces.py:167
+#: agent_tablet/spaces.py:167
 msgid "no open spaces"
 msgstr ""
 
-#: claude_session_manager/spaces.py:237
+#: agent_tablet/spaces.py:237
 msgid "New agent in this space"
 msgstr ""
 
-#: claude_session_manager/spaces.py:280
+#: agent_tablet/spaces.py:280
 msgid "Change emoji"
 msgstr ""
 
-#: claude_session_manager/terminal.py:124
+#: agent_tablet/terminal.py:124
 #, python-brace-format
 msgid "warning: project dir {cwd} no longer exists, starting in HOME"
 msgstr ""
 
-#: claude_session_manager/terminal.py:142
+#: agent_tablet/terminal.py:142
 #, python-brace-format
 msgid "warning: `{cli}` not found in PATH — starting a plain shell"
 msgstr ""
 
-#: claude_session_manager/terminal.py:167
+#: agent_tablet/terminal.py:167
 #, python-brace-format
 msgid "failed to start shell: {msg}"
 msgstr ""
 
-#: claude_session_manager/terminal.py:216
+#: agent_tablet/terminal.py:216
 msgid "Find in terminal…"
 msgstr ""
 
-#: claude_session_manager/terminal.py:223
+#: agent_tablet/terminal.py:223
 msgid "Previous match"
 msgstr ""
 
-#: claude_session_manager/terminal.py:225
+#: agent_tablet/terminal.py:225
 msgid "Next match"
 msgstr ""
 
-#: claude_session_manager/window.py:62 claude_session_manager/window.py:104
+#: agent_tablet/window.py:62 agent_tablet/window.py:104
 msgid "Remove emoji"
 msgstr ""
 
-#: claude_session_manager/window.py:103
+#: agent_tablet/window.py:103
 msgid "Set emoji…"
 msgstr ""
 
-#: claude_session_manager/window.py:106
+#: agent_tablet/window.py:106
 msgid "Close"
 msgstr ""
 
-#: claude_session_manager/window.py:117
+#: agent_tablet/window.py:117
 msgid "Open session file…"
 msgstr ""
 
-#: claude_session_manager/window.py:118
+#: agent_tablet/window.py:118
 msgid "Show hidden sessions"
 msgstr ""
 
-#: claude_session_manager/window.py:119
+#: agent_tablet/window.py:119
 msgid "MCP servers"
 msgstr ""
 
-#: claude_session_manager/window.py:121
-msgid "About Agent Session Manager"
+#: agent_tablet/window.py:121
+msgid "About Agent Tablet"
 msgstr ""
 
-#: claude_session_manager/window.py:125
+#: agent_tablet/window.py:125
 msgid "Toggle sidebar (F9)"
 msgstr ""
 
-#: claude_session_manager/window.py:131
+#: agent_tablet/window.py:131
 #, python-brace-format
 msgid "New {name} session…"
 msgstr ""
 
-#: claude_session_manager/window.py:136
+#: agent_tablet/window.py:136
 #, python-brace-format
 msgid "New {name} session (advanced)…"
 msgstr ""
 
-#: claude_session_manager/window.py:140
+#: agent_tablet/window.py:140
 #, python-brace-format
 msgid "Continue last {name} session…"
 msgstr ""
 
-#: claude_session_manager/window.py:146
+#: agent_tablet/window.py:146
 #, python-brace-format
 msgid "New {name} chat ({mode})"
 msgstr ""
 
-#: claude_session_manager/window.py:150
+#: agent_tablet/window.py:150
 #, python-brace-format
 msgid "New {name} chat…"
 msgstr ""
 
-#: claude_session_manager/window.py:152
+#: agent_tablet/window.py:152
 msgid "New window"
 msgstr ""
 
-#: claude_session_manager/window.py:154
+#: agent_tablet/window.py:154
 msgid "New session (Ctrl+Shift+T)"
 msgstr ""
 
-#: claude_session_manager/window.py:161
+#: agent_tablet/window.py:161
 msgid "Close all tabs"
 msgstr ""
 
-#: claude_session_manager/window.py:171
+#: agent_tablet/window.py:171
 msgid "No session open"
 msgstr ""
 
-#: claude_session_manager/window.py:172
+#: agent_tablet/window.py:172
 msgid "Pick a session from the sidebar, or start a new one."
 msgstr ""
 
-#: claude_session_manager/window.py:349
+#: agent_tablet/window.py:349
 msgid "Some transcripts could not be trashed"
 msgstr ""
 
-#: claude_session_manager/window.py:353
+#: agent_tablet/window.py:353
 #, python-brace-format
 msgid "Move {n} transcript(s) to trash?"
 msgstr ""
 
-#: claude_session_manager/window.py:354
+#: agent_tablet/window.py:354
 msgid "The files are moved to the trash and can be restored."
 msgstr ""
 
-#: claude_session_manager/window.py:355 claude_session_manager/window.py:1116
+#: agent_tablet/window.py:355 agent_tablet/window.py:1116
 msgid "Move to Trash"
 msgstr ""
 
-#: claude_session_manager/window.py:407 claude_session_manager/window.py:438
-#: claude_session_manager/window.py:458 claude_session_manager/window.py:508
+#: agent_tablet/window.py:407 agent_tablet/window.py:438
+#: agent_tablet/window.py:458 agent_tablet/window.py:508
 msgid "Choose project directory"
 msgstr ""
 
-#: claude_session_manager/window.py:535
+#: agent_tablet/window.py:535
 #, python-brace-format
 msgid "Chat — {dir}"
 msgstr ""
 
-#: claude_session_manager/window.py:553
+#: agent_tablet/window.py:553
 #, python-brace-format
 msgid "Chat — {name}"
 msgstr ""
 
-#: claude_session_manager/window.py:567
+#: agent_tablet/window.py:567
 #, python-brace-format
 msgid "Replay — {name}"
 msgstr ""
 
-#: claude_session_manager/window.py:674
+#: agent_tablet/window.py:674
 #, python-brace-format
 msgid "{agent} needs your input."
 msgstr ""
 
-#: claude_session_manager/window.py:676
+#: agent_tablet/window.py:676
 #, python-brace-format
 msgid "{agent} finished."
 msgstr ""
 
-#: claude_session_manager/window.py:782
+#: agent_tablet/window.py:782
 msgid "Tab name"
 msgstr ""
 
-#: claude_session_manager/window.py:901
+#: agent_tablet/window.py:901
 msgid "split right (a shell)"
 msgstr ""
 
-#: claude_session_manager/window.py:903
+#: agent_tablet/window.py:903
 msgid "split down (a shell)"
 msgstr ""
 
-#: claude_session_manager/window.py:905
+#: agent_tablet/window.py:905
 msgid "pane to the left"
 msgstr ""
 
-#: claude_session_manager/window.py:906
+#: agent_tablet/window.py:906
 msgid "pane below"
 msgstr ""
 
-#: claude_session_manager/window.py:907
+#: agent_tablet/window.py:907
 msgid "pane above"
 msgstr ""
 
-#: claude_session_manager/window.py:908
+#: agent_tablet/window.py:908
 msgid "pane to the right"
 msgstr ""
 
-#: claude_session_manager/window.py:909
+#: agent_tablet/window.py:909
 msgid "next pane"
 msgstr ""
 
-#: claude_session_manager/window.py:910
+#: agent_tablet/window.py:910
 msgid "zoom the pane"
 msgstr ""
 
-#: claude_session_manager/window.py:911
+#: agent_tablet/window.py:911
 msgid "close the pane"
 msgstr ""
 
-#: claude_session_manager/window.py:912
+#: agent_tablet/window.py:912
 msgid "new agent in this space"
 msgstr ""
 
-#: claude_session_manager/window.py:913
+#: agent_tablet/window.py:913
 msgid "next tab"
 msgstr ""
 
-#: claude_session_manager/window.py:914
+#: agent_tablet/window.py:914
 msgid "previous tab"
 msgstr ""
 
-#: claude_session_manager/window.py:915
+#: agent_tablet/window.py:915
 msgid "go to tab"
 msgstr ""
 
-#: claude_session_manager/window.py:917
+#: agent_tablet/window.py:917
 msgid "new space"
 msgstr ""
 
-#: claude_session_manager/window.py:918
+#: agent_tablet/window.py:918
 msgid "rename tab"
 msgstr ""
 
-#: claude_session_manager/window.py:919
+#: agent_tablet/window.py:919
 msgid "close tab"
 msgstr ""
 
-#: claude_session_manager/window.py:920
+#: agent_tablet/window.py:920
 msgid "go to agent"
 msgstr ""
 
-#: claude_session_manager/window.py:921
+#: agent_tablet/window.py:921
 msgid "toggle sidebar"
 msgstr ""
 
-#: claude_session_manager/window.py:922
+#: agent_tablet/window.py:922
 msgid "preferences"
 msgstr ""
 
-#: claude_session_manager/window.py:923
+#: agent_tablet/window.py:923
 msgid "this help"
 msgstr ""
 
-#: claude_session_manager/window.py:956
+#: agent_tablet/window.py:956
 msgid "send Ctrl+B to the terminal"
 msgstr ""
 
-#: claude_session_manager/window.py:959
+#: agent_tablet/window.py:959
 msgid "Ctrl+B, then…"
 msgstr ""
 
-#: claude_session_manager/window.py:1059
+#: agent_tablet/window.py:1059
 msgid "Export session as Markdown"
 msgstr ""
 
-#: claude_session_manager/window.py:1077
+#: agent_tablet/window.py:1077
 msgid "Export failed"
 msgstr ""
 
-#: claude_session_manager/window.py:1102
+#: agent_tablet/window.py:1102
 msgid "Could not trash transcript"
 msgstr ""
 
-#: claude_session_manager/window.py:1110
+#: agent_tablet/window.py:1110
 msgid "Move transcript to trash?"
 msgstr ""
 
-#: claude_session_manager/window.py:1111
+#: agent_tablet/window.py:1111
 #, python-brace-format
 msgid "“{name}” will be removed from Claude's history."
 msgstr ""
 
-#: claude_session_manager/window.py:1115
+#: agent_tablet/window.py:1115
 msgid "The file is moved to the trash and can be restored."
 msgstr ""
 
-#: claude_session_manager/window.py:1128
+#: agent_tablet/window.py:1128
 msgid "Could not delete transcript"
 msgstr ""
 
-#: claude_session_manager/window.py:1136
+#: agent_tablet/window.py:1136
 msgid "Delete session permanently?"
 msgstr ""
 
-#: claude_session_manager/window.py:1137
+#: agent_tablet/window.py:1137
 #, python-brace-format
 msgid ""
 "“{name}” and its transcript file will be permanently deleted. This cannot be "
 "undone."
 msgstr ""
 
-#: claude_session_manager/window.py:1139
+#: agent_tablet/window.py:1139
 msgid "Delete permanently"
 msgstr ""
 
-#: claude_session_manager/window.py:1146
+#: agent_tablet/window.py:1146
 msgid "Open session transcript"
 msgstr ""
 
-#: claude_session_manager/window.py:1148
+#: agent_tablet/window.py:1148
 msgid "Session transcripts (*.jsonl)"
 msgstr ""
 
-#: claude_session_manager/window.py:1168
+#: agent_tablet/window.py:1168
 msgid "Could not open transcript"
 msgstr ""
 
-#: claude_session_manager/window.py:1169
+#: agent_tablet/window.py:1169
 msgid "The file couldn't be read as a session transcript."
 msgstr ""
 
-#: claude_session_manager/window.py:1184
+#: agent_tablet/window.py:1184
 msgid ""
 "Manage and resume your AI coding agent sessions.\n"
 "\n"
 "Unofficial community tool — not affiliated with or endorsed by Anthropic."
 msgstr ""
 
-#: claude_session_manager/window.py:1204
+#: agent_tablet/window.py:1204
 msgid "Switch session"
 msgstr ""
 
-#: claude_session_manager/window.py:1204
+#: agent_tablet/window.py:1204
 msgid "Jump to a session…"
 msgstr ""
 
-#: claude_session_manager/window.py:1231
+#: agent_tablet/window.py:1231
 msgid "Go to agent"
 msgstr ""
 
-#: claude_session_manager/window.py:1231
+#: agent_tablet/window.py:1231
 msgid "Agent, space or state…"
 msgstr ""

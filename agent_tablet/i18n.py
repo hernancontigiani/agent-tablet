@@ -5,7 +5,7 @@ from __future__ import annotations
 import gettext
 from pathlib import Path
 
-DOMAIN = "claude-session-manager"
+DOMAIN = "agent-tablet"
 LOCALEDIR = Path(__file__).resolve().parent / "locale"
 
 # Languages offered in Preferences: code -> native display name.

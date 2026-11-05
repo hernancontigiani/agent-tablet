@@ -1,6 +1,6 @@
 import json
 
-from claude_session_manager.replaymodel import read_session_turns
+from agent_tablet.replaymodel import read_session_turns
 
 
 def _write(path, lines):

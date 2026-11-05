@@ -4,8 +4,10 @@
 > building anything. It does not explain decisions: it says where each one is explained. A decision
 > recorded here is not re-litigated without saying so explicitly.
 >
-> Written as **current state with a date**, never as a narrative: the sequence is `git log`. If this
-> file passes a few hundred lines, something here belongs in another file.
+> **A live index, 300 lines at most.** It answers only: what is decided and where it lives, what is
+> open and who decides it, which plan is in flight or a stub and what blocks it, and the numbering.
+> Written as **current state with a date**; what stops being current leaves for
+> `docs/history/plans/00-STATUS.md` in the same change, verbatim.
 >
 > Last updated: 2026-11-05.
 
@@ -23,6 +25,7 @@
 | 1.8 | Installation from source until a first stable version; the `.deb` after | 2026-11-05 | `docs/NOT_BUILT_YET.md` |
 | 1.9 | A session's name is Claude's; the app keeps no second name for a named session | 2026-11-05 | `CLAUDE.md` · plan 01, B2 |
 | 1.10 | The agents' data is read, never rewritten; any new write under `~/.claude` is decided here first | 2026-11-05 | `CLAUDE.md` |
+| 1.11 | UI checks by a session go through Playwright on an isolated instance; never the Chrome MCP tool or the human's instance | 2026-11-05 | `CLAUDE.md` · plan 03 |
 
 ## 2. Open
 
@@ -36,16 +39,19 @@
 | Order | Plan | State |
 |---|---|---|
 | 1 | `01-agent-tablet-fork.md` B0 | Delivered 2026-11-05 |
-| 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Written, ready to execute |
+| 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Delivered 2026-11-05 |
 | 3 | `02-toolchain-baseline.md` | Stub — needs `/design-plan` |
 | 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute after 02 |
 | 5 | `01-agent-tablet-fork.md` B3–B6 | Stubs inside plan 01 — each needs `/design-plan` |
+| — | `03-ui-verification.md` (Broadway + Playwright, reload on change) | Stub, spike proved the path — needs `/design-plan`; wanted before B2's UI work |
 
 ## 4. Next plan number
 
-**03.** Take it by creating the file, and update this line in the same act.
+The highest `NN` in `plans/` plus one, taken by creating the empty file. A delivered plan's number
+is never reused (`git log --all -- 'plans/NN-*'` shows the ones already taken).
 
-## 5. Delivered
+## 5. Closing a plan
 
-A delivered plan leaves one short line here — what was built, the date, and anything left undone —
-and is then deleted. Nothing yet.
+Its row leaves §3, and its closing note — what was built, the date, what was left undone — goes to
+`docs/history/plans/00-STATUS.md`. What it left open enters §2 in one line; what it decided goes to
+the document that owns it.
