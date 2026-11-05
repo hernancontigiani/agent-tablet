@@ -1,21 +1,28 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
-build/
+/dist/
+/build/
 .pytest_cache/
 .ruff_cache/
 .venv/
-.claude/
 00_Temp.md
-node_modules/
-docs/.vitepress/dist/
-docs/.vitepress/cache/
+
+# Claude Code: the project's rules and skills are versioned; personal settings are not.
+.claude/settings.local.json
+
+# One-shot launch prompts for execution sessions. Each is deleted by the session that used it.
+/prompts/
+
+# Local settings and anything holding a token.
+.env
+.env.*
 
 # Debian build artifacts
 .pybuild/
 debian/.debhelper/
 debian/claude-session-manager/
+debian/agent-tablet/
 debian/files
 debian/debhelper-build-stamp
 debian/*.substvars

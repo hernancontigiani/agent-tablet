@@ -48,3 +48,20 @@ ignore = ["E402"]  # gi.require_version must precede gi.repository imports
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# Development tools, run through `uv run`. PyGObject, GTK, libadwaita and VTE are not here: they
+# come from the system packages, which is why the venv is created with --system-site-packages.
+[dependency-groups]
+dev = [
+    "ruff==0.17.4",
+    "pytest==9.2.0",
+    "pytest-xdist==3.8.0",
+    "pyright==1.1.414",
+    "pygobject-stubs==2.20.0",
+]
+
+[tool.uv]
+# pygobject-stubs declares PyGObject as a dependency, and installing it from PyPI builds pycairo
+# from source. The system's PyGObject is the one that must load, so it is dropped from resolution:
+# this marker never matches.
+override-dependencies = ["pygobject; sys_platform == 'never'"]

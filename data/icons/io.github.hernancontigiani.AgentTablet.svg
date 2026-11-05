@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Placeholder icon: a tablet with a session list on the left and an active pane on the right. -->
+  <rect x="8" y="14" width="112" height="100" rx="16" fill="#2b2d3a"/>
+  <rect x="16" y="22" width="96" height="84" rx="9" fill="#1b1c26"/>
+  <rect x="22" y="30" width="30" height="10" rx="3" fill="#c9a6ff"/>
+  <rect x="22" y="46" width="30" height="8" rx="3" fill="#4a4d63"/>
+  <rect x="22" y="60" width="30" height="8" rx="3" fill="#4a4d63"/>
+  <rect x="22" y="74" width="30" height="8" rx="3" fill="#4a4d63"/>
+  <circle cx="47" cy="35" r="2.5" fill="#1b1c26"/>
+  <rect x="58" y="30" width="48" height="68" rx="5" fill="#25273a"/>
+  <rect x="64" y="38" width="34" height="5" rx="2.5" fill="#7fd1a8"/>
+  <rect x="64" y="49" width="26" height="5" rx="2.5" fill="#8a8ea8"/>
+  <rect x="64" y="60" width="30" height="5" rx="2.5" fill="#8a8ea8"/>
+  <path d="M64 84 l6 4 -6 4" fill="none" stroke="#c9a6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
