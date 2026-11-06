@@ -41,6 +41,7 @@
 | 2.2 | The real format of the `custom-title` entry, checked against the human's own transcripts | Executor of B2 | B2 |
 | 2.5 | Whether categories are assigned automatically (by name pattern, or otherwise) or only by hand | Human | B5 |
 | 2.9 | Tabs that are not agents — open, read and edit a file (text, Markdown, code) in the project's window — and whether a project names its folders to scope them | Human, in a design session of its own | Nothing yet |
+| 2.10 | Renaming and deleting a project. Recommended: any can be renamed; any but the last can be deleted, stopping its running sessions after a confirmation | Human | Plan 04 B1, B4 (written with the recommendation) |
 
 ## 3. Roadmap and plans in flight
 
@@ -50,7 +51,7 @@
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Delivered 2026-11-05 |
 | 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute |
 | 5 | `01-agent-tablet-fork.md` B4–B6 | Stubs inside plan 01 — each needs `/design-plan`; B5 reopened 2026-11-06 (§1 1.14) |
-| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs; replaces B3) | Stub 2026-11-06, every product decision taken — needs `/design-plan` for its blocks; after B2 |
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Written 2026-11-06, ready to execute after B2; its B0 needs the human's go-ahead |
 
 ## 4. Next plan number
 

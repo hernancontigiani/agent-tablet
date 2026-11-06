@@ -134,6 +134,9 @@ GTK code no unit test reaches — a number to read, not a target. The Makefile c
 with GNU make's `shell` function: a shell command substitution in a recipe line was stopped by the
 session's safety check before it ran.
 
+> Left §3 on 2026-11-06: plan 04 written.
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs; replaces B3) | Stub 2026-11-06, every product decision taken — needs `/design-plan` for its blocks; after B2 |
+
 ## 4. Next plan number
 
 > Left §4 on 2026-11-05: the next number is derived from `plans/`, so this line no longer changes.
