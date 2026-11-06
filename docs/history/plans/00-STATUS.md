@@ -149,6 +149,9 @@ session's safety check before it ran.
 > Left §3 on 2026-11-06: plan 04 built.
 | 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Written 2026-11-06, ready to execute after B2; its B0 needs the human's go-ahead |
 
+> Left §3 on 2026-11-06: B0's interactive results confirmed `&& exit`.
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Built 2026-11-06 (B0–B6 and B7's documents); open: B0's interactive exit statuses, which confirm `&& exit`, and the human's check by hand. Not closed |
+
 ## 4. Next plan number
 
 > Left §4 on 2026-11-05: the next number is derived from `plans/`, so this line no longer changes.

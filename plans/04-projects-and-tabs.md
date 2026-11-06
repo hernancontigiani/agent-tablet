@@ -1,7 +1,6 @@
 # 04 — Projects, the session list and tabs
 
-> **Status: built 2026-11-06 (see the execution log); not closed until B0's interactive results and
-> the human's check by hand.** Written the same day, after plan 01 B2. Every product decision is
+> **Status: built 2026-11-06 (see the execution log); not closed until the human's check by hand.** Written the same day, after plan 01 B2. Every product decision is
 > taken (`plans/00-STATUS.md` §1 1.13–1.19). B0 needs the human's go-ahead before it runs (it creates throwaway sessions in their `~/.claude`).
 >
 > **Comes from:** a design session with the human on 2026-11-05/06, with an interactive mock-up
@@ -498,8 +497,8 @@ tab, and finds a pane's page from the widget (`_page_of`), so a pane can move be
 it there without stopping when it was alone in its own tab. Closing a pane, the row's Stop, and the
 agent's own exit stop that pane's session only; closing the tab exits every agent in it. A tab of
 two sessions is titled "A │ B"; its strip button carries the group color when both are in one
-group. The typed command ends with `&& exit` (`typed_command`), **provisionally** until B0's
-interactive results: a failing start then leaves its message in the shell. Deviations:
+group. The typed command ends with `&& exit` (`typed_command`): a failing start then leaves its
+message in the shell (confirmed by B0's interactive results). Deviations:
 - The row's "⋯" builds its menu on each click and drops it on close, as the history's row menu
   does: one popover per row made the walk's tool unable to tell which one was open.
 - The walk's isolated environment puts a stand-in `claude` first in `PATH`
@@ -552,4 +551,10 @@ closing its row, which wait for B0's results and the human's check.
    one window, no tabs.
 6. Two windows (Ctrl+Shift+N) with two projects: choosing the first window's project in the second
    brings the first forward; "Move from …" across windows moves the tab.
+
+**B0, completed (2026-11-06).** The human ran the interactive script in their terminal:
+`/exit` → 0, a transcript written; Ctrl+D twice → 0, no transcript; Ctrl+C twice → 0, no
+transcript. Every clean way out returns 0 and a failing start returns 1, so `&& exit` stands. The
+`/exit`-only transcript holds the name and the `/exit` command but no typed message: its preview is
+empty and `joins_project` refuses it, as the rule wants. B3 is complete.
 

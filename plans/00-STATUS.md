@@ -50,8 +50,9 @@
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Delivered 2026-11-05 |
 | 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Built 2026-11-06; pending the human's check by hand |
 | 5 | `01-agent-tablet-fork.md` B4–B6 | Stubs inside plan 01 — each needs `/design-plan`; B5 reopened 2026-11-06 (§1 1.14) |
-| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Built 2026-11-06 (B0–B6 and B7's documents); open: B0's interactive exit statuses, which confirm `&& exit`, and the human's check by hand. Not closed |
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Built 2026-11-06, B0 confirmed; open: the human's check by hand. Not closed |
 | 7 | `05-context-and-integrations.md` (plan 01 B4 — context ring, `--settings`, the integrations menu, usage capture) | B1–B2 built 2026-11-06 (statusline script, context model, ring — not yet shown anywhere); B3–B5 after plan 04 closes |
+| 8 | `06-usage-report.md` (execution time and tokens per session, category and project; replaces plan 01 B6) | Written 2026-11-06; B1–B4 executable now (new files only), B5 after plan 04 closes |
 
 ## 4. Next plan number
 

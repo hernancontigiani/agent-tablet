@@ -39,7 +39,12 @@ rejected.
   (`custom-title`, `agent-name`) before the first `user` line.
 - `--fork-session --session-id <uuid>` together are accepted; the fork's transcript takes that id.
 - `--continue` keeps the id of the session it continues; it creates no file.
-- A failing start (an invalid `--session-id`) exits with status 1.
+- Leaving with `/exit`, with Ctrl+D twice or with Ctrl+C twice exits with status 0; a failing start
+  (an invalid `--session-id`) exits with 1. That is why `&& exit` closes the tab on every way out
+  and keeps a failed start's message.
+- Leaving with `/exit` before typing anything writes a transcript with the name and the `/exit`
+  command, but no typed message; Ctrl+D or Ctrl+C before typing write none. Neither joins a
+  project.
 
 ## Rejected, and why
 
