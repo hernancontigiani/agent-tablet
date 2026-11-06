@@ -36,7 +36,9 @@ number is that number. The code never documents that.
 ## What separates an executable plan from a design document
 
 - **Blocks that leave the tree green**, each ending in its concrete verification. If a block cannot
-  be verified, it is cut wrong.
+  be verified, it is cut wrong. **A block that changes the UI declares `make ui-check` and what its
+  screenshots must show**, and adds a step to `tools/ui/check.py` when the walk does not reach the
+  screen it changes (`docs/ui-verification.md`).
 - **"Out of scope" and "Do not touch" are two sections, not one.**
 - **If you make something configurable, read what the code REQUIRES today, not only what it
   stores.** Reading the type says what can be saved; only reading the validation says what can stop

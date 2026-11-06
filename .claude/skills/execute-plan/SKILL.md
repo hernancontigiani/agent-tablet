@@ -25,7 +25,9 @@ found in the code that contradicts the plan**. Only then start.
 
 - **One block at a time, in order.** Each block leaves the tree green.
 - **Each block ends in its verification** — the one the block declares, plus `make ci`. A block
-  without its verification run is not finished.
+  without its verification run is not finished. **A block that changes the UI also runs
+  `make ui-check` and looks at its screenshots** (`docs/ui-verification.md`): a green walk proves
+  the screens open, not that they look right.
 - **A new test is seen red before it is trusted.** Inject the defect from a temporary test or an env
   var, or invert the assertion — never by editing code another session may be reading — watch it
   fail, then put it back.

@@ -3,7 +3,7 @@
 
 PKG := agent_tablet
 
-.PHONY: ci venv lint test history fmt run clean
+.PHONY: ci venv lint test history fmt run ui ui-watch ui-check clean
 
 ci: lint test history
 
@@ -18,7 +18,7 @@ venv: .venv/.stamp
 	@touch $@
 
 lint: venv
-	uv run --locked ruff check $(PKG)/ tests/
+	uv run --locked ruff check $(PKG)/ tests/ tools/
 
 # In parallel from day one: a test that passes only because of the order it runs in, or of state
 # another test left behind, shows up here instead of months later.
@@ -35,6 +35,19 @@ fmt: venv
 	@test -n "$(FILES)" || { echo 'usage: make fmt FILES="<paths>"'; exit 1; }
 	uv run --locked ruff format $(FILES)
 	uv run --locked ruff check --fix $(FILES)
+
+# Looks at the UI of an isolated instance (docs/ui-verification.md). Not part of `ci`: it needs
+# Google Chrome and gtk4-broadwayd, and the block that changes the UI runs it.
+#   make ui-check [THEME=light] [DEMO=empty] [OUT=<dir>]
+ui-check: venv
+	uv run --locked python -m tools.ui.check $(if $(THEME),--theme $(THEME)) $(if $(DEMO),--demo $(DEMO)) $(if $(OUT),--out $(OUT))
+
+# An isolated instance at a URL, until Ctrl+C; ui-watch restarts it on every source change.
+ui: venv
+	uv run --locked python -m tools.ui.serve $(if $(THEME),--theme $(THEME))
+
+ui-watch: venv
+	uv run --locked python -m tools.ui.serve --watch $(if $(THEME),--theme $(THEME))
 
 run: venv
 	uv run --locked python -m $(PKG)

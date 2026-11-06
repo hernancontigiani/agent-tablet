@@ -36,7 +36,7 @@ what matters from being lost when a plan is deleted.
 
 | Doc | Open it when |
 |---|---|
-| — | None yet. The first plan that builds a subsystem adds its row |
+| `docs/ui-verification.md` | Looking at a UI change, or writing a step of `make ui-check` |
 
 ## Product rules the code must hold
 
@@ -128,7 +128,7 @@ with a skill rather than pasted by hand, so it cannot drift from what is version
   and what the app reads, between a category list and the rules that assign it.
 - **A session sees its own UI change through Playwright, never the Chrome MCP tool and never the
   human's running instance** (decided 2026-11-05): an unattended, isolated run is reproducible and
-  costs a fraction; the human's Chrome is theirs. How: plan 03 (`plans/00-STATUS.md`).
+  costs a fraction; the human's Chrome is theirs. How: `docs/ui-verification.md`.
 - **The human tests by hand, with their own data.** Their config, their sessions and their
   `~/.claude` are not touched to set up a test or a demo; ask first.
 

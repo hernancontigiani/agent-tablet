@@ -25,7 +25,7 @@
 | 1.8 | Installation from source until a first stable version; the `.deb` after | 2026-11-05 | `docs/NOT_BUILT_YET.md` |
 | 1.9 | A session's name is Claude's; the app keeps no second name for a named session | 2026-11-05 | `CLAUDE.md` · plan 01, B2 |
 | 1.10 | The agents' data is read, never rewritten; any new write under `~/.claude` is decided here first | 2026-11-05 | `CLAUDE.md` |
-| 1.11 | UI checks by a session go through Playwright on an isolated instance; never the Chrome MCP tool or the human's instance | 2026-11-05 | `CLAUDE.md` · plan 03 |
+| 1.11 | UI checks by a session go through Playwright on an isolated instance; never the Chrome MCP tool or the human's instance | 2026-11-05 | `CLAUDE.md` · `docs/ui-verification.md` |
 
 ## 2. Open
 
@@ -33,6 +33,7 @@
 |---|---|---|---|
 | 2.1 | Whether the app may install its statusline script into `~/.claude/settings.json` from Preferences (plan 01, B4) — the first write under `~/.claude` the app would start itself | Human | B4 |
 | 2.2 | The real format of the `custom-title` entry, checked against the human's own transcripts | Executor of B2 | B2 |
+| 2.3 | Under Broadway, popovers stop opening once a key has reached the app (`docs/ui-verification.md`). Does the native app do the same — type in the search, then click the gear? | Human (a 10-second check); then whoever investigates | Menu steps after typing in `make ui-check` |
 
 ## 3. Roadmap and plans in flight
 
@@ -43,7 +44,6 @@
 | 3 | `02-toolchain-baseline.md` | Stub — needs `/design-plan` |
 | 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute after 02 |
 | 5 | `01-agent-tablet-fork.md` B3–B6 | Stubs inside plan 01 — each needs `/design-plan` |
-| — | `03-ui-verification.md` (Broadway + Playwright, reload on change) | Stub, spike proved the path — needs `/design-plan`; wanted before B2's UI work |
 
 ## 4. Next plan number
 

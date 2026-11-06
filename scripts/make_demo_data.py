@@ -2,7 +2,7 @@
 """Generate fake Claude Code sessions for screenshots and demos.
 
 Usage:
-    python3 scripts/make_demo_data.py
+    python3 scripts/make_demo_data.py [--root DIR]     (default /tmp/csm-demo)
     XDG_CONFIG_HOME=/tmp/csm-demo/config \\
         CSM_PROJECTS_DIR=/tmp/csm-demo/projects \\
         CSM_CLAUDE_CONFIG=/tmp/csm-demo/claude.json \\
@@ -11,13 +11,14 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import time
 import uuid
 from pathlib import Path
 
-ROOT = Path("/tmp/csm-demo")
+DEFAULT_ROOT = Path("/tmp/csm-demo")
 
 # (project, preview prompt, age, custom name|None, favorite, emoji|None, mcp server used|None)
 SESSIONS = [
@@ -82,9 +83,9 @@ def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | N
     return session_id, "\n".join(json.dumps(line) for line in lines)
 
 
-def main() -> None:
-    projects_dir = ROOT / "projects"
-    config_dir = ROOT / "config" / "agent-tablet"
+def write_demo(root: Path) -> None:
+    projects_dir = root / "projects"
+    config_dir = root / "config" / "agent-tablet"
     projects_dir.mkdir(parents=True, exist_ok=True)
     config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,16 +118,23 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    (ROOT / "claude.json").write_text(
+    (root / "claude.json").write_text(
         json.dumps({"mcpServers": MCP_GLOBAL, "projects": MCP_PER_PROJECT}, indent=2),
         encoding="utf-8",
     )
 
-    print(f"Demo data written to {ROOT}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate fake Claude Code sessions.")
+    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="output directory")
+    root = parser.parse_args().root
+    write_demo(root)
+    print(f"Demo data written to {root}")
     print("Launch with:")
     print(
-        f"  XDG_CONFIG_HOME={ROOT}/config CSM_PROJECTS_DIR={ROOT}/projects "
-        f"CSM_CLAUDE_CONFIG={ROOT}/claude.json python3 -m agent_tablet"
+        f"  XDG_CONFIG_HOME={root}/config CSM_PROJECTS_DIR={root}/projects "
+        f"CSM_CLAUDE_CONFIG={root}/claude.json python3 -m agent_tablet"
     )
 
 

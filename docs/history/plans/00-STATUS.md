@@ -6,12 +6,28 @@
 > Written as **current state with a date**, never as a narrative: the sequence is `git log`. If this
 > file passes a few hundred lines, something here belongs in another file.
 
+## 1. Decided
+
+> Left §1 on 2026-11-05: plan 03 was delivered and its decision lives in its doc.
+| 1.11 | UI checks by a session go through Playwright on an isolated instance; never the Chrome MCP tool or the human's instance | 2026-11-05 | `CLAUDE.md` · plan 03 |
+
 ## 3. Roadmap and plans in flight
 
 > Left §3 on 2026-11-05.
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Written, ready to execute |
 > Left §3 on 2026-11-05.
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Built 2026-11-05; pending the human's manual check |
+
+> Left §3 on 2026-11-05.
+| — | `03-ui-verification.md` (Broadway + Playwright, reload on change) | Stub, spike proved the path — needs `/design-plan`; wanted before B2's UI work |
+
+> Closed 2026-11-05 — plan 03, "Seeing the UI: Broadway + Playwright, isolated, reloaded on change".
+> Built `tools/ui/` (launcher, session, locate, check, serve), `make ui-check`, `make ui`,
+> `make ui-watch`, and `docs/ui-verification.md`; no code in `agent_tablet/`. Found while executing
+> and not in the plan: portals hang the start; boxes must be relative to each native (popovers are
+> surfaces of their own); the tree is read after layout and once stable; a click is held 120 ms;
+> stale Broadway socket files; dialogs render narrower than on the desktop. Left open: popovers
+> stop opening once a key has reached the app (§2.3), so the walk types last.
 
 ## 4. Next plan number
 
