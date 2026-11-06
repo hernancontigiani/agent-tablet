@@ -30,12 +30,30 @@ def test_streaming_text_deltas():
     p = StreamParser()
     events = _feed(
         p,
-        {"type": "stream_event", "event": {"type": "content_block_start", "index": 0,
-                                           "content_block": {"type": "text", "text": ""}}},
-        {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0,
-                                           "delta": {"type": "text_delta", "text": "hi "}}},
-        {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0,
-                                           "delta": {"type": "text_delta", "text": "there"}}},
+        {
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "index": 0,
+                "content_block": {"type": "text", "text": ""},
+            },
+        },
+        {
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_delta",
+                "index": 0,
+                "delta": {"type": "text_delta", "text": "hi "},
+            },
+        },
+        {
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_delta",
+                "index": 0,
+                "delta": {"type": "text_delta", "text": "there"},
+            },
+        },
     )
     texts = [e.text for e in events if e.kind == "text"]
     assert "".join(texts) == "hi there"
@@ -43,24 +61,46 @@ def test_streaming_text_deltas():
 
 def test_thinking_delta():
     p = StreamParser()
-    events = _feed(p, {"type": "stream_event", "event": {"type": "content_block_delta", "index": 0,
-                       "delta": {"type": "thinking_delta", "thinking": "hmm"}}})
+    events = _feed(
+        p,
+        {
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_delta",
+                "index": 0,
+                "delta": {"type": "thinking_delta", "thinking": "hmm"},
+            },
+        },
+    )
     assert [e.text for e in events if e.kind == "thinking"] == ["hmm"]
 
 
 def test_tool_use_chip():
     p = StreamParser()
-    events = _feed(p, {"type": "stream_event", "event": {"type": "content_block_start", "index": 1,
-                       "content_block": {"type": "tool_use", "id": "t1", "name": "Read", "input": {}}}})
+    events = _feed(
+        p,
+        {
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "index": 1,
+                "content_block": {"type": "tool_use", "id": "t1", "name": "Read", "input": {}},
+            },
+        },
+    )
     tools = [e for e in events if e.kind == "tool"]
     assert len(tools) == 1 and tools[0].tool_name == "Read"
 
 
 def test_rate_limit_event():
     p = StreamParser()
-    (ev,) = _feed(p, {"type": "rate_limit_event",
-                      "rate_limit_info": {"status": "allowed", "resetsAt": 1781283600,
-                                          "rateLimitType": "five_hour"}})
+    (ev,) = _feed(
+        p,
+        {
+            "type": "rate_limit_event",
+            "rate_limit_info": {"status": "allowed", "resetsAt": 1781283600, "rateLimitType": "five_hour"},
+        },
+    )
     assert ev.kind == "rate_limit"
     assert ev.rate_status == "allowed"
     assert ev.resets_at == 1781283600
@@ -68,8 +108,16 @@ def test_rate_limit_event():
 
 def test_result_turn_end():
     p = StreamParser()
-    (ev,) = _feed(p, {"type": "result", "subtype": "success", "is_error": False,
-                      "result": "hi there friend", "total_cost_usd": 0.0489})
+    (ev,) = _feed(
+        p,
+        {
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "result": "hi there friend",
+            "total_cost_usd": 0.0489,
+        },
+    )
     assert ev.kind == "turn_end"
     assert ev.text == "hi there friend"
     assert round(ev.cost_usd, 4) == 0.0489
@@ -77,8 +125,7 @@ def test_result_turn_end():
 
 def test_result_error():
     p = StreamParser()
-    (ev,) = _feed(p, {"type": "result", "subtype": "error", "is_error": True,
-                      "result": "rate limited"})
+    (ev,) = _feed(p, {"type": "result", "subtype": "error", "is_error": True, "result": "rate limited"})
     assert ev.kind == "error"
     assert "rate limited" in ev.text
 
@@ -94,18 +141,21 @@ def test_partial_line_buffering():
 
 def test_permission_request_parsed():
     p = StreamParser()
-    (ev,) = _feed(p, {
-        "type": "control_request",
-        "request_id": "rid-1",
-        "request": {
-            "subtype": "can_use_tool",
-            "tool_name": "Write",
-            "display_name": "Write",
-            "input": {"file_path": "/a/b.txt", "content": "hi"},
-            "description": "b.txt",
-            "tool_use_id": "toolu_9",
+    (ev,) = _feed(
+        p,
+        {
+            "type": "control_request",
+            "request_id": "rid-1",
+            "request": {
+                "subtype": "can_use_tool",
+                "tool_name": "Write",
+                "display_name": "Write",
+                "input": {"file_path": "/a/b.txt", "content": "hi"},
+                "description": "b.txt",
+                "tool_use_id": "toolu_9",
+            },
         },
-    })
+    )
     assert ev.kind == "permission"
     assert ev.request_id == "rid-1"
     assert ev.tool_name == "Write"
@@ -171,15 +221,26 @@ def test_cursor_stream_normalized():
         p,
         {"type": "system", "subtype": "init", "session_id": "cur-1"},
         {"type": "thinking", "subtype": "delta", "text": "hmm"},
-        {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "Hel"}]},
-         "timestamp_ms": 1},
-        {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "lo"}]},
-         "timestamp_ms": 2},
+        {
+            "type": "assistant",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "Hel"}]},
+            "timestamp_ms": 1,
+        },
+        {
+            "type": "assistant",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "lo"}]},
+            "timestamp_ms": 2,
+        },
         # final consolidated message (no timestamp_ms) must be skipped → no dup text
-        {"type": "assistant",
-         "message": {"role": "assistant", "content": [{"type": "text", "text": "Hello"}]}},
-        {"type": "tool_call", "subtype": "started",
-         "tool_call": {"editToolCall": {"args": {"path": "/a"}}, "toolCallId": "x"}},
+        {
+            "type": "assistant",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "Hello"}]},
+        },
+        {
+            "type": "tool_call",
+            "subtype": "started",
+            "tool_call": {"editToolCall": {"args": {"path": "/a"}}, "toolCallId": "x"},
+        },
         {"type": "result", "subtype": "success", "is_error": False, "result": "Hello"},
     )
     kinds = [(e.kind, e.text or e.tool_name) for e in events]

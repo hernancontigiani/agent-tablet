@@ -68,7 +68,9 @@ def check(root: Path, relative: str) -> list[str]:
         for n, text in _removed(root, relative)
         if text.strip() not in kept
     ]
-    problems += [f"{mirror}:{n}: the mirror lost a line: {text.strip()}" for n, text in _removed(root, mirror)]
+    problems += [
+        f"{mirror}:{n}: the mirror lost a line: {text.strip()}" for n, text in _removed(root, mirror)
+    ]
     return problems
 
 

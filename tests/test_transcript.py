@@ -18,9 +18,16 @@ def _question_line(qid):
                     "type": "tool_use",
                     "id": qid,
                     "name": "AskUserQuestion",
-                    "input": {"questions": [{"question": "Which DB?", "header": "DB",
-                                             "multiSelect": False,
-                                             "options": [{"label": "Postgres"}, {"label": "SQLite"}]}]},
+                    "input": {
+                        "questions": [
+                            {
+                                "question": "Which DB?",
+                                "header": "DB",
+                                "multiSelect": False,
+                                "options": [{"label": "Postgres"}, {"label": "SQLite"}],
+                            }
+                        ]
+                    },
                 },
             ],
         },
@@ -28,8 +35,13 @@ def _question_line(qid):
 
 
 def _answer_line(qid):
-    return {"type": "user", "message": {"role": "user",
-            "content": [{"type": "tool_result", "tool_use_id": qid, "content": "ok"}]}}
+    return {
+        "type": "user",
+        "message": {
+            "role": "user",
+            "content": [{"type": "tool_result", "tool_use_id": qid, "content": "ok"}],
+        },
+    }
 
 
 def test_detects_pending_question(tmp_path):

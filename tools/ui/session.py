@@ -48,9 +48,7 @@ def socket_name(display: int) -> str:
     return f"broadway{display + 1}.socket"
 
 
-def allocate(
-    socket_taken: Callable[[int], bool], port_taken: Callable[[int], bool], limit: int = 100
-) -> int:
+def allocate(socket_taken: Callable[[int], bool], port_taken: Callable[[int], bool], limit: int = 100) -> int:
     """The first display whose Broadway socket and port are both free."""
     for display in range(FIRST_DISPLAY, FIRST_DISPLAY + limit):
         if not socket_taken(display) and not port_taken(port_of(display)):
@@ -220,8 +218,14 @@ class UiSession:
     def _start_broadway(self) -> None:
         socket_path(self.display).unlink(missing_ok=True)  # free per allocate(): nobody listens
         self._broadway = self._procs.spawn(
-            ["gtk4-broadwayd", "--port", str(port_of(self.display)), "--address", "127.0.0.1",
-             f":{self.display}"],
+            [
+                "gtk4-broadwayd",
+                "--port",
+                str(port_of(self.display)),
+                "--address",
+                "127.0.0.1",
+                f":{self.display}",
+            ],
             env=os.environ,
             log=self.out / "broadway.log",
         )

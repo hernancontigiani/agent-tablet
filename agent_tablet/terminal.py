@@ -139,9 +139,7 @@ class TerminalTab(Gtk.Box):
             command = self.provider.new_command(self._options)
         if command is None:
             self.feed_message(
-                _("warning: `{cli}` not found in PATH — starting a plain shell").format(
-                    cli=self.provider.cli
-                )
+                _("warning: `{cli}` not found in PATH — starting a plain shell").format(cli=self.provider.cli)
             )
         else:
             self._initial_command = command
@@ -196,10 +194,16 @@ class TerminalTab(Gtk.Box):
             # The screen up to the cursor, by absolute rows: get_text_format()
             # only returns the first line for a tab that isn't on screen.
             _col, row = self.terminal.get_cursor_position()
-            screen = self.terminal.get_text_range_format(
-                Vte.Format.TEXT, max(0, row - self.terminal.get_row_count()), 0,
-                row, self.terminal.get_column_count(),
-            )[0] or ""
+            screen = (
+                self.terminal.get_text_range_format(
+                    Vte.Format.TEXT,
+                    max(0, row - self.terminal.get_row_count()),
+                    0,
+                    row,
+                    self.terminal.get_column_count(),
+                )[0]
+                or ""
+            )
             title = self.terminal.get_window_title() or ""
             state = agentstate.detect_state(self.provider.id, title, screen)
         else:
@@ -312,9 +316,7 @@ class TerminalTab(Gtk.Box):
     def _on_transcript_event(self, *_args) -> None:
         if self._transcript_refresh_source is not None:
             return
-        self._transcript_refresh_source = GLib.timeout_add(
-            _TRANSCRIPT_DEBOUNCE_MS, self._debounced_update
-        )
+        self._transcript_refresh_source = GLib.timeout_add(_TRANSCRIPT_DEBOUNCE_MS, self._debounced_update)
 
     def _debounced_update(self) -> bool:
         self._transcript_refresh_source = None
@@ -354,9 +356,7 @@ class TerminalTab(Gtk.Box):
             return
         self._hide_card()
         self._current_question_id = qid
-        self._card = build_question_card(
-            pending.questions, self.provider, self._answer, self._dismiss_card
-        )
+        self._card = build_question_card(pending.questions, self.provider, self._answer, self._dismiss_card)
         self._overlay.add_overlay(self._card)
 
     def _hide_card(self) -> None:
@@ -426,9 +426,7 @@ class TerminalTab(Gtk.Box):
         except (TypeError, ValueError):
             pass
         themes.apply_terminal_theme(self.terminal, settings)
-        self._frame.get_label_widget().set_visible(
-            settings.get("ui_style", themes.DEFAULT_UI_STYLE) == "tui"
-        )
+        self._frame.get_label_widget().set_visible(settings.get("ui_style", themes.DEFAULT_UI_STYLE) == "tui")
 
     def feed_message(self, text: str) -> None:
         self.terminal.feed(f"\r\n\x1b[1;33m[session manager]\x1b[0m {text}\r\n".encode())
@@ -443,10 +441,15 @@ class TerminalTab(Gtk.Box):
         # Shift+Enter → newline. Terminals send the same byte for Enter and
         # Shift+Enter, so we emit Meta+Enter (ESC + CR), which Claude Code
         # interprets as "insert a line break" rather than "submit".
-        if shift and not ctrl and keyval in (
-            Gdk.KEY_Return,
-            Gdk.KEY_KP_Enter,
-            Gdk.KEY_ISO_Enter,
+        if (
+            shift
+            and not ctrl
+            and keyval
+            in (
+                Gdk.KEY_Return,
+                Gdk.KEY_KP_Enter,
+                Gdk.KEY_ISO_Enter,
+            )
         ):
             self.terminal.feed_child(b"\x1b\r")
             return True

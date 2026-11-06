@@ -33,9 +33,7 @@ from .sessions import (
 from .sessions import parse_details as _claude_parse_details
 
 # Cursor transcripts live under ~/.cursor/projects; override for demos/tests.
-CURSOR_PROJECTS_DIR = Path(
-    os.environ.get("CSM_CURSOR_PROJECTS_DIR") or Path.home() / ".cursor" / "projects"
-)
+CURSOR_PROJECTS_DIR = Path(os.environ.get("CSM_CURSOR_PROJECTS_DIR") or Path.home() / ".cursor" / "projects")
 
 _CURSOR_TAIL_BYTES = 64 * 1024
 _USER_QUERY_RE = re.compile(r"</?user_query>")
@@ -160,9 +158,7 @@ class Provider:
         non-empty `session_id` resumes that existing session."""
         return None
 
-    def chat_turn_command(
-        self, variant_key: str, prompt: str, session_id: str
-    ) -> list[str] | None:
+    def chat_turn_command(self, variant_key: str, prompt: str, session_id: str) -> list[str] | None:
         """argv for ONE turn of a "spawn_resume" chat (a fresh process per turn,
         resuming `session_id` if set). None for agents that don't use it."""
         return None
@@ -238,13 +234,18 @@ class ClaudeProvider(Provider):
         if cli is None:
             return None
         argv = [
-            cli, "-p",
-            "--input-format", "stream-json",
-            "--output-format", "stream-json",
+            cli,
+            "-p",
+            "--input-format",
+            "stream-json",
+            "--output-format",
+            "stream-json",
             "--include-partial-messages",
             "--verbose",
-            "--permission-mode", "default",
-            "--permission-prompt-tool", "stdio",
+            "--permission-mode",
+            "default",
+            "--permission-prompt-tool",
+            "stdio",
         ]
         if session_id:
             argv += ["--resume", session_id]
@@ -354,14 +355,10 @@ class CursorProvider(Provider):
         # that runs edits/commands automatically.
         return [
             ChatVariant(key="ask", transport="spawn_resume", label="ask, read-only"),
-            ChatVariant(
-                key="trusted", transport="spawn_resume", writeable=True, label="trusted, auto-run"
-            ),
+            ChatVariant(key="trusted", transport="spawn_resume", writeable=True, label="trusted, auto-run"),
         ]
 
-    def chat_turn_command(
-        self, variant_key: str, prompt: str, session_id: str
-    ) -> list[str] | None:
+    def chat_turn_command(self, variant_key: str, prompt: str, session_id: str) -> list[str] | None:
         # cursor-agent takes the prompt as an arg; multi-turn = --resume the same
         # session id. --trust skips the workspace-trust prompt (required headless).
         cli = shutil.which(self.cli)
@@ -397,9 +394,7 @@ class CursorProvider(Provider):
     def latest_transcript_for_cwd(self, cwd: str) -> Path | None:
         if not cwd:
             return None
-        directory = (
-            self.projects_dir / re.sub(r"[^A-Za-z0-9]", "-", cwd).lstrip("-") / "agent-transcripts"
-        )
+        directory = self.projects_dir / re.sub(r"[^A-Za-z0-9]", "-", cwd).lstrip("-") / "agent-transcripts"
         if not directory.is_dir():
             return None
         cands = list(directory.glob("*/*.jsonl"))
@@ -513,7 +508,7 @@ def _cursor_preview(path: Path) -> str:
 
 
 def _cursor_state(path: Path) -> str:
-    """"waiting" if the agent's last message was a question; else ""."""
+    """ "waiting" if the agent's last message was a question; else ""."""
     try:
         size = path.stat().st_size
         with path.open("rb") as fh:

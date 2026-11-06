@@ -96,7 +96,7 @@ class ReplayTab(Gtk.Box):
     def _reveal_to(self, n: int) -> None:
         n = max(0, min(n, len(self._turns)))
         if n > self._shown:
-            for turn in self._turns[self._shown:n]:
+            for turn in self._turns[self._shown : n]:
                 self._list.append(self._widget_for(turn))
         elif n < self._shown:
             for _ignore in range(self._shown - n):

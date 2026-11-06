@@ -44,7 +44,7 @@ def _abbreviate_path(path: str | None) -> str:
     if path == home:
         return "~"
     if path.startswith(home + "/"):
-        return "~" + path[len(home):]
+        return "~" + path[len(home) :]
     return path
 
 
@@ -171,15 +171,19 @@ class SessionRow(Gtk.ListBoxRow):
         item.bind_property("display-name", name_label, "label", flags)
         item.bind_property("subtitle", subtitle_label, "label", flags)
         item.bind_property("preview", preview_label, "label", flags)
+        item.bind_property("preview", preview_label, "visible", flags, lambda _b, value: bool(value))
         item.bind_property(
-            "preview", preview_label, "visible", flags, lambda _b, value: bool(value)
-        )
-        item.bind_property(
-            "favorite", star, "icon-name", flags,
+            "favorite",
+            star,
+            "icon-name",
+            flags,
             lambda _b, fav: "starred-symbolic" if fav else "non-starred-symbolic",
         )
         item.bind_property(
-            "favorite", star, "tooltip-text", flags,
+            "favorite",
+            star,
+            "tooltip-text",
+            flags,
             lambda _b, fav: _("Remove from favorites") if fav else _("Add to favorites"),
         )
 
@@ -242,8 +246,9 @@ class SessionSidebar(Gtk.Box):
         "trash-many": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
     }
 
-    def __init__(self, store: SessionStore, top: Gtk.Widget | None = None,
-                 menu: Gio.MenuModel | None = None) -> None:
+    def __init__(
+        self, store: SessionStore, top: Gtk.Widget | None = None, menu: Gio.MenuModel | None = None
+    ) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("app-sidebar")
         self.store = store
@@ -329,8 +334,9 @@ class SessionSidebar(Gtk.Box):
         empty = Adw.StatusPage(
             icon_name="folder-symbolic",
             title=_("No sessions found"),
-            description=_("Run claude in a project directory first — "
-            "sessions will appear here automatically."),
+            description=_(
+                "Run claude in a project directory first — sessions will appear here automatically."
+            ),
         )
         empty.add_css_class("compact")
 
@@ -610,9 +616,7 @@ class SessionSidebar(Gtk.Box):
             row.check.set_active(selected)
 
     def _selected_items(self) -> list[SessionItem]:
-        return [
-            item for sid in self._selected if (item := self.store.get_item(sid)) is not None
-        ]
+        return [item for sid in self._selected if (item := self.store.get_item(sid)) is not None]
 
     def _bulk_open(self) -> None:
         self.emit("open-many", self._selected_items())

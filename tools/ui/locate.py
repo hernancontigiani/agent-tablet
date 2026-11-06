@@ -16,7 +16,11 @@ def _matches(widget: dict, type: str | None, text: str | None, css: str | None) 
 
 
 def find_all(
-    tree: list[dict], *, type: str | None = None, text: str | None = None, css: str | None = None,
+    tree: list[dict],
+    *,
+    type: str | None = None,
+    text: str | None = None,
+    css: str | None = None,
     window: str | None = None,
 ) -> list[tuple[dict, dict]]:
     return [
@@ -52,7 +56,8 @@ def native_origin(native: dict, surfaces: list[dict]) -> tuple[float, float]:
     offset_x, offset_y = native["surface_offset"]
     width = native["size"][0]
     same = [
-        s for s in surfaces
+        s
+        for s in surfaces
         if s["offset"] == [offset_x, offset_y] and abs(s["width"] - 2 * offset_x - width) <= 2
     ]
     if len(same) != 1:

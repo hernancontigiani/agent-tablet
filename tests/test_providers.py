@@ -126,13 +126,28 @@ def test_cursor_chat_turn_command(monkeypatch):
     cur = CursorProvider()
     # first turn (no session id), read-only ask mode
     assert cur.chat_turn_command("ask", "hello", "") == [
-        "/usr/bin/cursor-agent", "-p", "--output-format", "stream-json",
-        "--stream-partial-output", "--trust", "--mode", "ask", "hello",
+        "/usr/bin/cursor-agent",
+        "-p",
+        "--output-format",
+        "stream-json",
+        "--stream-partial-output",
+        "--trust",
+        "--mode",
+        "ask",
+        "hello",
     ]
     # follow-up turn resumes the session; trusted mode uses --force
     assert cur.chat_turn_command("trusted", "go", "sid-9") == [
-        "/usr/bin/cursor-agent", "-p", "--output-format", "stream-json",
-        "--stream-partial-output", "--trust", "--resume", "sid-9", "--force", "go",
+        "/usr/bin/cursor-agent",
+        "-p",
+        "--output-format",
+        "stream-json",
+        "--stream-partial-output",
+        "--trust",
+        "--resume",
+        "sid-9",
+        "--force",
+        "go",
     ]
 
 
@@ -143,6 +158,7 @@ def test_cursor_chat_turn_command_none_when_missing(monkeypatch):
 
 def test_new_command_options(monkeypatch):
     from agent_tablet.providers import SessionOptions
+
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     claude = ClaudeProvider()
     opts = SessionOptions(model="opus", permission_mode="plan", add_dirs=("/extra",))
@@ -185,12 +201,17 @@ def test_graceful_exit_text():
 
 
 def test_claude_answer_keystrokes_single_select():
-    q = [{"question": "Which DB?", "multiSelect": False,
-          "options": [{"label": "Postgres"}, {"label": "SQLite"}, {"label": "Mongo"}]}]
+    q = [
+        {
+            "question": "Which DB?",
+            "multiSelect": False,
+            "options": [{"label": "Postgres"}, {"label": "SQLite"}, {"label": "Mongo"}],
+        }
+    ]
     claude = ClaudeProvider()
-    assert claude.answer_keystrokes(q, 0) == "\r"               # first option: just submit
-    assert claude.answer_keystrokes(q, 2) == "\x1b[B\x1b[B\r"   # down twice, submit
-    assert claude.answer_keystrokes(q, 9) is None               # out of range
+    assert claude.answer_keystrokes(q, 0) == "\r"  # first option: just submit
+    assert claude.answer_keystrokes(q, 2) == "\x1b[B\x1b[B\r"  # down twice, submit
+    assert claude.answer_keystrokes(q, 9) is None  # out of range
 
 
 def test_answer_keystrokes_fallback_cases():
@@ -198,7 +219,6 @@ def test_answer_keystrokes_fallback_cases():
     multi = [{"question": "Pick", "multiSelect": True, "options": [{"label": "a"}]}]
     two = [{"question": "1", "options": [{"label": "a"}]}, {"question": "2", "options": [{"label": "b"}]}]
     assert claude.answer_keystrokes(multi, 0) is None  # multi-select → terminal
-    assert claude.answer_keystrokes(two, 0) is None    # multiple questions → terminal
+    assert claude.answer_keystrokes(two, 0) is None  # multiple questions → terminal
     # Cursor can't auto-answer at all
-    assert CursorProvider().answer_keystrokes(
-        [{"question": "x", "options": [{"label": "a"}]}], 0) is None
+    assert CursorProvider().answer_keystrokes([{"question": "x", "options": [{"label": "a"}]}], 0) is None

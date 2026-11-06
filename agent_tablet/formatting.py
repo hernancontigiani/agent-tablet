@@ -25,8 +25,6 @@ def format_timestamp(ts: str | None) -> str:
     if not ts:
         return "—"
     try:
-        return (
-            datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone().strftime("%Y-%m-%d %H:%M")
-        )
+        return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone().strftime("%Y-%m-%d %H:%M")
     except ValueError:
         return ts

@@ -18,15 +18,11 @@ from pathlib import Path
 PEEK_MESSAGES = 12
 
 # Override with CSM_PROJECTS_DIR for demos and development.
-CLAUDE_PROJECTS_DIR = Path(
-    os.environ.get("CSM_PROJECTS_DIR") or Path.home() / ".claude" / "projects"
-)
+CLAUDE_PROJECTS_DIR = Path(os.environ.get("CSM_PROJECTS_DIR") or Path.home() / ".claude" / "projects")
 CLAUDE_CONFIG = Path(os.environ.get("CSM_CLAUDE_CONFIG") or Path.home() / ".claude.json")
 
 # Session transcripts are named <uuid>.jsonl; skip anything else (agent files, etc.)
-_UUID_RE = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-)
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 # How much of a transcript to scan for cwd/preview before giving up.
 _MAX_SCAN_LINES = 50

@@ -34,16 +34,25 @@ _GHOSTTY = shutil.which("ghostty")
 
 # keys that don't end the Ctrl+B prefix by themselves
 _MODIFIER_KEYS = {
-    Gdk.KEY_Shift_L, Gdk.KEY_Shift_R, Gdk.KEY_Control_L, Gdk.KEY_Control_R,
-    Gdk.KEY_Alt_L, Gdk.KEY_Alt_R, Gdk.KEY_Super_L, Gdk.KEY_Super_R,
-    Gdk.KEY_ISO_Level3_Shift, Gdk.KEY_Caps_Lock,
+    Gdk.KEY_Shift_L,
+    Gdk.KEY_Shift_R,
+    Gdk.KEY_Control_L,
+    Gdk.KEY_Control_R,
+    Gdk.KEY_Alt_L,
+    Gdk.KEY_Alt_R,
+    Gdk.KEY_Super_L,
+    Gdk.KEY_Super_R,
+    Gdk.KEY_ISO_Level3_Shift,
+    Gdk.KEY_Caps_Lock,
 }
+
 
 def _add_remove_button(chooser: Gtk.EmojiChooser, on_remove) -> None:
     """Put a "remove emoji" button at the end of the picker's search bar.
     ponytail: reaches into GtkEmojiChooser's internals (the .emoji-searchbar
     box); if GTK changes them the button just doesn't appear — the tab menu's
     "Remove emoji" still works."""
+
     def find(widget: Gtk.Widget) -> Gtk.Widget | None:
         if "emoji-searchbar" in widget.get_css_classes():
             return widget
@@ -143,9 +152,7 @@ class MainWindow(Adw.ApplicationWindow):
         for provider in available_providers():
             for variant in provider.chat_variants():  # native streaming chat
                 if variant.label:
-                    text = _("New {name} chat ({mode})").format(
-                        name=provider.name, mode=_(variant.label)
-                    )
+                    text = _("New {name} chat ({mode})").format(name=provider.name, mode=_(variant.label))
                 else:
                     text = _("New {name} chat…").format(name=provider.name)
                 new_menu.append(text, f"win.new-chat-provider::{provider.id}:{variant.key}")
@@ -155,7 +162,6 @@ class MainWindow(Adw.ApplicationWindow):
         new_btn.set_menu_model(new_menu)
         new_btn.connect("clicked", lambda *_: self._new_session())
         content_header.pack_start(new_btn)
-
 
         self.close_all_btn = Gtk.Button(icon_name="tab-close-symbolic", visible=False)
         self.close_all_btn.set_tooltip_text(_("Close all tabs"))
@@ -185,9 +191,7 @@ class MainWindow(Adw.ApplicationWindow):
         # --- sidebar: spaces + agents on top, session history below ---
         self.spaces_panel = SpacesPanel(self.state)
         self.spaces_panel.connect("select-space", self._on_select_space)
-        self.spaces_panel.connect(
-            "select-page", lambda _p, page: self.tab_view.set_selected_page(page)
-        )
+        self.spaces_panel.connect("select-page", lambda _p, page: self.tab_view.set_selected_page(page))
         self.sidebar = SessionSidebar(self.store, top=self.spaces_panel, menu=app_menu)
         self.sidebar.connect("open-session", self._on_sidebar_open)
         self.sidebar.connect("open-many", self._on_sidebar_open_many)
@@ -211,9 +215,7 @@ class MainWindow(Adw.ApplicationWindow):
             "active",
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
-        self.sidebar_toggle.connect(
-            "toggled", lambda b: self.sidebar.set_visible(b.get_active())
-        )
+        self.sidebar_toggle.connect("toggled", lambda b: self.sidebar.set_visible(b.get_active()))
 
     # -- sidebar width persistence -------------------------------------------
 
@@ -254,9 +256,7 @@ class MainWindow(Adw.ApplicationWindow):
             "open-session-file": lambda *_: self._open_session_file(),
             "copy-tab-session-id": lambda *_: self._copy_tab_session_id(),
             "close-menu-tab": lambda *_: self._close_menu_tab(),
-            "toggle-sidebar": lambda *_: self.sidebar.set_visible(
-                not self.sidebar.get_visible()
-            ),
+            "toggle-sidebar": lambda *_: self.sidebar.set_visible(not self.sidebar.get_visible()),
         }
         for name, callback in plain.items():
             action = Gio.SimpleAction(name=name)
@@ -290,9 +290,7 @@ class MainWindow(Adw.ApplicationWindow):
             action.connect("activate", callback)
             self.add_action(action)
 
-        show_hidden = Gio.SimpleAction.new_stateful(
-            "show-hidden", None, GLib.Variant.new_boolean(False)
-        )
+        show_hidden = Gio.SimpleAction.new_stateful("show-hidden", None, GLib.Variant.new_boolean(False))
         show_hidden.connect("change-state", self._on_show_hidden)
         self.add_action(show_hidden)
 
@@ -314,9 +312,7 @@ class MainWindow(Adw.ApplicationWindow):
             ("F9", "win.toggle-sidebar"),
         ):
             controller.add_shortcut(
-                Gtk.Shortcut.new(
-                    Gtk.ShortcutTrigger.parse_string(trigger), Gtk.NamedAction.new(action)
-                )
+                Gtk.Shortcut.new(Gtk.ShortcutTrigger.parse_string(trigger), Gtk.NamedAction.new(action))
             )
         self.add_controller(controller)
 
@@ -377,8 +373,7 @@ class MainWindow(Adw.ApplicationWindow):
             jsonl_path=session.jsonl_path,
         )
         title = f"{self.store.display_name(session)} (fork)" if fork else self._tab_title(session)
-        page = self._add_tab(tab, title,
-                             f"{session.project_name} — {session.session_id}")
+        page = self._add_tab(tab, title, f"{session.project_name} — {session.session_id}")
         if not fork:
             self._pages[session.session_id] = page
             self._sync_status(session.session_id)
@@ -423,7 +418,10 @@ class MainWindow(Adw.ApplicationWindow):
     def _start_new_session(self, cwd: str, provider=None, options=None) -> None:
         provider = provider or self._default_provider()
         tab = TerminalTab(
-            cwd=cwd, session_id=None, settings=self.state.settings, provider=provider,
+            cwd=cwd,
+            session_id=None,
+            settings=self.state.settings,
+            provider=provider,
             options=options,
         )
         self._add_tab(
@@ -471,13 +469,16 @@ class MainWindow(Adw.ApplicationWindow):
         self.state.set_setting("new_session_dir", cwd)
         provider = getattr(self, "_cont_provider", None) or self._default_provider()
         tab = TerminalTab(
-            cwd=cwd, settings=self.state.settings, provider=provider,
+            cwd=cwd,
+            settings=self.state.settings,
+            provider=provider,
             command_override=provider.continue_command(),
         )
         self._add_tab(tab, GLib.path_get_basename(cwd), f"continue {provider.name} — {cwd}")
 
-    def _append_page(self, tab: Gtk.Widget, title: str, tooltip: str,
-                     cwd: str | None, agent: str) -> Adw.TabPage:
+    def _append_page(
+        self, tab: Gtk.Widget, title: str, tooltip: str, cwd: str | None, agent: str
+    ) -> Adw.TabPage:
         """Append a tab into the space of its folder and select it."""
         page = self.tab_view.append(tab)
         page.set_title(title)
@@ -533,8 +534,11 @@ class MainWindow(Adw.ApplicationWindow):
             return
         tab = ChatSessionTab(cwd=cwd, provider=provider, variant=variant)
         self._append_page(
-            tab, _("Chat — {dir}").format(dir=GLib.path_get_basename(cwd)),
-            f"{provider.name} chat — {cwd}", cwd, f"{provider.id} chat",
+            tab,
+            _("Chat — {dir}").format(dir=GLib.path_get_basename(cwd)),
+            f"{provider.name} chat — {cwd}",
+            cwd,
+            f"{provider.id} chat",
         )
 
     def _on_resume_chat_action(self, _action, param: GLib.Variant) -> None:
@@ -551,8 +555,11 @@ class MainWindow(Adw.ApplicationWindow):
             cwd=session.cwd, provider=provider, variant=variant, resume_session_id=session_id
         )
         self._append_page(
-            tab, _("Chat — {name}").format(name=self.store.display_name(session)),
-            f"{provider.name} chat — {session.session_id}", session.cwd, f"{provider.id} chat",
+            tab,
+            _("Chat — {name}").format(name=self.store.display_name(session)),
+            f"{provider.name} chat — {session.session_id}",
+            session.cwd,
+            f"{provider.id} chat",
         )
 
     # -- session replay ----------------------------------------------------
@@ -565,8 +572,11 @@ class MainWindow(Adw.ApplicationWindow):
     def _open_replay(self, session: Session) -> None:
         tab = ReplayTab(session, session.provider)
         self._append_page(
-            tab, _("Replay — {name}").format(name=self.store.display_name(session)),
-            f"replay — {session.project_name} — {session.session_id}", session.cwd, "replay",
+            tab,
+            _("Replay — {name}").format(name=self.store.display_name(session)),
+            f"replay — {session.project_name} — {session.session_id}",
+            session.cwd,
+            "replay",
         )
 
     def _close_current_tab(self) -> None:
@@ -715,9 +725,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def focus_session(self, target: str) -> None:
         """Select the tab of a session id (or, for unsaved tabs, a title)."""
-        page = self._pages.get(target) or next(
-            (t.page for t in self._tab_infos() if t.title == target), None
-        )
+        page = self._pages.get(target) or next((t.page for t in self._tab_infos() if t.title == target), None)
         if page is not None:
             self.tab_view.set_selected_page(page)
 
@@ -886,8 +894,9 @@ class MainWindow(Adw.ApplicationWindow):
         if panes is None:
             return
         primary = panes.primary
-        pane = TerminalTab(cwd=primary.cwd, settings=self.state.settings,
-                           provider=primary.provider, shell=True)
+        pane = TerminalTab(
+            cwd=primary.cwd, settings=self.state.settings, provider=primary.provider, shell=True
+        )
         pane.connect("process-exited", lambda p, _status: panes.close(p))
         panes.split(pane, orientation)
 
@@ -912,6 +921,7 @@ class MainWindow(Adw.ApplicationWindow):
     def _prefix_commands(self) -> list[tuple[list[int], str, str, Callable[[int], None]]]:
         """What follows Ctrl+B (herdr's defaults): (keyvals, keys as shown in
         the help, description, callback(keyval))."""
+
         def panes(method: str, *args) -> Callable[[int], None]:
             return lambda _kv: (p := self._panes()) is not None and getattr(p, method)(*args)
 
@@ -920,10 +930,18 @@ class MainWindow(Adw.ApplicationWindow):
 
         k = Gdk
         return [
-            ([k.KEY_v, k.KEY_percent], "v  %", _("split right (a shell)"),
-             lambda _kv: self._split(Gtk.Orientation.HORIZONTAL)),
-            ([k.KEY_minus, k.KEY_quotedbl], '-  "', _("split down (a shell)"),
-             lambda _kv: self._split(Gtk.Orientation.VERTICAL)),
+            (
+                [k.KEY_v, k.KEY_percent],
+                "v  %",
+                _("split right (a shell)"),
+                lambda _kv: self._split(Gtk.Orientation.HORIZONTAL),
+            ),
+            (
+                [k.KEY_minus, k.KEY_quotedbl],
+                '-  "',
+                _("split down (a shell)"),
+                lambda _kv: self._split(Gtk.Orientation.VERTICAL),
+            ),
             ([k.KEY_h, k.KEY_Left], "h  ←", _("pane to the left"), panes("focus_direction", "left")),
             ([k.KEY_j, k.KEY_Down], "j  ↓", _("pane below"), panes("focus_direction", "down")),
             ([k.KEY_k, k.KEY_Up], "k  ↑", _("pane above"), panes("focus_direction", "up")),
@@ -934,8 +952,12 @@ class MainWindow(Adw.ApplicationWindow):
             ([k.KEY_c], "c", _("new agent in this space"), act("new-in-space")),
             ([k.KEY_n], "n", _("next tab"), act("next-tab")),
             ([k.KEY_p], "p", _("previous tab"), act("prev-tab")),
-            ([getattr(k, f"KEY_{n}") for n in range(1, 10)], "1–9", _("go to tab"),
-             lambda kv: self._goto_tab(kv - k.KEY_0)),
+            (
+                [getattr(k, f"KEY_{n}") for n in range(1, 10)],
+                "1–9",
+                _("go to tab"),
+                lambda kv: self._goto_tab(kv - k.KEY_0),
+            ),
             ([k.KEY_N], "N", _("new space"), act("new-space")),
             ([k.KEY_T], "T", _("rename tab"), act("rename-tab")),
             ([k.KEY_X], "X", _("close tab"), act("close-tab")),
@@ -988,11 +1010,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_close_page(self, view: Adw.TabView, page: Adw.TabPage) -> bool:
         tab = self._tab_of(page)
-        if (
-            isinstance(tab, TerminalTab)
-            and page not in self._confirmed_closes
-            and tab.has_running_command()
-        ):
+        if isinstance(tab, TerminalTab) and page not in self._confirmed_closes and tab.has_running_command():
             if page not in self._closing_pages:  # start a graceful /exit in the background
                 self._graceful_close(page)
             view.close_page_finish(page, False)  # keep the tab until it exits cleanly
@@ -1041,8 +1059,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
         cwd = session.cwd if session.cwd and Path(session.cwd).is_dir() else str(Path.home())
         subprocess.Popen(
-            [_GHOSTTY, f"--working-directory={cwd}", "-e",
-             provider.cli, "--resume", session.session_id],
+            [_GHOSTTY, f"--working-directory={cwd}", "-e", provider.cli, "--resume", session.session_id],
             start_new_session=True,
         )
 
@@ -1130,9 +1147,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialogs.confirm_dialog(
             self,
             _("Move transcript to trash?"),
-            _("“{name}” will be removed from Claude's history.").format(
-                name=self.store.display_name(session)
-            )
+            _("“{name}” will be removed from Claude's history.").format(name=self.store.display_name(session))
             + "\n"
             + _("The file is moved to the trash and can be restored."),
             _("Move to Trash"),
@@ -1156,8 +1171,9 @@ class MainWindow(Adw.ApplicationWindow):
         dialogs.confirm_dialog(
             self,
             _("Delete session permanently?"),
-            _("“{name}” and its transcript file will be permanently deleted. "
-              "This cannot be undone.").format(name=self.store.display_name(session)),
+            _("“{name}” and its transcript file will be permanently deleted. This cannot be undone.").format(
+                name=self.store.display_name(session)
+            ),
             _("Delete permanently"),
             do_delete,
         )
@@ -1204,13 +1220,18 @@ class MainWindow(Adw.ApplicationWindow):
             license_type=Gtk.License.GPL_3_0,
             copyright="© 2026 Máté Molnár (Agent Session Manager)\n© 2026 Hernan Contigiani (Agent Tablet)",
             comments=(
-                _("Manage and resume your AI coding agent sessions.\n\n"
-                "Unofficial community tool — not affiliated with or endorsed by Anthropic.")
+                _(
+                    "Manage and resume your AI coding agent sessions.\n\n"
+                    "Unofficial community tool — not affiliated with or endorsed by Anthropic."
+                )
             ),
             website="https://github.com/hernancontigiani/agent-tablet",
             issue_url="https://github.com/hernancontigiani/agent-tablet/issues",
         )
-        about.add_credit_section(_("Based on"), ["Agent Session Manager by Máté Molnár https://github.com/r4nd3l/agent-session-manager"])
+        about.add_credit_section(
+            _("Based on"),
+            ["Agent Session Manager by Máté Molnár https://github.com/r4nd3l/agent-session-manager"],
+        )
         about.present(self)
 
     def _quick_switch(self) -> None:
@@ -1224,8 +1245,10 @@ class MainWindow(Adw.ApplicationWindow):
                 subtitle += f" · {item.session.preview}"
             entries.append(SwitchEntry(item.display_name, subtitle, item, item.search_text))
         self._switcher = QuickSwitcher(
-            entries, lambda item: self.open_session(item.session),
-            _("Switch session"), _("Jump to a session…"),
+            entries,
+            lambda item: self.open_session(item.session),
+            _("Switch session"),
+            _("Jump to a session…"),
         )
         self._switcher.connect("closed", self._on_switcher_closed)
         self._switcher.present(self)
@@ -1246,8 +1269,11 @@ class MainWindow(Adw.ApplicationWindow):
         order = list(dict.fromkeys(t.space for t in infos))  # spaces in tab order
         entries = [
             SwitchEntry(
-                f"{space_name(t.space)} · {t.title}", f"{t.agent} · {t.status}", t.page,
-                f"{t.title} {t.space} {t.agent} {t.status}", t.status,
+                f"{space_name(t.space)} · {t.title}",
+                f"{t.agent} · {t.status}",
+                t.page,
+                f"{t.title} {t.space} {t.agent} {t.status}",
+                t.status,
             )
             for t in sorted(infos, key=lambda t: order.index(t.space))
         ]

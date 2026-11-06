@@ -149,9 +149,7 @@ def mcp_browser_dialog(parent: Gtk.Widget) -> None:
         page.add(empty)
     else:
         if config.global_servers:
-            group = Adw.PreferencesGroup(
-                title=_("Global"), description=_("Available to every project")
-            )
+            group = Adw.PreferencesGroup(title=_("Global"), description=_("Available to every project"))
             for server in config.global_servers:
                 group.add(server_row(server.name, server.summary))
             page.add(group)

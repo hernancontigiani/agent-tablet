@@ -143,9 +143,7 @@ class App(Adw.Application):
         display = Gdk.Display.get_default()
         provider = Gtk.CssProvider()
         provider.load_from_data(_CSS)
-        Gtk.StyleContext.add_provider_for_display(
-            display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+        Gtk.StyleContext.add_provider_for_display(display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         if _BUNDLED_ICONS.is_dir():  # running from source; installed icons live in the system theme
             Gtk.IconTheme.get_for_display(display).add_search_path(str(_BUNDLED_ICONS))
 

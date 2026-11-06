@@ -22,30 +22,72 @@ DEFAULT_ROOT = Path("/tmp/csm-demo")
 
 # (project, preview prompt, age, custom name|None, favorite, emoji|None, mcp server used|None)
 SESSIONS = [
-    ("portfolio-website", "Redesign the hero section with a dark theme and subtle animations",
-     300, "Homepage redesign", True, "🎨", None),
-    ("portfolio-website", "Fix the contact form validation, emails with a plus sign are rejected",
-     7200, None, False, None, None),
-    ("todo-api", "Add JWT authentication to the API with refresh tokens",
-     5400, "JWT auth", True, "🔐", "postgres"),
+    (
+        "portfolio-website",
+        "Redesign the hero section with a dark theme and subtle animations",
+        300,
+        "Homepage redesign",
+        True,
+        "🎨",
+        None,
+    ),
+    (
+        "portfolio-website",
+        "Fix the contact form validation, emails with a plus sign are rejected",
+        7200,
+        None,
+        False,
+        None,
+        None,
+    ),
+    (
+        "todo-api",
+        "Add JWT authentication to the API with refresh tokens",
+        5400,
+        "JWT auth",
+        True,
+        "🔐",
+        "postgres",
+    ),
     ("todo-api", "Write integration tests for the todo endpoints", 86400, None, False, None, None),
-    ("dotfiles", "Migrate my neovim configuration from vimscript to lua",
-     172800, None, False, None, None),
-    ("snake-game", "Build a snake game in pygame with a persistent high score list",
-     259200, "Snake", False, "🐍", None),
-    ("data-pipeline", "Optimize the CSV import, it is too slow on files over 1GB",
-     518400, None, False, None, "linear"),
+    ("dotfiles", "Migrate my neovim configuration from vimscript to lua", 172800, None, False, None, None),
+    (
+        "snake-game",
+        "Build a snake game in pygame with a persistent high score list",
+        259200,
+        "Snake",
+        False,
+        "🐍",
+        None,
+    ),
+    (
+        "data-pipeline",
+        "Optimize the CSV import, it is too slow on files over 1GB",
+        518400,
+        None,
+        False,
+        None,
+        "linear",
+    ),
 ]
 
 # Fake MCP servers, so the MCP browser and details show realistic-but-fake data.
 MCP_GLOBAL = {
     "github": {"type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"]},
     "linear": {"type": "http", "url": "https://mcp.linear.app/sse"},
-    "filesystem": {"type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"]},
+    "filesystem": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+    },
 }
 MCP_PER_PROJECT = {
     "/home/demo/projects/todo-api": {
-        "postgres": {"type": "stdio", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-postgres"]},
+        "postgres": {
+            "type": "stdio",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-postgres"],
+        },
     },
 }
 
@@ -55,9 +97,7 @@ def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | N
     session_id = str(uuid.uuid4())
     content = [{"type": "text", "text": "On it — here's the plan, then I'll start."}]
     if mcp_server:
-        content.append(
-            {"type": "tool_use", "id": "t1", "name": f"mcp__{mcp_server}__query", "input": {}}
-        )
+        content.append({"type": "tool_use", "id": "t1", "name": f"mcp__{mcp_server}__query", "input": {}})
     lines = [
         {"type": "mode", "sessionId": session_id},
         {
@@ -122,7 +162,6 @@ def write_demo(root: Path) -> None:
         json.dumps({"mcpServers": MCP_GLOBAL, "projects": MCP_PER_PROJECT}, indent=2),
         encoding="utf-8",
     )
-
 
 
 def main() -> None:

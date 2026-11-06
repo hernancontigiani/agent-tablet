@@ -58,8 +58,7 @@ def _parse_claude(entry: dict) -> list[Turn]:
             if text and not text.startswith("<"):
                 turns.append(Turn("user", "message", text=text))
         elif isinstance(content, list):
-            texts = [b.get("text", "") for b in content
-                     if isinstance(b, dict) and b.get("type") == "text"]
+            texts = [b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"]
             text = _clean(" ".join(t for t in texts if t))
             if text and not text.startswith("<"):
                 turns.append(Turn("user", "message", text=text))
@@ -83,11 +82,23 @@ def _parse_claude(entry: dict) -> list[Turn]:
                 flush()
                 name = block.get("name", "")
                 if name == "AskUserQuestion":
-                    turns.append(Turn("assistant", "question", tool_name=name,
-                                      questions=(block.get("input") or {}).get("questions", [])))
+                    turns.append(
+                        Turn(
+                            "assistant",
+                            "question",
+                            tool_name=name,
+                            questions=(block.get("input") or {}).get("questions", []),
+                        )
+                    )
                 else:
-                    turns.append(Turn("assistant", "tool", tool_name=name,
-                                      text=_tool_summary(name, block.get("input") or {})))
+                    turns.append(
+                        Turn(
+                            "assistant",
+                            "tool",
+                            tool_name=name,
+                            text=_tool_summary(name, block.get("input") or {}),
+                        )
+                    )
             # "thinking" / other blocks are not replayed
         flush()
 

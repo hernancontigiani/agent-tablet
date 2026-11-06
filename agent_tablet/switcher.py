@@ -26,8 +26,9 @@ class SwitchEntry:
 
 
 class QuickSwitcher(Adw.Dialog):
-    def __init__(self, entries: list[SwitchEntry], on_choose: Callable[[object], None],
-                 title: str, placeholder: str) -> None:
+    def __init__(
+        self, entries: list[SwitchEntry], on_choose: Callable[[object], None], title: str, placeholder: str
+    ) -> None:
         super().__init__(title=title)
         self._entries = entries
         self._on_choose = on_choose

@@ -32,12 +32,14 @@ class PaneContainer(Gtk.Box):
 
     def panes(self) -> list[TerminalTab]:
         """Every terminal pane, in layout order."""
+
         def leaves(widget: Gtk.Widget) -> list[TerminalTab]:
             if isinstance(widget, TerminalTab):
                 return [widget]
             if isinstance(widget, Gtk.Paned):
                 return leaves(widget.get_start_child()) + leaves(widget.get_end_child())
             return []
+
         return leaves(self.get_first_child())
 
     @property
@@ -83,6 +85,7 @@ class PaneContainer(Gtk.Box):
             if size > 0:
                 paned.set_position(size // 2)
             return GLib.SOURCE_REMOVE
+
         GLib.idle_add(halve)
         GLib.idle_add(pane.grab_terminal_focus)
 

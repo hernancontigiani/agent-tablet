@@ -22,19 +22,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Cancel": "Mégse",
         "Session list": "Munkamenet-lista",
         "Show folder path": "Mappa elérési útjának megjelenítése",
-        "Show each session's project folder path in the sidebar":
-            "Az egyes munkamenetek projektmappájának elérési útja az oldalsávon",
+        "Show each session's project folder path in the sidebar": "Az egyes munkamenetek projektmappájának elérési útja az oldalsávon",
         "Open session file…": "Munkamenetfájl megnyitása…",
         "Open session transcript": "Munkamenet-átirat megnyitása",
         "Session transcripts (*.jsonl)": "Munkamenet-átiratok (*.jsonl)",
         "Could not open transcript": "Az átirat nem nyitható meg",
-        "The file couldn't be read as a session transcript.":
-            "A fájl nem olvasható be munkamenet-átiratként.",
+        "The file couldn't be read as a session transcript.": "A fájl nem olvasható be munkamenet-átiratként.",
         "Delete permanently…": "Végleges törlés…",
         "Could not delete transcript": "Az átirat nem törölhető",
         "Delete session permanently?": "Véglegesen törlöd a munkamenetet?",
-        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.":
-            "A(z) „{name}” és az átiratfájlja véglegesen törlődik. Ez nem vonható vissza.",
+        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.": "A(z) „{name}” és az átiratfájlja véglegesen törlődik. Ez nem vonható vissza.",
         "Delete permanently": "Végleges törlés",
         "New {name} session (advanced)…": "Új {name} munkamenet (haladó)…",
         "Continue last {name} session…": "Utolsó {name} munkamenet folytatása…",
@@ -49,8 +46,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Start": "Indítás",
         "Save": "Mentés",
         "Set tab emoji": "Lap emodzsi beállítása",
-        "Shown before the tab title. Leave empty to remove.":
-            "A lap címe előtt jelenik meg. Hagyd üresen az eltávolításhoz.",
+        "Shown before the tab title. Leave empty to remove.": "A lap címe előtt jelenik meg. Hagyd üresen az eltávolításhoz.",
         "e.g. 🚀": "pl. 🚀",
         "OK": "OK",
         "No MCP servers configured": "Nincs konfigurált MCP-kiszolgáló",
@@ -141,11 +137,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Restart to apply": "Újraindítás szükséges",
         "Notifications": "Értesítések",
         "Notify about background agents": "Értesítés a háttérben futó agentekről",
-        "A notice when an agent you are not watching finishes or needs your input":
-            "Értesítés, ha egy nem figyelt agent végez vagy a válaszodra vár",
+        "A notice when an agent you are not watching finishes or needs your input": "Értesítés, ha egy nem figyelt agent végez vagy a válaszodra vár",
         "Play a sound": "Hang lejátszása",
-        "When an agent you are not watching finishes or needs your input":
-            "Ha egy nem figyelt agent végez vagy a válaszodra vár",
+        "When an agent you are not watching finishes or needs your input": "Ha egy nem figyelt agent végez vagy a válaszodra vár",
         "Show": "Megnyitás",
         "{agent} needs your input.": "{agent} a válaszodra vár.",
         "{agent} finished.": "{agent} végzett.",
@@ -186,10 +180,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Remove selected from favorites": "Kijelöltek eltávolítása a kedvencekből",
         "Add selected to favorites": "Kijelöltek hozzáadása a kedvencekhez",
         "Open selected in tabs": "Kijelöltek megnyitása lapokon",
-        "warning: project dir {cwd} no longer exists, starting in HOME":
-            "figyelmeztetés: a(z) {cwd} projektkönyvtár már nem létezik, indítás a HOME-ban",
-        "warning: `{cli}` not found in PATH — starting a plain shell":
-            "figyelmeztetés: a `{cli}` nem található a PATH-ban — egyszerű parancsértelmező indítása",
+        "warning: project dir {cwd} no longer exists, starting in HOME": "figyelmeztetés: a(z) {cwd} projektkönyvtár már nem létezik, indítás a HOME-ban",
+        "warning: `{cli}` not found in PATH — starting a plain shell": "figyelmeztetés: a `{cli}` nem található a PATH-ban — egyszerű parancsértelmező indítása",
         "failed to start shell: {msg}": "nem sikerült elindítani a parancsértelmezőt: {msg}",
         "Find in terminal…": "Keresés a terminálban…",
         "Previous match": "Előző találat",
@@ -202,19 +194,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Agent": "Ügynök",
         "Question": "Kérdés",
         "{n} questions": "{n} kérdés",
-        "This prompt needs the terminal to answer.":
-            "Ezt a kérdést a terminálban kell megválaszolni.",
+        "This prompt needs the terminal to answer.": "Ezt a kérdést a terminálban kell megválaszolni.",
         "Answer in terminal": "Válasz a terminálban",
         "New {name} chat…": "Új {name} csevegés…",
-        "Chat with {name} — every file edit and command asks your permission first.":
-            "Csevegés a {name}-tal — minden fájlmódosítás és parancs előbb az engedélyedet kéri.",
+        "Chat with {name} — every file edit and command asks your permission first.": "Csevegés a {name}-tal — minden fájlmódosítás és parancs előbb az engedélyedet kéri.",
         "New {name} chat ({mode})": "Új {name} csevegés ({mode})",
         "ask, read-only": "kérdés, csak olvasható",
         "trusted, auto-run": "megbízható, automatikus",
-        "Read-only chat with {name} — analyses and answers, never edits.":
-            "Csak olvasható csevegés a {name}-tal — elemez és válaszol, soha nem szerkeszt.",
-        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.":
-            "Csevegés a {name}-tal — ⚠ a módosításokat és parancsokat automatikusan, kérdés nélkül futtatja.",
+        "Read-only chat with {name} — analyses and answers, never edits.": "Csak olvasható csevegés a {name}-tal — elemez és válaszol, soha nem szerkeszt.",
+        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.": "Csevegés a {name}-tal — ⚠ a módosításokat és parancsokat automatikusan, kérdés nélkül futtatja.",
         "{name} wants to use {tool}": "A {name} a(z) {tool} eszközt szeretné használni",
         "Allow once": "Egyszeri engedélyezés",
         "Always allow {tool}": "{tool} mindig engedélyezve",
@@ -240,16 +228,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Chat — {name}": "Csevegés — {name}",
         "Continue in chat": "Folytatás csevegésben",
         "Continue in chat ({mode})": "Folytatás csevegésben ({mode})",
-        "Continuing the previous session — earlier messages aren't shown here.":
-            "A korábbi munkamenet folytatása — a régebbi üzenetek itt nem jelennek meg.",
+        "Continuing the previous session — earlier messages aren't shown here.": "A korábbi munkamenet folytatása — a régebbi üzenetek itt nem jelennek meg.",
         "Close all tabs": "Összes lap bezárása",
         "No session open": "Nincs megnyitott munkamenet",
-        "Pick a session from the sidebar, or start a new one.":
-            "Válassz egy munkamenetet az oldalsávból, vagy indíts egy újat.",
+        "Pick a session from the sidebar, or start a new one.": "Válassz egy munkamenetet az oldalsávból, vagy indíts egy újat.",
         "Some transcripts could not be trashed": "Néhány átiratot nem sikerült a kukába helyezni",
         "Move {n} transcript(s) to trash?": "{n} átirat kukába helyezése?",
-        "The files are moved to the trash and can be restored.":
-            "A fájlok a kukába kerülnek, és visszaállíthatók.",
+        "The files are moved to the trash and can be restored.": "A fájlok a kukába kerülnek, és visszaállíthatók.",
         "Move to Trash": "Kukába",
         "New window": "Új ablak",
         "You interrupted Claude here": "Itt szakítottad meg a Claude-ot",
@@ -260,10 +245,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Export failed": "Az exportálás sikertelen",
         "Could not trash transcript": "Az átiratot nem sikerült a kukába helyezni",
         "Move transcript to trash?": "Átirat kukába helyezése?",
-        "“{name}” will be removed from Claude's history.":
-            "A(z) „{name}” eltávolításra kerül a Claude előzményeiből.",
-        "The file is moved to the trash and can be restored.":
-            "A fájl a kukába kerül, és visszaállítható.",
+        "“{name}” will be removed from Claude's history.": "A(z) „{name}” eltávolításra kerül a Claude előzményeiből.",
+        "The file is moved to the trash and can be restored.": "A fájl a kukába kerül, és visszaállítható.",
     },
     "de": {
         "Rename session": "Sitzung umbenennen",
@@ -271,20 +254,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Cancel": "Abbrechen",
         "Session list": "Sitzungsliste",
         "Show folder path": "Ordnerpfad anzeigen",
-        "Show each session's project folder path in the sidebar":
-            "Den Projektordnerpfad jeder Sitzung in der Seitenleiste anzeigen",
+        "Show each session's project folder path in the sidebar": "Den Projektordnerpfad jeder Sitzung in der Seitenleiste anzeigen",
         "Open session file…": "Sitzungsdatei öffnen…",
         "Open session transcript": "Sitzungsprotokoll öffnen",
         "Session transcripts (*.jsonl)": "Sitzungsprotokolle (*.jsonl)",
         "Could not open transcript": "Protokoll konnte nicht geöffnet werden",
-        "The file couldn't be read as a session transcript.":
-            "Die Datei konnte nicht als Sitzungsprotokoll gelesen werden.",
+        "The file couldn't be read as a session transcript.": "Die Datei konnte nicht als Sitzungsprotokoll gelesen werden.",
         "Delete permanently…": "Endgültig löschen…",
         "Could not delete transcript": "Protokoll konnte nicht gelöscht werden",
         "Delete session permanently?": "Sitzung endgültig löschen?",
-        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.":
-            "„{name}“ und die zugehörige Protokolldatei werden endgültig gelöscht. "
-            "Dies kann nicht rückgängig gemacht werden.",
+        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.": "„{name}“ und die zugehörige Protokolldatei werden endgültig gelöscht. "
+        "Dies kann nicht rückgängig gemacht werden.",
         "Delete permanently": "Endgültig löschen",
         "New {name} session (advanced)…": "Neue {name}-Sitzung (erweitert)…",
         "Continue last {name} session…": "Letzte {name}-Sitzung fortsetzen…",
@@ -299,8 +279,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Start": "Starten",
         "Save": "Speichern",
         "Set tab emoji": "Tab-Emoji festlegen",
-        "Shown before the tab title. Leave empty to remove.":
-            "Wird vor dem Tab-Titel angezeigt. Zum Entfernen leer lassen.",
+        "Shown before the tab title. Leave empty to remove.": "Wird vor dem Tab-Titel angezeigt. Zum Entfernen leer lassen.",
         "e.g. 🚀": "z. B. 🚀",
         "OK": "OK",
         "No MCP servers configured": "Keine MCP-Server konfiguriert",
@@ -391,12 +370,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Restart to apply": "Neustart erforderlich",
         "Notifications": "Benachrichtigungen",
         "Notify about background agents": "Über Agenten im Hintergrund benachrichtigen",
-        "A notice when an agent you are not watching finishes or needs your input":
-            "Hinweis, wenn ein nicht beobachteter Agent fertig ist "
-            "oder deine Eingabe braucht",
+        "A notice when an agent you are not watching finishes or needs your input": "Hinweis, wenn ein nicht beobachteter Agent fertig ist "
+        "oder deine Eingabe braucht",
         "Play a sound": "Ton abspielen",
-        "When an agent you are not watching finishes or needs your input":
-            "Wenn ein nicht beobachteter Agent fertig ist oder deine Eingabe braucht",
+        "When an agent you are not watching finishes or needs your input": "Wenn ein nicht beobachteter Agent fertig ist oder deine Eingabe braucht",
         "Show": "Anzeigen",
         "{agent} needs your input.": "{agent} braucht deine Eingabe.",
         "{agent} finished.": "{agent} ist fertig.",
@@ -432,16 +409,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select all (filtered) sessions": "Alle (gefilterten) Sitzungen auswählen",
         "None": "Keine",
         "Clear selection": "Auswahl aufheben",
-        "Move selected transcripts to trash…":
-            "Ausgewählte Transkripte in den Papierkorb verschieben…",
+        "Move selected transcripts to trash…": "Ausgewählte Transkripte in den Papierkorb verschieben…",
         "Hide selected": "Ausgewählte ausblenden",
         "Remove selected from favorites": "Ausgewählte aus Favoriten entfernen",
         "Add selected to favorites": "Ausgewählte zu Favoriten hinzufügen",
         "Open selected in tabs": "Ausgewählte in Tabs öffnen",
-        "warning: project dir {cwd} no longer exists, starting in HOME":
-            "Warnung: Projektverzeichnis {cwd} existiert nicht mehr, starte im HOME",
-        "warning: `{cli}` not found in PATH — starting a plain shell":
-            "Warnung: `{cli}` nicht im PATH gefunden — starte eine einfache Shell",
+        "warning: project dir {cwd} no longer exists, starting in HOME": "Warnung: Projektverzeichnis {cwd} existiert nicht mehr, starte im HOME",
+        "warning: `{cli}` not found in PATH — starting a plain shell": "Warnung: `{cli}` nicht im PATH gefunden — starte eine einfache Shell",
         "failed to start shell: {msg}": "Shell konnte nicht gestartet werden: {msg}",
         "Find in terminal…": "Im Terminal suchen…",
         "Previous match": "Vorheriger Treffer",
@@ -454,19 +428,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Agent": "Agent",
         "Question": "Frage",
         "{n} questions": "{n} Fragen",
-        "This prompt needs the terminal to answer.":
-            "Diese Eingabe muss im Terminal beantwortet werden.",
+        "This prompt needs the terminal to answer.": "Diese Eingabe muss im Terminal beantwortet werden.",
         "Answer in terminal": "Im Terminal antworten",
         "New {name} chat…": "Neuer {name}-Chat…",
-        "Chat with {name} — every file edit and command asks your permission first.":
-            "Chat mit {name} — jede Dateiänderung und jeder Befehl fragt zuerst um Erlaubnis.",
+        "Chat with {name} — every file edit and command asks your permission first.": "Chat mit {name} — jede Dateiänderung und jeder Befehl fragt zuerst um Erlaubnis.",
         "New {name} chat ({mode})": "Neuer {name}-Chat ({mode})",
         "ask, read-only": "fragen, schreibgeschützt",
         "trusted, auto-run": "vertraut, automatisch",
-        "Read-only chat with {name} — analyses and answers, never edits.":
-            "Schreibgeschützter Chat mit {name} — analysiert und antwortet, bearbeitet nie.",
-        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.":
-            "Chat mit {name} — ⚠ führt Änderungen und Befehle automatisch ohne Nachfrage aus.",
+        "Read-only chat with {name} — analyses and answers, never edits.": "Schreibgeschützter Chat mit {name} — analysiert und antwortet, bearbeitet nie.",
+        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.": "Chat mit {name} — ⚠ führt Änderungen und Befehle automatisch ohne Nachfrage aus.",
         "{name} wants to use {tool}": "{name} möchte {tool} verwenden",
         "Allow once": "Einmal erlauben",
         "Always allow {tool}": "{tool} immer erlauben",
@@ -492,17 +462,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Chat — {name}": "Chat — {name}",
         "Continue in chat": "Im Chat fortsetzen",
         "Continue in chat ({mode})": "Im Chat fortsetzen ({mode})",
-        "Continuing the previous session — earlier messages aren't shown here.":
-            "Frühere Sitzung wird fortgesetzt — ältere Nachrichten werden hier nicht angezeigt.",
+        "Continuing the previous session — earlier messages aren't shown here.": "Frühere Sitzung wird fortgesetzt — ältere Nachrichten werden hier nicht angezeigt.",
         "Close all tabs": "Alle Tabs schließen",
         "No session open": "Keine Sitzung geöffnet",
-        "Pick a session from the sidebar, or start a new one.":
-            "Wähle eine Sitzung in der Seitenleiste oder starte eine neue.",
-        "Some transcripts could not be trashed":
-            "Einige Transkripte konnten nicht in den Papierkorb verschoben werden",
+        "Pick a session from the sidebar, or start a new one.": "Wähle eine Sitzung in der Seitenleiste oder starte eine neue.",
+        "Some transcripts could not be trashed": "Einige Transkripte konnten nicht in den Papierkorb verschoben werden",
         "Move {n} transcript(s) to trash?": "{n} Transkript(e) in den Papierkorb verschieben?",
-        "The files are moved to the trash and can be restored.":
-            "Die Dateien werden in den Papierkorb verschoben und können wiederhergestellt werden.",
+        "The files are moved to the trash and can be restored.": "Die Dateien werden in den Papierkorb verschoben und können wiederhergestellt werden.",
         "Move to Trash": "In den Papierkorb",
         "New window": "Neues Fenster",
         "You interrupted Claude here": "Du hast Claude hier unterbrochen",
@@ -511,13 +477,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Tab name": "Tab-Name",
         "Export session as Markdown": "Sitzung als Markdown exportieren",
         "Export failed": "Export fehlgeschlagen",
-        "Could not trash transcript":
-            "Transkript konnte nicht in den Papierkorb verschoben werden",
+        "Could not trash transcript": "Transkript konnte nicht in den Papierkorb verschoben werden",
         "Move transcript to trash?": "Transkript in den Papierkorb verschieben?",
-        "“{name}” will be removed from Claude's history.":
-            "„{name}“ wird aus Claudes Verlauf entfernt.",
-        "The file is moved to the trash and can be restored.":
-            "Die Datei wird in den Papierkorb verschoben und kann wiederhergestellt werden.",
+        "“{name}” will be removed from Claude's history.": "„{name}“ wird aus Claudes Verlauf entfernt.",
+        "The file is moved to the trash and can be restored.": "Die Datei wird in den Papierkorb verschoben und kann wiederhergestellt werden.",
     },
     "es": {
         "Rename session": "Renombrar sesión",
@@ -525,20 +488,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Cancel": "Cancelar",
         "Session list": "Lista de sesiones",
         "Show folder path": "Mostrar ruta de carpeta",
-        "Show each session's project folder path in the sidebar":
-            "Mostrar la ruta de la carpeta del proyecto de cada sesión en la barra lateral",
+        "Show each session's project folder path in the sidebar": "Mostrar la ruta de la carpeta del proyecto de cada sesión en la barra lateral",
         "Open session file…": "Abrir archivo de sesión…",
         "Open session transcript": "Abrir transcripción de sesión",
         "Session transcripts (*.jsonl)": "Transcripciones de sesión (*.jsonl)",
         "Could not open transcript": "No se pudo abrir la transcripción",
-        "The file couldn't be read as a session transcript.":
-            "No se pudo leer el archivo como transcripción de sesión.",
+        "The file couldn't be read as a session transcript.": "No se pudo leer el archivo como transcripción de sesión.",
         "Delete permanently…": "Eliminar permanentemente…",
         "Could not delete transcript": "No se pudo eliminar la transcripción",
         "Delete session permanently?": "¿Eliminar la sesión permanentemente?",
-        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.":
-            "«{name}» y su archivo de transcripción se eliminarán permanentemente. "
-            "Esto no se puede deshacer.",
+        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.": "«{name}» y su archivo de transcripción se eliminarán permanentemente. "
+        "Esto no se puede deshacer.",
         "Delete permanently": "Eliminar permanentemente",
         "New {name} session (advanced)…": "Nueva sesión de {name} (avanzada)…",
         "Continue last {name} session…": "Continuar la última sesión de {name}…",
@@ -553,8 +513,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Start": "Iniciar",
         "Save": "Guardar",
         "Set tab emoji": "Establecer emoji de pestaña",
-        "Shown before the tab title. Leave empty to remove.":
-            "Se muestra antes del título de la pestaña. Déjalo vacío para quitarlo.",
+        "Shown before the tab title. Leave empty to remove.": "Se muestra antes del título de la pestaña. Déjalo vacío para quitarlo.",
         "e.g. 🚀": "p. ej. 🚀",
         "OK": "Aceptar",
         "No MCP servers configured": "No hay servidores MCP configurados",
@@ -645,12 +604,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Restart to apply": "Reinicia para aplicar",
         "Notifications": "Notificaciones",
         "Notify about background agents": "Notificar sobre agentes en segundo plano",
-        "A notice when an agent you are not watching finishes or needs your input":
-            "Aviso cuando un agente que no estás mirando termina "
-            "o necesita tu respuesta",
+        "A notice when an agent you are not watching finishes or needs your input": "Aviso cuando un agente que no estás mirando termina "
+        "o necesita tu respuesta",
         "Play a sound": "Reproducir un sonido",
-        "When an agent you are not watching finishes or needs your input":
-            "Cuando un agente que no estás mirando termina o necesita tu respuesta",
+        "When an agent you are not watching finishes or needs your input": "Cuando un agente que no estás mirando termina o necesita tu respuesta",
         "Show": "Mostrar",
         "{agent} needs your input.": "{agent} necesita tu respuesta.",
         "{agent} finished.": "{agent} terminó.",
@@ -686,16 +643,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select all (filtered) sessions": "Seleccionar todas las sesiones (filtradas)",
         "None": "Ninguna",
         "Clear selection": "Borrar selección",
-        "Move selected transcripts to trash…":
-            "Mover las transcripciones seleccionadas a la papelera…",
+        "Move selected transcripts to trash…": "Mover las transcripciones seleccionadas a la papelera…",
         "Hide selected": "Ocultar seleccionadas",
         "Remove selected from favorites": "Quitar seleccionadas de favoritos",
         "Add selected to favorites": "Añadir seleccionadas a favoritos",
         "Open selected in tabs": "Abrir seleccionadas en pestañas",
-        "warning: project dir {cwd} no longer exists, starting in HOME":
-            "advertencia: el directorio del proyecto {cwd} ya no existe, iniciando en HOME",
-        "warning: `{cli}` not found in PATH — starting a plain shell":
-            "advertencia: no se encontró `{cli}` en PATH — iniciando una shell simple",
+        "warning: project dir {cwd} no longer exists, starting in HOME": "advertencia: el directorio del proyecto {cwd} ya no existe, iniciando en HOME",
+        "warning: `{cli}` not found in PATH — starting a plain shell": "advertencia: no se encontró `{cli}` en PATH — iniciando una shell simple",
         "failed to start shell: {msg}": "no se pudo iniciar la shell: {msg}",
         "Find in terminal…": "Buscar en la terminal…",
         "Previous match": "Coincidencia anterior",
@@ -708,19 +662,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Agent": "Agente",
         "Question": "Pregunta",
         "{n} questions": "{n} preguntas",
-        "This prompt needs the terminal to answer.":
-            "Esta petición debe responderse en la terminal.",
+        "This prompt needs the terminal to answer.": "Esta petición debe responderse en la terminal.",
         "Answer in terminal": "Responder en la terminal",
         "New {name} chat…": "Nuevo chat de {name}…",
-        "Chat with {name} — every file edit and command asks your permission first.":
-            "Chat con {name}: cada edición de archivo y comando pide tu permiso primero.",
+        "Chat with {name} — every file edit and command asks your permission first.": "Chat con {name}: cada edición de archivo y comando pide tu permiso primero.",
         "New {name} chat ({mode})": "Nuevo chat de {name} ({mode})",
         "ask, read-only": "preguntar, solo lectura",
         "trusted, auto-run": "de confianza, automático",
-        "Read-only chat with {name} — analyses and answers, never edits.":
-            "Chat de solo lectura con {name}: analiza y responde, nunca edita.",
-        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.":
-            "Chat con {name}: ⚠ ejecuta ediciones y comandos automáticamente, sin preguntar.",
+        "Read-only chat with {name} — analyses and answers, never edits.": "Chat de solo lectura con {name}: analiza y responde, nunca edita.",
+        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.": "Chat con {name}: ⚠ ejecuta ediciones y comandos automáticamente, sin preguntar.",
         "{name} wants to use {tool}": "{name} quiere usar {tool}",
         "Allow once": "Permitir una vez",
         "Always allow {tool}": "Permitir siempre {tool}",
@@ -746,17 +696,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Chat — {name}": "Chat — {name}",
         "Continue in chat": "Continuar en el chat",
         "Continue in chat ({mode})": "Continuar en el chat ({mode})",
-        "Continuing the previous session — earlier messages aren't shown here.":
-            "Continuando la sesión anterior: los mensajes anteriores no se muestran aquí.",
+        "Continuing the previous session — earlier messages aren't shown here.": "Continuando la sesión anterior: los mensajes anteriores no se muestran aquí.",
         "Close all tabs": "Cerrar todas las pestañas",
         "No session open": "Ninguna sesión abierta",
-        "Pick a session from the sidebar, or start a new one.":
-            "Elige una sesión en la barra lateral o inicia una nueva.",
-        "Some transcripts could not be trashed":
-            "No se pudieron enviar a la papelera algunas transcripciones",
+        "Pick a session from the sidebar, or start a new one.": "Elige una sesión en la barra lateral o inicia una nueva.",
+        "Some transcripts could not be trashed": "No se pudieron enviar a la papelera algunas transcripciones",
         "Move {n} transcript(s) to trash?": "¿Mover {n} transcripción(es) a la papelera?",
-        "The files are moved to the trash and can be restored.":
-            "Los archivos se mueven a la papelera y se pueden restaurar.",
+        "The files are moved to the trash and can be restored.": "Los archivos se mueven a la papelera y se pueden restaurar.",
         "Move to Trash": "Mover a la papelera",
         "New window": "Nueva ventana",
         "You interrupted Claude here": "Interrumpiste a Claude aquí",
@@ -767,10 +713,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Export failed": "Error al exportar",
         "Could not trash transcript": "No se pudo enviar la transcripción a la papelera",
         "Move transcript to trash?": "¿Mover la transcripción a la papelera?",
-        "“{name}” will be removed from Claude's history.":
-            "«{name}» se eliminará del historial de Claude.",
-        "The file is moved to the trash and can be restored.":
-            "El archivo se mueve a la papelera y se puede restaurar.",
+        "“{name}” will be removed from Claude's history.": "«{name}» se eliminará del historial de Claude.",
+        "The file is moved to the trash and can be restored.": "El archivo se mueve a la papelera y se puede restaurar.",
     },
     "fr": {
         "Rename session": "Renommer la session",
@@ -778,20 +722,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Cancel": "Annuler",
         "Session list": "Liste des sessions",
         "Show folder path": "Afficher le chemin du dossier",
-        "Show each session's project folder path in the sidebar":
-            "Afficher le chemin du dossier de projet de chaque session dans la barre latérale",
+        "Show each session's project folder path in the sidebar": "Afficher le chemin du dossier de projet de chaque session dans la barre latérale",
         "Open session file…": "Ouvrir un fichier de session…",
         "Open session transcript": "Ouvrir une transcription de session",
         "Session transcripts (*.jsonl)": "Transcriptions de session (*.jsonl)",
         "Could not open transcript": "Impossible d'ouvrir la transcription",
-        "The file couldn't be read as a session transcript.":
-            "Le fichier n'a pas pu être lu comme une transcription de session.",
+        "The file couldn't be read as a session transcript.": "Le fichier n'a pas pu être lu comme une transcription de session.",
         "Delete permanently…": "Supprimer définitivement…",
         "Could not delete transcript": "Impossible de supprimer la transcription",
         "Delete session permanently?": "Supprimer définitivement la session ?",
-        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.":
-            "« {name} » et son fichier de transcription seront définitivement supprimés. "
-            "Cette action est irréversible.",
+        "“{name}” and its transcript file will be permanently deleted. This cannot be undone.": "« {name} » et son fichier de transcription seront définitivement supprimés. "
+        "Cette action est irréversible.",
         "Delete permanently": "Supprimer définitivement",
         "New {name} session (advanced)…": "Nouvelle session {name} (avancé)…",
         "Continue last {name} session…": "Continuer la dernière session {name}…",
@@ -806,8 +747,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Start": "Démarrer",
         "Save": "Enregistrer",
         "Set tab emoji": "Définir l’emoji de l’onglet",
-        "Shown before the tab title. Leave empty to remove.":
-            "Affiché avant le titre de l’onglet. Laisser vide pour le retirer.",
+        "Shown before the tab title. Leave empty to remove.": "Affiché avant le titre de l’onglet. Laisser vide pour le retirer.",
         "e.g. 🚀": "p. ex. 🚀",
         "OK": "OK",
         "No MCP servers configured": "Aucun serveur MCP configuré",
@@ -898,11 +838,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Restart to apply": "Redémarrer pour appliquer",
         "Notifications": "Notifications",
         "Notify about background agents": "Notifier pour les agents en arrière-plan",
-        "A notice when an agent you are not watching finishes or needs your input":
-            "Avis lorsqu’un agent que vous ne regardez pas termine ou attend votre réponse",
+        "A notice when an agent you are not watching finishes or needs your input": "Avis lorsqu’un agent que vous ne regardez pas termine ou attend votre réponse",
         "Play a sound": "Jouer un son",
-        "When an agent you are not watching finishes or needs your input":
-            "Lorsqu’un agent que vous ne regardez pas termine ou attend votre réponse",
+        "When an agent you are not watching finishes or needs your input": "Lorsqu’un agent que vous ne regardez pas termine ou attend votre réponse",
         "Show": "Afficher",
         "{agent} needs your input.": "{agent} attend votre réponse.",
         "{agent} finished.": "{agent} a terminé.",
@@ -938,16 +876,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Select all (filtered) sessions": "Sélectionner toutes les sessions (filtrées)",
         "None": "Aucune",
         "Clear selection": "Effacer la sélection",
-        "Move selected transcripts to trash…":
-            "Mettre les transcriptions sélectionnées à la corbeille…",
+        "Move selected transcripts to trash…": "Mettre les transcriptions sélectionnées à la corbeille…",
         "Hide selected": "Masquer la sélection",
         "Remove selected from favorites": "Retirer la sélection des favoris",
         "Add selected to favorites": "Ajouter la sélection aux favoris",
         "Open selected in tabs": "Ouvrir la sélection dans des onglets",
-        "warning: project dir {cwd} no longer exists, starting in HOME":
-            "avertissement : le répertoire de projet {cwd} n’existe plus, démarrage dans HOME",
-        "warning: `{cli}` not found in PATH — starting a plain shell":
-            "avertissement : `{cli}` introuvable dans le PATH — démarrage d’un shell simple",
+        "warning: project dir {cwd} no longer exists, starting in HOME": "avertissement : le répertoire de projet {cwd} n’existe plus, démarrage dans HOME",
+        "warning: `{cli}` not found in PATH — starting a plain shell": "avertissement : `{cli}` introuvable dans le PATH — démarrage d’un shell simple",
         "failed to start shell: {msg}": "échec du démarrage du shell : {msg}",
         "Find in terminal…": "Rechercher dans le terminal…",
         "Previous match": "Correspondance précédente",
@@ -960,21 +895,17 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Agent": "Agent",
         "Question": "Question",
         "{n} questions": "{n} questions",
-        "This prompt needs the terminal to answer.":
-            "Cette invite doit être traitée dans le terminal.",
+        "This prompt needs the terminal to answer.": "Cette invite doit être traitée dans le terminal.",
         "Answer in terminal": "Répondre dans le terminal",
         "New {name} chat…": "Nouvelle discussion {name}…",
-        "Chat with {name} — every file edit and command asks your permission first.":
-            "Discussion avec {name} — chaque modification de fichier et commande "
-            "demande d'abord votre permission.",
+        "Chat with {name} — every file edit and command asks your permission first.": "Discussion avec {name} — chaque modification de fichier et commande "
+        "demande d'abord votre permission.",
         "New {name} chat ({mode})": "Nouvelle discussion {name} ({mode})",
         "ask, read-only": "questions, lecture seule",
         "trusted, auto-run": "de confiance, automatique",
-        "Read-only chat with {name} — analyses and answers, never edits.":
-            "Discussion en lecture seule avec {name} — analyse et répond, ne modifie jamais.",
-        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.":
-            "Discussion avec {name} — ⚠ exécute les modifications et commandes "
-            "automatiquement, sans demander.",
+        "Read-only chat with {name} — analyses and answers, never edits.": "Discussion en lecture seule avec {name} — analyse et répond, ne modifie jamais.",
+        "Chat with {name} — ⚠ runs edits and commands automatically, without asking.": "Discussion avec {name} — ⚠ exécute les modifications et commandes "
+        "automatiquement, sans demander.",
         "{name} wants to use {tool}": "{name} veut utiliser {tool}",
         "Allow once": "Autoriser une fois",
         "Always allow {tool}": "Toujours autoriser {tool}",
@@ -1000,17 +931,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Chat — {name}": "Discussion — {name}",
         "Continue in chat": "Continuer dans la discussion",
         "Continue in chat ({mode})": "Continuer dans la discussion ({mode})",
-        "Continuing the previous session — earlier messages aren't shown here.":
-            "Reprise de la session précédente — les messages antérieurs ne sont pas affichés ici.",
+        "Continuing the previous session — earlier messages aren't shown here.": "Reprise de la session précédente — les messages antérieurs ne sont pas affichés ici.",
         "Close all tabs": "Fermer tous les onglets",
         "No session open": "Aucune session ouverte",
-        "Pick a session from the sidebar, or start a new one.":
-            "Choisissez une session dans la barre latérale, ou démarrez-en une nouvelle.",
-        "Some transcripts could not be trashed":
-            "Certaines transcriptions n’ont pas pu être mises à la corbeille",
+        "Pick a session from the sidebar, or start a new one.": "Choisissez une session dans la barre latérale, ou démarrez-en une nouvelle.",
+        "Some transcripts could not be trashed": "Certaines transcriptions n’ont pas pu être mises à la corbeille",
         "Move {n} transcript(s) to trash?": "Mettre {n} transcription(s) à la corbeille ?",
-        "The files are moved to the trash and can be restored.":
-            "Les fichiers sont mis à la corbeille et peuvent être restaurés.",
+        "The files are moved to the trash and can be restored.": "Les fichiers sont mis à la corbeille et peuvent être restaurés.",
         "Move to Trash": "Mettre à la corbeille",
         "New window": "Nouvelle fenêtre",
         "You interrupted Claude here": "Vous avez interrompu Claude ici",
@@ -1021,10 +948,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "Export failed": "Échec de l’exportation",
         "Could not trash transcript": "Impossible de mettre la transcription à la corbeille",
         "Move transcript to trash?": "Mettre la transcription à la corbeille ?",
-        "“{name}” will be removed from Claude's history.":
-            "« {name} » sera retiré de l’historique de Claude.",
-        "The file is moved to the trash and can be restored.":
-            "Le fichier est mis à la corbeille et peut être restauré.",
+        "“{name}” will be removed from Claude's history.": "« {name} » sera retiré de l’historique de Claude.",
+        "The file is moved to the trash and can be restored.": "Le fichier est mis à la corbeille et peut être restauré.",
     },
 }
 
@@ -1055,9 +980,7 @@ def main() -> None:
 
         mo_dir = LOCALE / lang / "LC_MESSAGES"
         mo_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            ["msgfmt", "-o", str(mo_dir / f"{DOMAIN}.mo"), str(po_path)], check=True
-        )
+        subprocess.run(["msgfmt", "-o", str(mo_dir / f"{DOMAIN}.mo"), str(po_path)], check=True)
         print(f"{lang}: {len(entries)} strings → {po_path.name} + .mo")
 
 

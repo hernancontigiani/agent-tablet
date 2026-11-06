@@ -56,6 +56,7 @@ def _theme_swatch(name: str) -> Gtk.DrawingArea:
     area.set_draw_func(_draw_swatch, name)
     return area
 
+
 _SCHEMES = [
     ("system", N_("Follow system"), Adw.ColorScheme.DEFAULT),
     ("light", N_("Light"), Adw.ColorScheme.FORCE_LIGHT),
@@ -116,9 +117,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         scheme_row = Adw.ComboRow(title=_("Color scheme"))
         scheme_row.set_model(Gtk.StringList.new([_(label) for _k, label, _s in _SCHEMES]))
         current_scheme = state.get_setting("color_scheme") or "system"
-        scheme_row.set_selected(
-            next((i for i, (k, _l, _s) in enumerate(_SCHEMES) if k == current_scheme), 0)
-        )
+        scheme_row.set_selected(next((i for i, (k, _l, _s) in enumerate(_SCHEMES) if k == current_scheme), 0))
         scheme_row.connect("notify::selected", self._on_scheme_changed)
         appearance_group.add(scheme_row)
         current_style = state.get_setting("ui_style") or DEFAULT_UI_STYLE
@@ -187,9 +186,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
         current_lang = state.get_setting("language") or ""
         self._initial_lang = current_lang
-        current_label = next(
-            (label for code, label in LANGUAGES if code == current_lang), LANGUAGES[0][1]
-        )
+        current_label = next((label for code, label in LANGUAGES if code == current_lang), LANGUAGES[0][1])
         lang_group = Adw.PreferencesGroup(title=_("Language"), description=_("Restart to apply"))
         self._restart_btn = Gtk.Button(label=_("Restart now"), valign=Gtk.Align.CENTER)
         self._restart_btn.add_css_class("suggested-action")
@@ -216,9 +213,7 @@ class PreferencesDialog(Adw.PreferencesDialog):
         notif_group = Adw.PreferencesGroup(title=_("Notifications"))
         self._notify_row = Adw.SwitchRow(
             title=_("Notify about background agents"),
-            subtitle=_(
-                "A notice when an agent you are not watching finishes or needs your input"
-            ),
+            subtitle=_("A notice when an agent you are not watching finishes or needs your input"),
         )
         self._notify_row.set_active(bool(state.get_setting("notify_idle")))
         self._notify_row.connect("notify::active", self._on_notify_changed)

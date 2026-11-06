@@ -36,8 +36,7 @@ def _claude(title: str, screen: str) -> str:
         or "waiting for permission" in recent
         or "do you want to allow this connection?" in recent
         or "review your answers" in recent
-        or ("esc to cancel" in recent
-            and ("enter to confirm" in recent or "enter to select" in recent))
+        or ("esc to cancel" in recent and ("enter to confirm" in recent or "enter to select" in recent))
         or (("do you want to" in recent or "would you like to" in recent) and "yes" in recent)
     ):
         return "blocked"
@@ -49,8 +48,7 @@ def _claude(title: str, screen: str) -> str:
 def _cursor(screen: str) -> str:
     recent = _bottom(screen, 10)
     if (
-        ("run this command?" in recent
-         and ("run (once) (y)" in recent or "skip (esc or n)" in recent))
+        ("run this command?" in recent and ("run (once) (y)" in recent or "skip (esc or n)" in recent))
         or ("write to this file?" in recent and "proceed (y)" in recent)
         or "(y) (enter)" in recent
         or "keep (n)" in recent

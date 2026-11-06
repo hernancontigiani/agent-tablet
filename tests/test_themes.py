@@ -19,6 +19,11 @@ def test_tui_css_uses_theme_colors_and_accent():
 
 def test_catppuccin_default_matches_herdr_chrome_exactly():
     css = tui_css(effective_theme({"terminal_theme": "Default"}, dark=True))
-    for token in ("tsm_mantle #181825", "tsm_surface0 #313244", "tsm_overlay0 #6c7086",
-                  "tsm_subtext0 #a6adc8", "tsm_accent #cba6f7"):
+    for token in (
+        "tsm_mantle #181825",
+        "tsm_surface0 #313244",
+        "tsm_overlay0 #6c7086",
+        "tsm_subtext0 #a6adc8",
+        "tsm_accent #cba6f7",
+    ):
         assert f"@define-color {token};" in css

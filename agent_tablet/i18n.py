@@ -30,9 +30,7 @@ def init(language: str | None = None) -> None:
     elif language == "en":
         _translation = gettext.NullTranslations()  # source strings are English
     else:
-        _translation = gettext.translation(
-            DOMAIN, str(LOCALEDIR), languages=[language], fallback=True
-        )
+        _translation = gettext.translation(DOMAIN, str(LOCALEDIR), languages=[language], fallback=True)
 
 
 def _(message: str) -> str:

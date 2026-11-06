@@ -3,9 +3,9 @@
 
 PKG := agent_tablet
 
-.PHONY: ci venv lint test history fmt run ui ui-watch ui-check clean
+.PHONY: ci venv lint format-check test history fmt run ui ui-watch ui-check clean
 
-ci: lint test history
+ci: lint format-check test history
 
 # --system-site-packages is not optional: PyGObject, GTK, libadwaita and VTE come from the system
 # packages, and a venv without them imports nothing of the app.
@@ -19,6 +19,9 @@ venv: .venv/.stamp
 
 lint: venv
 	uv run --locked ruff check $(PKG)/ tests/ tools/
+
+format-check: venv
+	uv run --locked ruff format --check .
 
 # In parallel from day one: a test that passes only because of the order it runs in, or of state
 # another test left behind, shows up here instead of months later.

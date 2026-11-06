@@ -90,9 +90,7 @@ class SessionStore(GObject.Object):
         sessions = self._last_sessions
         self.sessions = {s.session_id: s for s in sessions}
 
-        visible = [
-            s for s in sessions if self.show_hidden or not self.state.is_hidden(s.session_id)
-        ]
+        visible = [s for s in sessions if self.show_hidden or not self.state.is_hidden(s.session_id)]
         favorites = [s for s in visible if self.state.is_favorite(s.session_id)]
         rest = [s for s in visible if not self.state.is_favorite(s.session_id)]
 
@@ -101,9 +99,7 @@ class SessionStore(GObject.Object):
         for session in rest:
             grouped.setdefault(("proj", session.project_name), []).append(session)
 
-        ordered: list[tuple[Session, tuple, str]] = [
-            (s, FAV_GROUP, "Favorites") for s in favorites
-        ]
+        ordered: list[tuple[Session, tuple, str]] = [(s, FAV_GROUP, "Favorites") for s in favorites]
         for key, group_sessions in grouped.items():
             ordered.extend((s, key, key[1]) for s in group_sessions)
 
@@ -158,9 +154,7 @@ class SessionStore(GObject.Object):
             paths += provider.watch_dirs()
         for path in paths:
             try:
-                monitor = Gio.File.new_for_path(str(path)).monitor_directory(
-                    Gio.FileMonitorFlags.NONE, None
-                )
+                monitor = Gio.File.new_for_path(str(path)).monitor_directory(Gio.FileMonitorFlags.NONE, None)
             except GLib.Error:
                 continue
             monitor.connect("changed", self._on_fs_event)

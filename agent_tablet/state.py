@@ -34,6 +34,7 @@ def _migrate_old_config() -> None:
             shutil.copy2(old_state, _STATE_FILE)
             return
 
+
 DEFAULT_SETTINGS = {
     "font": "",  # empty = VTE default
     "scrollback": 10_000,

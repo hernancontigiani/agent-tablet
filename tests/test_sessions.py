@@ -15,8 +15,7 @@ from agent_tablet.sessions import (
 def test_session_from_file_claude(tmp_path):
     p = tmp_path / "abc.jsonl"
     p.write_text(
-        json.dumps({"type": "user", "message": {"role": "user", "content": "hi"}, "cwd": "/proj"})
-        + "\n",
+        json.dumps({"type": "user", "message": {"role": "user", "content": "hi"}, "cwd": "/proj"}) + "\n",
         encoding="utf-8",
     )
     session = session_from_file(p)
@@ -191,12 +190,16 @@ def test_tail_state_waiting(monkeypatch, tmp_path):
         sid = name
         lines = [
             {"type": "user", "cwd": "/home/u/proj", "message": {"content": "do the thing"}},
-            {"type": "assistant", "message": {"role": "assistant", "model": "claude-opus-4-8",
-                                              "content": [{"type": "text", "text": last_assistant_text}]}},
+            {
+                "type": "assistant",
+                "message": {
+                    "role": "assistant",
+                    "model": "claude-opus-4-8",
+                    "content": [{"type": "text", "text": last_assistant_text}],
+                },
+            },
         ]
-        (root / f"{sid}.jsonl").write_text(
-            "\n".join(json.dumps(line) for line in lines), encoding="utf-8"
-        )
+        (root / f"{sid}.jsonl").write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
 
     # valid UUID-shaped stems are required by discovery
     waiting_id = "11111111-1111-1111-1111-111111111111"
@@ -218,12 +221,9 @@ def test_tail_state_interrupted(monkeypatch, tmp_path):
     sid = "44444444-4444-4444-4444-444444444444"
     lines = [
         {"type": "assistant", "message": {"content": [{"type": "text", "text": "Working on it…"}]}},
-        {"type": "user", "cwd": "/home/u/proj",
-         "message": {"content": "[Request interrupted by user]"}},
+        {"type": "user", "cwd": "/home/u/proj", "message": {"content": "[Request interrupted by user]"}},
     ]
-    (root / f"{sid}.jsonl").write_text(
-        "\n".join(json.dumps(line) for line in lines), encoding="utf-8"
-    )
+    (root / f"{sid}.jsonl").write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
     state = next(s.state for s in sessions_mod.discover_sessions() if s.session_id == sid)
     assert state == "interrupted"
 
@@ -239,9 +239,7 @@ def test_tail_state_user_replied_after_question(monkeypatch, tmp_path):
         {"type": "assistant", "message": {"content": [{"type": "text", "text": "Which one?"}]}},
         {"type": "user", "cwd": "/home/u/proj", "message": {"content": "the second one"}},
     ]
-    (root / f"{sid}.jsonl").write_text(
-        "\n".join(json.dumps(line) for line in lines), encoding="utf-8"
-    )
+    (root / f"{sid}.jsonl").write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
     state = next(s.state for s in sessions_mod.discover_sessions() if s.session_id == sid)
     assert state == ""  # user already replied → not waiting
 
@@ -259,7 +257,7 @@ def test_export_markdown(projects_dir):
 
 def test_parse_details_handles_garbage(tmp_path):
     bad = tmp_path / "bad.jsonl"
-    bad.write_text("not json\n{\"type\": 12}\n[]\n", encoding="utf-8")
+    bad.write_text('not json\n{"type": 12}\n[]\n', encoding="utf-8")
     details = parse_details(bad)
     assert details.user_messages == 0
     assert details.models == []

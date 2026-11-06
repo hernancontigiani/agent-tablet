@@ -56,8 +56,9 @@ class SectionHeader(Gtk.Box):
     The folded state is saved, and on_toggle() lets the owner re-show its
     widgets (visibility also depends on things only the owner knows)."""
 
-    def __init__(self, key: str, text: str, state, on_toggle: Callable[[], None],
-                 suffix: Gtk.Widget | None = None) -> None:
+    def __init__(
+        self, key: str, text: str, state, on_toggle: Callable[[], None], suffix: Gtk.Widget | None = None
+    ) -> None:
         super().__init__(spacing=6)
         self.add_css_class("section-title")
         self._key = key
@@ -166,8 +167,7 @@ class SpacesPanel(Gtk.Box):
         for tab in tabs:
             name = space_name(tab.space)  # herdr-style "space · tab"
             title = name if tab.title == name else f"{name} · {tab.title}"
-            row = self._row(title, tab.agent, tab.status,
-                            current is not None and current.page is tab.page)
+            row = self._row(title, tab.agent, tab.status, current is not None and current.page is tab.page)
             row.key = tab.page
             self._agents.append(row)
 
@@ -265,7 +265,7 @@ class TabStrip(Gtk.Box):
             click.connect("pressed", self._on_emoji_pressed, tab.page)
             emoji.add_controller(click)
             box.append(emoji)
-            title = title[len(tab.emoji):].lstrip()
+            title = title[len(tab.emoji) :].lstrip()
         box.append(Gtk.Label(label=title, max_width_chars=28, ellipsize=_ELLIPSIZE_END))
         button = Gtk.Button(child=box)
         button.add_css_class("flat")
