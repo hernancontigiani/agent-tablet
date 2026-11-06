@@ -1,4 +1,4 @@
-"""Persistent app state: custom names, favorites, hidden sessions, settings.
+"""Persistent app state: custom names, emojis, hidden sessions, settings.
 
 Everything lives in our own config file — the agents' session data is never
 modified.
@@ -12,10 +12,13 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from .projects import FILE_NAME as PROJECTS_FILE
+from .projects import Projects
+
 _CONFIG_BASE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
 _CONFIG_DIR = _CONFIG_BASE / "agent-tablet"
 # The app this was forked from, under its current and its pre-rebrand name, newest first. Its
-# state is imported once so names and favorites set there survive the switch; it is never written.
+# state is imported once so names set there survive the switch; it is never written.
 _ORIGINAL_CONFIG_DIRS = (
     _CONFIG_BASE / "agent-session-manager",
     _CONFIG_BASE / "claude-session-manager",
@@ -47,11 +50,7 @@ DEFAULT_SETTINGS = {
     "notify_sound": True,  # play a sound when a background agent finishes / gets blocked
     "new_session_dir": "",  # remembered folder for new sessions (empty = ask)
     "sidebar_width": 300,  # persisted sidebar pane width in px
-    # sidebar sections: shown at all (preferences) / folded up (click the title)
-    "sidebar_show_spaces": True,
-    "sidebar_show_agents": True,
-    "sidebar_show_history": True,
-    "sidebar_collapsed": [],  # section keys: "spaces" | "agents" | "history"
+    "reopen_tabs": True,  # on start, resume the sessions that were in tabs, in their windows
 }
 
 
@@ -59,10 +58,11 @@ class AppState:
     def __init__(self) -> None:
         self.names: dict[str, str] = {}
         self.emojis: dict[str, str] = {}
-        self.favorites: set[str] = set()
         self.hidden: set[str] = set()
         self.settings: dict = dict(DEFAULT_SETTINGS)
         self._load()
+        self.projects_file = _CONFIG_DIR / PROJECTS_FILE
+        self.projects = Projects.load(self.projects_file)
 
     # -- persistence ---------------------------------------------------
 
@@ -79,7 +79,6 @@ class AppState:
                 data = {}
         self.names = dict(data.get("names") or {})
         self.emojis = dict(data.get("emojis") or {})
-        self.favorites = set(data.get("favorites") or [])
         self.hidden = set(data.get("hidden") or [])
         self.settings = {**DEFAULT_SETTINGS, **(data.get("settings") or {})}
 
@@ -88,13 +87,15 @@ class AppState:
         payload = {
             "names": self.names,
             "emojis": self.emojis,
-            "favorites": sorted(self.favorites),
             "hidden": sorted(self.hidden),
             "settings": self.settings,
         }
         tmp = _STATE_FILE.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
         tmp.replace(_STATE_FILE)
+
+    def save_projects(self) -> None:
+        self.projects.save(self.projects_file)
 
     # -- names -----------------------------------------------------------
 
@@ -121,19 +122,6 @@ class AppState:
         else:
             self.emojis.pop(session_id, None)
         self.save()
-
-    # -- favorites ---------------------------------------------------------
-
-    def is_favorite(self, session_id: str) -> bool:
-        return session_id in self.favorites
-
-    def toggle_favorite(self, session_id: str) -> bool:
-        if session_id in self.favorites:
-            self.favorites.discard(session_id)
-        else:
-            self.favorites.add(session_id)
-        self.save()
-        return session_id in self.favorites
 
     # -- hidden ------------------------------------------------------------
 

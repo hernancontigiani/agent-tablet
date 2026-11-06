@@ -2,7 +2,7 @@
 
 `agent-tablet` is a native GTK4 / libadwaita desktop app, written in Python, for working with
 several Claude Code (and Cursor) sessions at once: a session list on the left, the real agent
-running in an embedded VTE terminal on the right, with tabs, split panes, favorites, search and a
+running in an embedded VTE terminal on the right, with tabs, split panes, search and a
 quick switcher. It runs the real `claude` CLI; it does not reimplement the agent.
 
 It started as a fork of [Agent Session Manager](https://github.com/r4nd3l/agent-session-manager)
@@ -37,6 +37,7 @@ what matters from being lost when a plan is deleted.
 | Doc | Open it when |
 |---|---|
 | `docs/ui-verification.md` | Looking at a UI change, or writing a step of `make ui-check` |
+| `docs/projects.md` | Changing projects, tabs or windows, or how a session is started or stopped |
 
 ## Product rules the code must hold
 
@@ -55,6 +56,11 @@ Each one is broken by an ordinary-looking line of code.
 - **A session's name is the one Claude has** (`claude -n`, `/rename`). The app never keeps a second
   name for a session that Claude already named, because the two would drift without warning and
   sessions find each other by that name.
+- **A session belongs to one project at most, runs if and only if it has a tab, and is in at most
+  one tab across every window; a project is open in at most one window.** Each pair of these keeps a
+  session from being open twice, and a session from working where nothing shows it.
+- **The app's own state is JSON in its own config directory** (`state.json`, `projects.json`),
+  written whole through a temporary file.
 - **Nothing is encoded into a session's name**: categories, projects and status are the app's own
   data. A name carrying them breaks messaging between sessions by name.
 - **Nothing leaves the machine.** No telemetry, no update check, no crash reporting. The app makes

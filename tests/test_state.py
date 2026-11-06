@@ -6,13 +6,11 @@ import pytest
 def test_roundtrip(app_state):
     state = app_state.AppState()
     state.set_name("sid-1", "My session")
-    state.toggle_favorite("sid-1")
     state.set_hidden("sid-2", True)
     state.set_setting("scrollback", 5000)
 
     fresh = app_state.AppState()
     assert fresh.get_name("sid-1") == "My session"
-    assert fresh.is_favorite("sid-1")
     assert fresh.is_hidden("sid-2")
     assert fresh.get_setting("scrollback") == 5000
 
@@ -24,10 +22,15 @@ def test_clearing_name_removes_entry(app_state):
     assert app_state.AppState().get_name("sid-1") is None
 
 
-def test_toggle_favorite_returns_new_state(app_state):
+def test_favorites_leave_state_json_on_the_next_save(app_state):
+    """Projects replace favorites; the ones already saved are dropped, not migrated (plan 04)."""
+    app_state._CONFIG_DIR.mkdir(parents=True)
+    app_state._STATE_FILE.write_text(json.dumps({"names": {"a": "x"}, "favorites": ["a"]}), encoding="utf-8")
     state = app_state.AppState()
-    assert state.toggle_favorite("sid") is True
-    assert state.toggle_favorite("sid") is False
+    state.set_name("b", "y")
+    saved = json.loads(app_state._STATE_FILE.read_text(encoding="utf-8"))
+    assert "favorites" not in saved
+    assert saved["names"] == {"a": "x", "b": "y"}
 
 
 def test_defaults_for_unknown_settings(app_state):
@@ -59,7 +62,6 @@ def test_imports_the_original_apps_state_once(app_state, which):
 
     state = app_state.AppState()
     assert state.get_name("sid") == "Carried over"
-    assert state.is_favorite("sid")
     assert app_state._STATE_FILE.exists()  # copied into our own location
     assert (original / "state.json").read_bytes() == before  # the original's file is never written
 
@@ -83,3 +85,12 @@ def test_migrates_legacy_names_file(app_state):
     app_state._LEGACY_NAMES_FILE.write_text(json.dumps({"old-sid": "Old name"}), encoding="utf-8")
     state = app_state.AppState()
     assert state.get_name("old-sid") == "Old name"
+
+
+def test_projects_live_next_to_state_json(app_state):
+    state = app_state.AppState()
+    assert [p.name for p in state.projects.projects] == ["Default"]
+    state.projects.add(state.projects.current, "s1")
+    state.save_projects()
+    assert (app_state._CONFIG_DIR / "projects.json").exists()
+    assert app_state.AppState().projects.projects[0].members == ["s1"]

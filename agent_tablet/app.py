@@ -13,8 +13,11 @@ gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
-from . import themes
+from . import dialogs, themes
+from .i18n import _
+from .layout import Layouts, new_window_project, restore
 from .prefs import apply_color_scheme
+from .projects import ProjectError
 from .state import AppState
 from .store import SessionStore
 from .window import MainWindow
@@ -46,10 +49,19 @@ frame.term-frame { border: none; border-radius: 0; }
 .waiting-badge { color: #e5a50a; }      /* Claude asked a question */
 .interrupted-badge { color: #e01b24; }  /* user stopped Claude mid-task */
 
-/* sidebar sections (spaces / agents / history) */
-.section-title { padding: 6px 8px 2px 14px; min-height: 28px; }
-.section-title button { padding: 0 6px; min-height: 22px; }
-.spaces-panel row.current { background-color: alpha(currentColor, 0.08); }
+.status-dot.stopped {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px alpha(currentColor, 0.35);
+}
+.blocked-badge {
+  background-color: #e01b24;
+  color: white;
+  border-radius: 9px;
+  padding: 0 6px;
+  font-size: smaller;
+  font-weight: bold;
+}
+.project-bar > button { padding: 4px 8px; }
 
 .prefix-pill {
   background-color: @accent_bg_color;
@@ -137,6 +149,7 @@ class App(Adw.Application):
     def __init__(self) -> None:
         # CSM_APP_ID lets a demo instance run alongside the real one (for screenshots).
         super().__init__(application_id=os.environ.get("CSM_APP_ID") or APP_ID)
+        self._quitting = False  # the last window is closing: its tabs going must not erase the layout
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
@@ -163,7 +176,7 @@ class App(Adw.Application):
         self.add_action(focus)
 
         new_window = Gio.SimpleAction.new("new-window", None)
-        new_window.connect("activate", lambda *_: self._new_window())
+        new_window.connect("activate", lambda *_: self._open_new_window())
         self.add_action(new_window)
         self.set_accels_for_action("app.new-window", ["<Control><Shift>n"])
 
@@ -173,32 +186,105 @@ class App(Adw.Application):
             if isinstance(window, MainWindow):
                 window.apply_preferences()
 
-    def _new_window(self) -> MainWindow:
-        window = MainWindow(application=self, state=self.state, store=self.store)
+    def _new_window(self, project_id: str | None = None) -> MainWindow:
+        window = MainWindow(application=self, state=self.state, store=self.store, project_id=project_id)
         window.present()
         return window
 
+    # -- the windows and what each one holds -----------------------------------------------
+
+    def windows(self) -> list[MainWindow]:
+        return [w for w in self.get_windows() if isinstance(w, MainWindow)]
+
+    def layouts(self, but: MainWindow | None = None) -> Layouts:
+        layouts = Layouts()
+        for window in self.windows():
+            if window is not but and not window.closing:
+                layouts.add_window(window, window.project_id, window.snapshot())
+        return layouts
+
+    def window_holding(self, project_id: str, but: MainWindow | None = None) -> MainWindow | None:
+        holder = self.layouts(but=but).window_of(project_id)
+        return holder if isinstance(holder, MainWindow) else None
+
+    def held_elsewhere(self, window: MainWindow) -> set[str]:
+        return {pid for w in self.layouts(but=window).windows.values() for pid in w.projects}
+
+    def all_states(self) -> dict[str, str]:
+        states: dict[str, str] = {}
+        for window in self.windows():
+            states.update(window._session_states())
+        return states
+
+    def save_layout(self) -> None:
+        if self._quitting:
+            return
+        self.state.projects.windows = self.layouts().to_list()
+        self.state.save_projects()
+
+    def window_closing(self, window: MainWindow) -> None:
+        """A window closing on its own leaves the saved layout; the last one keeps it whole."""
+        others = [w for w in self.windows() if w is not window and not w.closing]
+        layouts = self.layouts(but=window) if others else Layouts()
+        if not others:
+            layouts.add_window(window, window.project_id, window.snapshot())
+        self.state.projects.windows = layouts.to_list()
+        self.state.save_projects()
+        if not others:
+            self._quitting = True
+
+    def _open_new_window(self) -> None:
+        project_id = new_window_project([p.id for p in self.state.projects.projects], self.layouts())
+        if project_id is not None:
+            self._new_window(project_id)
+            return
+        parent = self.get_active_window()
+
+        def create(name: str) -> None:
+            try:
+                project = self.state.projects.create(name)
+            except ProjectError as error:
+                dialogs.error_dialog(parent, _("No new window"), str(error))
+                return
+            self.state.save_projects()
+            self._new_window(project.id)
+
+        if parent is not None:
+            dialogs.text_dialog(
+                parent,
+                _("New project"),
+                _("Every project is open in a window already; a new window needs a new project."),
+                "",
+                _("Name"),
+                create,
+            )
+
     def _on_focus_session(self, _action, param: GLib.Variant) -> None:
-        window = self.get_active_window()
+        session_id = param.get_string()
+        window = next((w for w in self.windows() if session_id in w._pages), None) or self.get_active_window()
         if window is None:
             return
         window.present()
-        session_id = param.get_string()
         if session_id and isinstance(window, MainWindow):
             window.focus_session(session_id)
 
     def do_activate(self) -> None:
         window = self.get_active_window()
-        if window is None:
-            window = self._new_window()
-        window.present()
+        if window is not None:
+            window.present()
+            return
+        projects = self.state.projects
+        members = {p.id: set(p.members) for p in projects.projects}
+        reopen = bool(self.state.get_setting("reopen_tabs"))
+        for layout in restore(projects.windows, members, projects.current, reopen):
+            self._new_window(layout.current).restore_when_ready(layout)
 
 
 def main() -> int:
     from . import i18n, log
     from .state import AppState
 
+    log.configure(os.environ)
     i18n.init(AppState().get_setting("language"))
     app = App()
     return app.run(sys.argv)
-    log.configure(os.environ)

@@ -19,7 +19,7 @@
       <li>Spaces per project folder, with per-space tabs and split panes</li>
       <li>Agent states: working, blocked, done, or idle, with notifications</li>
       <li>A Ctrl+B prefix for panes, tabs, spaces, and a go-to-agent picker</li>
-      <li>Session history grouped by project, with favorites, search, and live updates</li>
+      <li>Session history grouped by project, with search and live updates</li>
       <li>Session details: message counts, models, token usage</li>
       <li>Catppuccin terminal-workspace look with theme variants, or classic Adwaita</li>
     </ul>

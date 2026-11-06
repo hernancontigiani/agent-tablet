@@ -223,3 +223,36 @@ def test_answer_keystrokes_fallback_cases():
     assert claude.answer_keystrokes(two, 0) is None  # multiple questions → terminal
     # Cursor can't auto-answer at all
     assert CursorProvider().answer_keystrokes([{"question": "x", "options": [{"label": "a"}]}], 0) is None
+
+
+def test_a_new_session_command_carries_its_id_and_name(monkeypatch):
+    """The app picks the new session's id, so it never guesses which transcript is the new one."""
+    monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
+    assert ClaudeProvider().new_command(session_id="u-1", name="lm plan") == (
+        "/usr/bin/claude --session-id u-1 -n 'lm plan'"
+    )
+    # Cursor's CLI takes neither flag; the app does not invent them for it.
+    assert CursorProvider().new_command(session_id="u-1", name="lm plan") == "/usr/bin/cursor-agent"
+
+
+def test_a_fork_takes_the_id_the_app_chose(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
+    assert ClaudeProvider().resume_command("abc", fork=True, new_id="u-2") == (
+        "/usr/bin/claude --resume abc --fork-session --session-id u-2"
+    )
+    assert ClaudeProvider().resume_command("abc", new_id="u-2") == "/usr/bin/claude --resume abc"
+
+
+def test_a_sessions_transcript_path_is_known_from_its_folder_and_id(projects_dir):
+    root, _ids = projects_dir
+    path = ClaudeProvider().transcript_path("/home/user/my_app", "u-1")
+    assert path == root / "-home-user-my-app" / "u-1.jsonl"
+    assert CursorProvider().transcript_path("/home/user/my_app", "u-1") is None
+
+
+def test_the_typed_command_ends_the_shell_with_the_agent():
+    """The tab closes when the agent exits (/exit, Ctrl+D), because the shell ends with it; a start
+    that fails leaves the shell, and its error, on screen."""
+    from agent_tablet.providers import typed_command
+
+    assert typed_command("/usr/bin/claude --resume abc") == "/usr/bin/claude --resume abc && exit"

@@ -59,6 +59,13 @@ ambiguous one lists the candidates.
   after one that used a dialog (`check.py`).
 - **Dialogs come out narrower than on the desktop**, so their text wraps (the About title on two
   lines, Preferences' labels letter by letter). Do not judge a dialog's width from Broadway.
+- **Once a terminal tab is up, popovers stop opening, and after a dialog, clicks stop reaching the
+  window** (seen 2026-11-06). A step that opens a tab runs last, after `restart_app()`.
+- **A third `restart_app()` in one run fails to reach the display** ("A connection to the bus
+  can't be made", seen twice on 2026-11-06): a walk restarts the app twice at most.
+- **The walk's `claude` is a stand-in** that `tools/ui/session.py` puts first in `PATH`: it waits
+  for `/exit`, so a tab opens without logging in anywhere. The real CLI with the session's empty
+  `HOME` would start its login.
 - **A killed `gtk4-broadwayd` leaves its socket file**; a display counts as taken only if something
   listens on it, and a session removes its own socket on exit.
 

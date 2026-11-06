@@ -171,23 +171,10 @@ class PreferencesDialog(Adw.PreferencesDialog):
         appearance_group.add(self._theme_expander)
         page.add(appearance_group)
 
-        sidebar_group = Adw.PreferencesGroup(
-            title=_("Sidebar"), description=_("Which sections the sidebar shows")
-        )
-        for key, title, subtitle in (
-            ("spaces", _("Spaces"), _("Project folders with open tabs")),
-            ("agents", _("Agents"), _("Every running agent, across spaces")),
-            ("history", _("History"), _("Past sessions, with search and favorites")),
-        ):
-            row = Adw.ActionRow(title=title, subtitle=subtitle)
-            check = Gtk.CheckButton(active=bool(state.get_setting(f"sidebar_show_{key}")))
-            check.connect("toggled", self._on_section_toggled, key)
-            row.add_prefix(check)
-            row.set_activatable_widget(check)
-            sidebar_group.add(row)
+        sidebar_group = Adw.PreferencesGroup(title=_("Add session"))
         self._folder_path_row = Adw.SwitchRow(
             title=_("Show folder path"),
-            subtitle=_("Show each session's project folder path in the sidebar"),
+            subtitle=_("Show each session's folder path in the session browser"),
         )
         self._folder_path_row.set_active(bool(state.get_setting("show_folder_path")))
         self._folder_path_row.connect("notify::active", self._on_folder_path_changed)
@@ -240,6 +227,18 @@ class PreferencesDialog(Adw.PreferencesDialog):
         notif_group.add(sound_row)
         page.add(notif_group)
 
+        start_group = Adw.PreferencesGroup(title=_("Start"))
+        reopen_row = Adw.SwitchRow(
+            title=_("Reopen tabs on start"),
+            subtitle=_("Resume the sessions that were in tabs, in their windows, with their splits"),
+        )
+        reopen_row.set_active(bool(state.get_setting("reopen_tabs")))
+        reopen_row.connect(
+            "notify::active", lambda row, _p: self._state.set_setting("reopen_tabs", row.get_active())
+        )
+        start_group.add(reopen_row)
+        page.add(start_group)
+
         self.add(page)
 
     def _on_font_changed(self, button: Gtk.FontDialogButton, _pspec) -> None:
@@ -281,10 +280,6 @@ class PreferencesDialog(Adw.PreferencesDialog):
 
     def _on_notify_changed(self, row: Adw.SwitchRow, _pspec) -> None:
         self._state.set_setting("notify_idle", row.get_active())
-        self._on_change()
-
-    def _on_section_toggled(self, check: Gtk.CheckButton, key: str) -> None:
-        self._state.set_setting(f"sidebar_show_{key}", check.get_active())
         self._on_change()
 
     def _on_folder_path_changed(self, row: Adw.SwitchRow, _pspec) -> None:

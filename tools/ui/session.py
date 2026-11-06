@@ -76,6 +76,14 @@ def _port_taken(port: int) -> bool:
         return probe.connect_ex(("127.0.0.1", port)) == 0
 
 
+# The walk's "claude": the app finds an agent and opens tabs for it, but nothing logs in or reaches
+# the network. It waits for /exit, as the real one does.
+FAKE_AGENT = """#!/bin/sh
+echo "demo agent: type /exit to leave"
+while read -r line; do [ "$line" = "/exit" ] && exit 0; done
+"""
+
+
 def build_env(base: Path, display: int, base_env: Mapping[str, str]) -> dict[str, str]:
     env = dict(base_env)
     env.update(
@@ -96,6 +104,7 @@ def build_env(base: Path, display: int, base_env: Mapping[str, str]) -> dict[str
             "CSM_APP_ID": DEV_APP_ID,
             "AT_UI_TREE": str(base / "tree.json"),
             "PYTHONPATH": str(REPO),
+            "PATH": f"{base / 'bin'}:{base_env.get('PATH', '')}",
         }
     )
     return env
@@ -109,6 +118,13 @@ def write_isolated_state(config_home: Path, theme: str = "dark") -> None:
     data = json.loads(state_file.read_text(encoding="utf-8")) if state_file.exists() else {}
     data.setdefault("settings", {})["color_scheme"] = theme
     state_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def write_fake_agent(bin_dir: Path) -> None:
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    fake = bin_dir / "claude"
+    fake.write_text(FAKE_AGENT, encoding="utf-8")
+    fake.chmod(0o755)
 
 
 class ProcessGroup:
@@ -218,6 +234,7 @@ class UiSession:
         else:
             (self.base / "projects").mkdir(exist_ok=True)
         write_isolated_state(self.base / "config", self.theme)
+        write_fake_agent(self.base / "bin")
 
     def _start_broadway(self) -> None:
         socket_path(self.display).unlink(missing_ok=True)  # free per allocate(): nobody listens

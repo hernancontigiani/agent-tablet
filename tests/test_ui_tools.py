@@ -175,3 +175,12 @@ def test_a_browser_that_fails_to_close_does_not_orphan_the_app(tmp_path, monkeyp
     while _alive(child.pid) and time.monotonic() < deadline:
         time.sleep(0.05)
     assert not _alive(child.pid)
+
+
+def test_the_isolated_app_runs_the_fake_agent_first(tmp_path):
+    """A tab opened by the walk runs a stand-in: a real agent with an empty HOME would start its
+    login and reach the network."""
+    env = session.build_env(tmp_path, display=20, base_env={"PATH": "/usr/bin:/bin"})
+    session.write_fake_agent(tmp_path / "bin")
+    assert env["PATH"].split(":") == [str(tmp_path / "bin"), "/usr/bin", "/bin"]
+    assert (tmp_path / "bin" / "claude").stat().st_mode & 0o111

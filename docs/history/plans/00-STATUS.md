@@ -40,6 +40,12 @@
 > Left §2 on 2026-11-06: decided (§1 1.18).
 | 2.8 | Several windows, one project in each (two monitors): allowed or not, and with which limits | Human | Plan 04 blocks |
 
+> Left §2 on 2026-11-06: decided (§1 1.19).
+| 2.10 | Renaming and deleting a project. Recommended: any can be renamed; any but the last can be deleted, stopping its running sessions after a confirmation | Human | Plan 04 B1, B4 (written with the recommendation) |
+
+> Left §2 on 2026-11-06: answered — the format is as assumed (plan 01, B2's log).
+| 2.2 | The real format of the `custom-title` entry, checked against the human's own transcripts | Executor of B2 | B2 |
+
 ## 3. Roadmap and plans in flight
 
 > Left §3 on 2026-11-05.
@@ -136,6 +142,12 @@ session's safety check before it ran.
 
 > Left §3 on 2026-11-06: plan 04 written.
 | 6 | `04-projects-and-tabs.md` (projects, the session list, tabs; replaces B3) | Stub 2026-11-06, every product decision taken — needs `/design-plan` for its blocks; after B2 |
+
+> Left §3 on 2026-11-06: B2 built.
+| 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute |
+
+> Left §3 on 2026-11-06: plan 04 built.
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Written 2026-11-06, ready to execute after B2; its B0 needs the human's go-ahead |
 
 ## 4. Next plan number
 

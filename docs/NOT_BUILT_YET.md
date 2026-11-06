@@ -31,3 +31,34 @@ targets, given the Python 3.12 floor.
 The original's VitePress site was removed with the fork; `README.md` is the user guide.
 
 **Trigger:** the README stops fitting on a few screens, or someone outside the human uses the app.
+
+### Sessions that survive quitting the app
+
+Quitting stops every agent; the next start resumes the ones that were in tabs. Keeping them alive
+would need a process supervisor (tmux, dtach) to install and reason about.
+
+**Trigger:** the human loses work to a quit, or wants an agent to keep working with the app closed.
+First question: does resuming lose anything the agent had not written to its transcript?
+
+### Dragging sessions and tabs
+
+"Open beside" from a row's menu puts a session in a tab's second pane; rows and tabs are not
+reordered by dragging.
+
+**Trigger:** the human misses dragging a row onto a tab, or reordering rows. First question: is the
+order of a project's sessions worth saving, or is the group enough?
+
+### More than two panes in a tab
+
+Two panes are what the human uses; more is unreadable at a laptop's width.
+
+**Trigger:** a workflow that needs three agents in view at once. First question: a third pane, or a
+second window on another monitor?
+
+### Choosing which monitor a window opens on
+
+On Wayland the app cannot place its windows; reopened windows land where the system puts them.
+
+**Trigger:** the human rearranges windows by hand after every start. First question: does the
+compositor offer a portal for it by then?
+

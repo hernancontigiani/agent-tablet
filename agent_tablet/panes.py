@@ -1,9 +1,7 @@
-"""Split panes inside a tab, as in herdr: a tree of Gtk.Paned with terminal
-panes as leaves.
+"""Split panes inside a tab: at most two terminal panes, side by side or stacked.
 
-The tab's original terminal is its *primary* pane: it carries the session,
-the agent state and the tab's lifetime (the window only ever talks to it).
-Extra panes are shells in the same folder; closing one folds its split away.
+The *primary* pane names the tab and carries its emoji; either pane may hold a session or a shell.
+Closing one leaves the other, which becomes the primary.
 """
 
 from __future__ import annotations
@@ -13,6 +11,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk
 
+from .layout import MAX_PANES
 from .terminal import TerminalTab
 
 # focus_direction() names → (axis, sign)
@@ -66,9 +65,11 @@ class PaneContainer(Gtk.Box):
 
     # -- operations -----------------------------------------------------------
 
-    def split(self, pane: TerminalTab, orientation: Gtk.Orientation) -> None:
+    def split(self, pane: TerminalTab, orientation: Gtk.Orientation) -> bool:
         """Put `pane` next to the focused one: HORIZONTAL = side by side
-        (herdr's split right), VERTICAL = stacked (split down)."""
+        (herdr's split right), VERTICAL = stacked (split down). False when the tab is full."""
+        if len(self.panes()) >= MAX_PANES:
+            return False
         self.unzoom()
         target = self.focused
         paned = Gtk.Paned(orientation=orientation, wide_handle=False)
@@ -88,11 +89,17 @@ class PaneContainer(Gtk.Box):
 
         GLib.idle_add(halve)
         GLib.idle_add(pane.grab_terminal_focus)
+        return True
+
+    def toggle_orientation(self) -> None:
+        paned = self.get_first_child()
+        if isinstance(paned, Gtk.Paned):
+            vertical = paned.get_orientation() == Gtk.Orientation.VERTICAL
+            paned.set_orientation(Gtk.Orientation.HORIZONTAL if vertical else Gtk.Orientation.VERTICAL)
 
     def close(self, pane: TerminalTab) -> None:
-        """Remove a non-primary pane; its sibling takes the split's place."""
-        if pane is self.primary:
-            return
+        """Remove a pane of a split; its sibling takes the split's place, and becomes the primary
+        if the primary left."""
         self.unzoom()
         paned = pane.get_parent()
         if not isinstance(paned, Gtk.Paned):
@@ -105,6 +112,8 @@ class PaneContainer(Gtk.Box):
         paned.set_end_child(None)
         assert sibling is not None  # a split always holds two panes
         self._replace(paned, sibling)
+        if pane is self.primary and isinstance(sibling, TerminalTab):
+            self.primary = sibling
         self._focused = sibling if isinstance(sibling, TerminalTab) else self.panes()[0]
         GLib.idle_add(self.focused.grab_terminal_focus)
 

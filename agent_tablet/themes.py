@@ -377,7 +377,6 @@ button.strip-tab.selected label { opacity: 1; }
 .app-sidebar, .app-sidebar toolbarview, .app-sidebar list,
 .app-sidebar scrolledwindow { background-color: @tsm_mantle; }
 .app-sidebar row { color: @tsm_subtext0; border-radius: 0; }
-.spaces-panel row.current { background-color: @window_bg_color; color: @window_fg_color; }
 .app-sidebar .dim-label { color: @tsm_overlay0; opacity: 1; }
 .app-sidebar entry { background-color: @tsm_surface0; }
 .status-dot.open { background-color: transparent; box-shadow: inset 0 0 0 1.5px @tsm_green; }
@@ -390,6 +389,8 @@ button.strip-tab.selected label { opacity: 1; }
   background-color: @tsm_red;
   box-shadow: 0 0 0 2px alpha(@tsm_red, 0.35);
 }
+.status-dot.stopped { background-color: transparent; box-shadow: inset 0 0 0 1.5px @tsm_overlay0; }
+.blocked-badge { background-color: @tsm_red; color: @tsm_mantle; }
 
 /* each terminal sits in a thin frame labelled with its agent */
 frame.term-frame {

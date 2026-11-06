@@ -104,3 +104,21 @@ def test_the_suite_never_sees_the_real_home():
     for seen in (Path.home(), state._CONFIG_BASE):
         assert not seen.is_relative_to(real_home), seen
         assert "agent-tablet-tests-" in str(seen), seen
+
+
+def test_projects_and_layout_stay_free_of_gtk():
+    """Membership, tabs and windows are decided in plain data, so every rule about them is tested
+    without a display; the widgets only show what these modules decide."""
+    offenders = []
+    for path, module in _modules():
+        if path.name not in ("projects.py", "layout.py"):
+            continue
+        for node in ast.walk(module):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            offenders += [f"{path.name}:{node.lineno} {n}" for n in names if n.split(".")[0] == "gi"]
+    assert offenders == []

@@ -192,7 +192,10 @@ terminal and its file appears under `~/.cache/agent-tablet/sessions/`.
 ### B4 — The ring in the row and on the tab (after plan 04)
 
 - [ ] `contextring` in `projectlist.py`'s row and `spaces.py`'s tabs; `context.py` created by the
-      app and passed down.
+      app and passed down. Where, as plan 04 built them (verified 2026-11-06): the ring goes in
+      `projectlist._SessionRow`, next to the name; on the tab, `spaces.TabInfo` gains a reading the
+      way it carries `color` (`spaces.py:31`, drawn at `:102`); per-session state comes from
+      `MainWindow._session_states()` / `App.all_states()`, the pattern to mirror for readings.
 - [ ] `scripts/make_demo_data.py` writes session files for two demo sessions (one at 65 %, one
       estimated); `tools/ui/check.py` gains a step: the two rings, with their tooltips.
 

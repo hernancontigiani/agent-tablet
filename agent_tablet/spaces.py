@@ -1,14 +1,11 @@
-"""Terminal-workspace navigation: the "spaces" / "agents" sidebar panel and
-the per-space tab strip.
+"""The tab strip: the tabs of the project a window shows.
 
-A space is a project folder with open tabs; the tab strip only shows the
-current space's tabs. The window owns the pages and pushes snapshots in via
-update(); these widgets only render and emit what the user picked.
+The window owns the pages and pushes snapshots in via update(); the strip only renders and emits
+what the user picked.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -18,31 +15,20 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, GObject, Gtk, Pango
 
-from .agentstate import rollup
 from .i18n import _
-from .sessions import git_branch
 
 _ELLIPSIZE_END = Pango.EllipsizeMode.END
-
-
-class _KeyedRow(Gtk.ListBoxRow):
-    """A row that carries what activating it selects: a space's path or a tab's page."""
-
-    key: object = None
 
 
 @dataclass
 class TabInfo:
     page: Adw.TabPage
     title: str
-    space: str  # project folder
+    space: str  # the id of the project the tab belongs to
     agent: str  # e.g. "claude", "cursor", "replay"
     status: str  # agent state: "working" | "blocked" | "done" | "idle"
     emoji: str = ""  # the tab's emoji, also the start of its title
-
-
-def space_name(space: str) -> str:
-    return GLib.path_get_basename(space) or space
+    color: str = ""  # its sessions' group color, when they share one
 
 
 def _dot(status: str) -> Gtk.Widget:
@@ -53,156 +39,8 @@ def _dot(status: str) -> Gtk.Widget:
     return dot
 
 
-def section_shown(state, key: str) -> bool:
-    """Whether a sidebar section is switched on in the preferences."""
-    return bool(state.get_setting(f"sidebar_show_{key}"))
-
-
-class SectionHeader(Gtk.Box):
-    """A sidebar section title; clicking the arrow + title folds the section.
-    The folded state is saved, and on_toggle() lets the owner re-show its
-    widgets (visibility also depends on things only the owner knows)."""
-
-    def __init__(
-        self, key: str, text: str, state, on_toggle: Callable[[], None], suffix: Gtk.Widget | None = None
-    ) -> None:
-        super().__init__(spacing=6)
-        self.add_css_class("section-title")
-        self._key = key
-        self._state = state
-        self._on_toggle = on_toggle
-
-        toggle = Gtk.Box(spacing=4, hexpand=True)
-        toggle.set_cursor_from_name("pointer")
-        self._arrow = Gtk.Image()
-        self._arrow.add_css_class("dim-label")
-        toggle.append(self._arrow)
-        label = Gtk.Label(label=text, xalign=0.0, hexpand=True)
-        label.add_css_class("dim-label")
-        toggle.append(label)
-        click = Gtk.GestureClick()
-        click.connect("released", lambda *_: self._toggle())
-        toggle.add_controller(click)
-        self.append(toggle)
-        if suffix is not None:
-            self.append(suffix)
-        self._sync_arrow()
-
-    @property
-    def collapsed(self) -> bool:
-        return self._key in (self._state.get_setting("sidebar_collapsed") or [])
-
-    def _toggle(self) -> None:
-        collapsed = set(self._state.get_setting("sidebar_collapsed") or []) ^ {self._key}
-        self._state.set_setting("sidebar_collapsed", sorted(collapsed))
-        self._sync_arrow()
-        self._on_toggle()
-
-    def _sync_arrow(self) -> None:
-        self._arrow.set_from_icon_name("pan-end-symbolic" if self.collapsed else "pan-down-symbolic")
-
-
-class SpacesPanel(Gtk.Box):
-    """Top of the sidebar: the open spaces, then every running agent."""
-
-    __gsignals__: ClassVar[dict] = {
-        "select-space": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-        "select-page": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
-    }
-
-    def __init__(self, state) -> None:
-        super().__init__(orientation=Gtk.Orientation.VERTICAL)
-        self.add_css_class("spaces-panel")
-        self._state = state
-        self._has_tabs = False
-
-        new_btn = Gtk.Button(icon_name="list-add-symbolic")
-        new_btn.add_css_class("flat")
-        new_btn.set_tooltip_text(_("New space: start an agent in a folder"))
-        new_btn.set_action_name("win.new-space")
-        self._spaces_header = SectionHeader("spaces", _("spaces"), state, self.apply_sections, new_btn)
-        self.append(self._spaces_header)
-
-        self._spaces = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        self._spaces.add_css_class("navigation-sidebar")
-        self._spaces.connect("row-activated", lambda _l, row: self.emit("select-space", row.key))
-        self.append(self._spaces)
-
-        self._agents_header = SectionHeader("agents", _("agents"), state, self.apply_sections)
-        self.append(self._agents_header)
-        self._agents = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
-        self._agents.add_css_class("navigation-sidebar")
-        self._agents.connect("row-activated", lambda _l, row: self.emit("select-page", row.key))
-        self.append(self._agents)
-        self.apply_sections()
-
-    def apply_sections(self) -> None:
-        """Show / fold the sections per the preferences and title clicks."""
-        show_spaces = section_shown(self._state, "spaces")
-        show_agents = section_shown(self._state, "agents")
-        self._spaces_header.set_visible(show_spaces)
-        self._spaces.set_visible(show_spaces and not self._spaces_header.collapsed)
-        self._agents_header.set_visible(show_agents and self._has_tabs)
-        self._agents.set_visible(show_agents and self._has_tabs and not self._agents_header.collapsed)
-        self.set_visible(show_spaces or (show_agents and self._has_tabs))
-
-    def update(self, tabs: list[TabInfo], current: TabInfo | None) -> None:
-        self._spaces.remove_all()
-        self._agents.remove_all()
-        spaces: dict[str, list[TabInfo]] = {}
-        for tab in tabs:
-            spaces.setdefault(tab.space, []).append(tab)
-
-        if not spaces:
-            hint = Gtk.Label(label=_("no open spaces"), xalign=0.0)
-            hint.add_css_class("dim-label")
-            hint.set_margin_start(12)
-            hint.set_margin_bottom(6)
-            self._spaces.append(hint)
-            hint_row = hint.get_parent()
-            if isinstance(hint_row, Gtk.ListBoxRow):
-                hint_row.set_activatable(False)
-        for space, members in spaces.items():
-            # a blocked agent makes its space blocked, a working one active…
-            status = rollup([t.status for t in members])
-            branch = git_branch(space)
-            row = self._row(space_name(space), branch, status, current is not None and current.space == space)
-            row.key = space
-            row.set_tooltip_text(space)
-            self._spaces.append(row)
-
-        self._has_tabs = bool(tabs)
-        self.apply_sections()
-        for tab in tabs:
-            name = space_name(tab.space)  # herdr-style "space · tab"
-            title = name if tab.title == name else f"{name} · {tab.title}"
-            row = self._row(title, tab.agent, tab.status, current is not None and current.page is tab.page)
-            row.key = tab.page
-            self._agents.append(row)
-
-    @staticmethod
-    def _row(title: str, subtitle: str, status: str, is_current: bool) -> _KeyedRow:
-        top = Gtk.Box(spacing=8)
-        top.append(_dot(status))
-        label = Gtk.Label(label=title, xalign=0.0, hexpand=True)
-        label.set_ellipsize(_ELLIPSIZE_END)
-        top.append(label)
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        box.append(top)
-        if subtitle:
-            sub = Gtk.Label(label=subtitle, xalign=0.0)
-            sub.set_ellipsize(_ELLIPSIZE_END)
-            sub.add_css_class("dim-label")
-            sub.set_margin_start(16)  # align under the title, past the dot
-            box.append(sub)
-        row = _KeyedRow(child=box)
-        if is_current:
-            row.add_css_class("current")
-        return row
-
-
 class TabStrip(Gtk.Box):
-    """Flat tab row for the current space, with a trailing "+"."""
+    """Flat tab row for the current project, with a trailing "+"."""
 
     __gsignals__: ClassVar[dict] = {
         "select": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
@@ -225,7 +63,7 @@ class TabStrip(Gtk.Box):
         self.append(self._prefix)
         add = Gtk.Button(label="+")
         add.add_css_class("flat")
-        add.set_tooltip_text(_("New agent in this space"))
+        add.set_tooltip_text(_("New session in this project"))
         add.set_action_name("win.new-in-space")
         self._tabs_add = add
         self._buttons: dict[Adw.TabPage, Gtk.Widget] = {}
@@ -261,6 +99,10 @@ class TabStrip(Gtk.Box):
 
     def _tab(self, tab: TabInfo, selected: bool) -> Gtk.Widget:
         box = Gtk.Box(spacing=6)
+        if tab.color:
+            swatch = Gtk.Label()
+            swatch.set_markup(f'<span foreground="{GLib.markup_escape_text(tab.color)}">●</span>')
+            box.append(swatch)
         if tab.status != "idle":
             box.append(_dot(tab.status))
         title = tab.title

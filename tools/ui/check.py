@@ -18,8 +18,9 @@ from tools.ui import locate
 from tools.ui.session import THEMES, UiSession
 
 APP_TITLE = "Agent Tablet"
-DEMO_PROJECTS = 5  # scripts/make_demo_data.py writes five projects
-FAVORITES = "FAVORITES"
+CLAUDE_NAMED = "todo-api-tests"  # scripts/make_demo_data.py names it inside Claude
+DEMO_PROJECT = "Client work"  # scripts/make_demo_data.py: the current project, mixing two folders
+GROUP = "api pair"  # its group
 
 
 class StepFailed(AssertionError):
@@ -41,27 +42,71 @@ def step_title(ui: UiSession, shot: Callable[[], None]) -> str:
     return f"window {APP_TITLE!r}"
 
 
-def step_history(ui: UiSession, shot: Callable[[], None]) -> str:
-    groups = _texts(ui.tree(), "caption-heading")
-    projects = [name for name in groups if name != FAVORITES]
-    _expect(FAVORITES in groups, f"no {FAVORITES} group; groups: {groups}")
-    _expect(
-        len(projects) >= DEMO_PROJECTS,
-        f"{len(projects)} project groups, expected at least {DEMO_PROJECTS}: {projects}",
-    )
-    return f"{len(projects)} projects + favorites"
+def _widgets(tree: list[dict]) -> list[dict]:
+    return [widget for window in tree for widget in window["widgets"]]
 
 
-def step_search(ui: UiSession, shot: Callable[[], None]) -> str:
-    ui.restart_app()  # a fresh process: Broadway's input is unreliable after a dialog was used
-    ui.click(type="SearchEntry")
-    ui.type("jwt")
-    sessions = _texts(ui.settle(), "heading")
-    _expect(sessions == ["JWT auth"], f"after searching 'jwt' the list shows {sessions}")
+def step_project_list(ui: UiSession, shot: Callable[[], None]) -> str:
+    tree = ui.settle()
+    names = _texts(tree, "heading")
+    for expected in (CLAUDE_NAMED, "JWT auth", "Homepage redesign"):
+        _expect(expected in names, f"{expected!r} is not in the project's list: {names}")
+    headings = _texts(tree, "caption-heading")
+    _expect(GROUP in headings, f"no {GROUP!r} group heading: {headings}")
+    folders = set(_texts(tree, "caption"))
+    _expect({"todo-api", "portfolio-website"} <= folders, f"the mixed project shows folders {folders}")
     shot()
-    ui.key("Control+a")
-    ui.key("Backspace")
-    return "'jwt' leaves only 'JWT auth'"
+    return f"{len(names)} sessions, the {GROUP!r} group, folder names shown"
+
+
+def step_project_dropdown(ui: UiSession, shot: Callable[[], None]) -> str:
+    ui.restart_app()  # a fresh process: Broadway's popovers stop opening after a dialog was used
+    ui.click(type="Label", text=DEMO_PROJECT)
+    labels = {w.get("label") for w in _widgets(ui.settle())}
+    for expected in ("Default", "Dotfiles"):
+        _expect(
+            expected in labels, f"the dropdown does not show {expected!r}: {sorted(filter(None, labels))}"
+        )
+    shot()
+    ui.click(type="Label", text="Dotfiles")
+    names = _texts(ui.settle(), "heading")
+    _expect(any("neovim" in n for n in names), f"Dotfiles shows {names}")
+    folders = _texts(ui.tree(), "caption")
+    _expect("dotfiles" not in folders, f"a single-folder project still shows its folder: {folders}")
+    ui.click(type="Label", text="Dotfiles")  # the dropdown's face now names it
+    ui.click(type="Label", text=DEMO_PROJECT)
+    ui.settle()
+    return "the dropdown lists the projects; switching shows each one's sessions"
+
+
+def step_open_tab(ui: UiSession, shot: Callable[[], None]) -> str:
+    # The walk's PATH starts with a stand-in "claude", so the tab runs without logging in anywhere.
+    # Under Broadway, popovers stop opening once a terminal is up, so "Open beside" is checked by hand.
+    # A third restart in one run cannot reach the display, so reopening on start is checked by hand.
+    ui.restart_app()  # a fresh process: the dialog before took the popovers with it
+    ui.click(type="Button", text="Actions for JWT auth")
+    ui.click(type="Label", text="Open")
+    tabs = [w.get("label", "") for w in _widgets(ui.settle()) if "JWT auth" in (w.get("label") or "")]
+    _expect(len(tabs) >= 2, f"no tab for 'JWT auth' next to its row: {tabs}")
+    shot()
+    return "a session opens in a tab of its project"
+
+
+def step_add_session(ui: UiSession, shot: Callable[[], None]) -> str:
+    ui.click(type="Button", text="Add session")
+    tree = ui.settle()
+    types = {w["type"] for w in _widgets(tree)}
+    _expect(
+        "AddSessionDialog" in types, f"the Add session button opened no AddSessionDialog: {sorted(types)}"
+    )
+    labels = {w.get("label") for w in _widgets(tree)}
+    for expected in ("Existing", "New", "TODO-API", "DOTFILES"):
+        _expect(expected in labels, f"the dialog does not show {expected!r}")
+    # Under Broadway, clicks inside this dialog do not reach it after the earlier steps' dialogs and
+    # popovers; adding, moving and the New page are checked by hand.
+    shot()
+    _close_dialog(ui, "AddSessionDialog")
+    return "the dialog opens on Existing, with the history by folder and a New page"
 
 
 def _menu_is_open(tree: list[dict]) -> bool:
@@ -121,10 +166,12 @@ def step_no_traceback(ui: UiSession, shot: Callable[[], None]) -> str:
 # a dialog goes first, and the ones that act inside the app come after the last menu they need.
 STEPS = (
     ("title", step_title),
-    ("history", step_history),
+    ("project-list", step_project_list),
     ("about", step_about),
     ("preferences", step_preferences),
-    ("search", step_search),
+    ("project-dropdown", step_project_dropdown),
+    ("add-session", step_add_session),
+    ("open-tab", step_open_tab),
     ("no-traceback", step_no_traceback),
 )
 

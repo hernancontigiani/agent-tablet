@@ -40,6 +40,8 @@ class Session:
     size: int = 0  # transcript size in bytes
     state: str = ""  # "" or "waiting" (the agent's last message was a question)
     provider: str = "claude"  # provider id (see providers.py)
+    claude_name: str = ""  # the name given with `claude -n` or `/rename`
+    ai_title: str = ""  # the title Claude generated for the conversation
 
     @property
     def project_name(self) -> str:
@@ -50,6 +52,59 @@ class Session:
     @property
     def last_active(self) -> datetime:
         return datetime.fromtimestamp(self.mtime)
+
+
+def session_title(session: Session, app_name: str | None) -> str:
+    """Claude's name first: sessions find each other by it, so a name kept by the app could only
+    drift from it. The app's own name is for sessions Claude never named."""
+    return session.claude_name or app_name or session.ai_title or session.preview or session.session_id[:8]
+
+
+@dataclass
+class TitleScan:
+    offset: int  # bytes read, always at the end of a complete line
+    claude_name: str
+    ai_title: str
+
+
+# Per transcript: how far it was read and what was found. A rename is appended anywhere in a file
+# that can be many MB, so each refresh reads only what was appended since.
+TITLE_SCANS: dict[Path, TitleScan] = {}
+
+
+def read_titles(path: Path) -> tuple[str, str]:
+    """(Claude's name, Claude's generated title), each the last one in the transcript."""
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return "", ""
+    scan = TITLE_SCANS.get(path)
+    if scan is None or size < scan.offset:
+        scan = TitleScan(0, "", "")
+    if size > scan.offset:
+        try:
+            with path.open("rb") as fh:
+                fh.seek(scan.offset)
+                for line in fh:
+                    if not line.endswith(b"\n"):
+                        break  # still being written: read it whole next time
+                    scan.offset += len(line)
+                    if b'"custom-title"' not in line and b'"ai-title"' not in line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("type") == "custom-title" and isinstance(entry.get("customTitle"), str):
+                        scan.claude_name = entry["customTitle"].strip()
+                    elif entry.get("type") == "ai-title" and isinstance(entry.get("aiTitle"), str):
+                        scan.ai_title = entry["aiTitle"].strip()
+        except OSError:
+            return scan.claude_name, scan.ai_title
+    TITLE_SCANS[path] = scan
+    return scan.claude_name, scan.ai_title
 
 
 def _detect_provider(path: Path) -> str:
@@ -87,6 +142,8 @@ def session_from_file(path: Path) -> Session | None:
     if not path.is_file():
         return None
     cwd, preview = _scan_transcript(path)
+    provider = _detect_provider(path)
+    claude_name, ai_title = read_titles(path) if provider == "claude" else ("", "")
     return Session(
         session_id=path.stem,
         jsonl_path=path,
@@ -95,7 +152,9 @@ def session_from_file(path: Path) -> Session | None:
         mtime=stat.st_mtime,
         size=stat.st_size,
         state="",
-        provider=_detect_provider(path),
+        provider=provider,
+        claude_name=claude_name,
+        ai_title=ai_title,
     )
 
 

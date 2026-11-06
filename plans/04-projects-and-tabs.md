@@ -1,9 +1,8 @@
 # 04 — Projects, the session list and tabs
 
-> **Status: written 2026-11-06, ready to execute after plan 01 B2.** One product question is open
-> (`plans/00-STATUS.md` §2, 2.10: renaming and deleting a project); the blocks write the
-> recommendation and mark the two places that change if the human answers otherwise. B0 needs the
-> human's go-ahead before it runs (it creates throwaway sessions in their `~/.claude`).
+> **Status: built 2026-11-06 (see the execution log); not closed until B0's interactive results and
+> the human's check by hand.** Written the same day, after plan 01 B2. Every product decision is
+> taken (`plans/00-STATUS.md` §1 1.13–1.19). B0 needs the human's go-ahead before it runs (it creates throwaway sessions in their `~/.claude`).
 >
 > **Comes from:** a design session with the human on 2026-11-05/06, with an interactive mock-up
 > in view: <https://claude.ai/artifact/8jxpcxpcJRoirrMRd2cgdo> (private to the human). Where each
@@ -98,7 +97,7 @@ Cited by symbol, not by line: the tree was being reformatted while this was writ
   ("Move here"), with its tab, even from another window.
 - **Removing a session from a project never touches Claude's data.** If it is running, a
   confirmation says it will be stopped first.
-- **Renaming and deleting a project** (pending 2.10; the recommendation is written): any project can
+- **Renaming and deleting a project** (§1 1.19): any project can
   be renamed; any can be deleted except the last one; deleting one with running sessions asks, then
   stops them; its sessions are only released, never touched.
 
@@ -197,6 +196,7 @@ Every one is written **before** its code, in the block named. Names are the sent
 | Default exists from the first start, empty | `test_a_missing_projects_file_starts_with_an_empty_default` (`test_projects.py`) | no file → one project "Default", no members, and it is current |
 | A session belongs to one project at most | `test_adding_a_session_from_another_project_moves_it` | `s1` in A, add to B → A has no `s1`, B ends with `s1`; the call returns A |
 | Names are unique | `test_a_project_name_is_unique_ignoring_case_and_spaces` | "Core" exists → " core " is refused; "Core 2" is accepted |
+| Any project but the last can be deleted, and deleting releases its sessions | `test_the_last_project_cannot_be_deleted_and_deleting_releases_its_sessions` (`test_projects.py`) | one project → refused; A with `s1`, B → delete A → `owner(s1)` is `None`, B intact |
 | An empty group disappears | `test_a_group_disappears_when_its_last_session_leaves` | group of `s1`, `s1` removed or regrouped → no group |
 | Removing never touches Claude's files | `test_removing_a_session_leaves_its_transcript_byte_for_byte` | real transcript in `projects_dir`, bytes before == after |
 | Projects are JSON, written by rename | `test_saving_writes_the_whole_file_through_a_temporary` | save → `projects.json` parses, no `.tmp` left; a failing write leaves the old file intact (`monkeypatch` `Path.replace` to raise) |
@@ -278,7 +278,7 @@ the existing AST walk):
   rename to `projects.json.broken` (replacing an older `.broken`), log it with the path in `extra`,
   start with Default, and report it so the window can show our own toast.
 - Operations, each returning what the UI needs to say: `create(name)`, `rename(id, name)`,
-  `delete(id)` (refused for the last project — pending 2.10), `add(project_id, session_id)` →
+  `delete(id)` (refused for the last project), `add(project_id, session_id)` →
   previous owner or `None`, `remove(project_id, session_id)`, `owner(session_id)`,
   `set_group(project_id, session_id, group_name | None)`, `new_group(project_id, name,
   session_id)`, `folder_labels(sessions)`, `blocked_elsewhere(current_id, states)`.
@@ -342,7 +342,7 @@ row says *stopped*; a session closed before its first message does not appear.
 
 - New `agent_tablet/projectbar.py`: the dropdown (`Gtk.MenuButton` with a popover: projects, the
   current marked, blocked counts, "open in another window", a "New project" entry; rename and
-  delete per project — pending 2.10). New `agent_tablet/projectlist.py`: the rows and group
+  delete per project). New `agent_tablet/projectlist.py`: the rows and group
   headings of the design, bound to the project model of B2, the row menu, and "Add session" under
   the list.
 - `AddSessionDialog` (`Adw.Dialog`): "Existing" hosts `SessionSidebar` as it is minus favorites,
@@ -416,4 +416,140 @@ session answering what it was doing. With "Reopen tabs on start" off: one window
 
 ## Execution log
 
-(Written by the session that executes it.)
+**Before B0 (2026-11-06):** plan 01 B2 was executed first in the same session, at the human's
+choice, so the list shows Claude's names from this plan's first screenshot.
+
+**B0 (2026-11-06), partial.** Run with `claude -p` (print mode skips the folder-trust prompt) in a
+scratchpad folder, Claude Code 2.1.319:
+- `--session-id <uuid> -n b0-probe`: the transcript is `<that uuid>.jsonl`; its first lines are
+  `custom-title` and `agent-name` with the name, before the first `user` line.
+- `--resume <id> --fork-session --session-id <uuid2>`: the fork's transcript is `<uuid2>.jsonl`. The
+  CLI accepts the pair, so a fork gets its id from the app.
+- `--continue`: no new transcript; the newest session of the folder grows. It keeps its id.
+- A failing start (`--session-id not-a-uuid`) exits with 1, interactive or not.
+- `cursor-agent` is not installed on this machine: its exit status was not checked.
+- Not answered yet: the exit status after `/exit`, Ctrl+D and Ctrl+C, and whether a session left
+  before any message writes a file. Driving the TUI from a pty failed at the folder-trust prompt
+  (Esc is read as "cancel", and the choice did not register), so the human runs a short script in
+  their own terminal.
+
+**B1 (2026-11-06).** `agent_tablet/projects.py` and `agent_tablet/layout.py`, no GTK (asserted by
+`test_projects_and_layout_stay_free_of_gtk` in `tests/test_code_rules.py`). Deviations:
+- `blocked_elsewhere` takes the `Projects` it counts in, not only the current id.
+- `Layouts` also has `release` (a deleted project leaves every window), `close_tab` and
+  `move_session` ("Move here" carries the tab), which B4–B6 call.
+- An unreadable file includes one with no project or a newer `version`; a session listed in two
+  projects by hand stays in the first.
+- One known folder plus sessions with no folder counts as "shared", so no label shows.
+- Two tests were written against the design wrongly and corrected, not the code: the folder case
+  above, and a project shown and left without tabs is free for another window (1.18).
+- Each key test seen red against a defect injected from a throwaway test file.
+
+**B2 (2026-11-06).** Favorites removed from `state.py`, `models.py`, `store.py`, `sidebar.py` (star,
+menu item, bulk buttons), `window.py` (the action) and `prefs.py`; `state.json` loses the key on the
+next save (`test_favorites_leave_state_json_on_the_next_save`, seen red). The demo data, the walk's
+`history` step, `README.md`, the metainfo and `CLAUDE.md`'s introduction follow (its old line is in
+`docs/history/root/CLAUDE.md`). Deviations:
+- The per-window list model of the current project and `AppState` owning `Projects` move to B3/B4,
+  where their first consumer is built: no model without its caller.
+- `po/` still holds the favorites' msgids: this machine has neither `xgettext` nor `msgfmt`, so the
+  catalogues are not regenerated; stale msgids are unused, not wrong.
+
+**B3 (2026-11-06), built except one line.** Providers build `--session-id`/`-n` and the fork's
+`--session-id` (`_identity_flags`; Cursor's base returns none); `transcript_path` knows a
+session's file from its folder and id. `TerminalTab` takes `new_id`/`name`, its resolver waits for
+that exact file while the pane lives, and exposes `transcript_id`. The window keeps `_joining`
+entries (new, fork and continue tabs) and adds a session to its project on the store's refresh once
+`joins_project` accepts it, also after its tab closed. `AppState` owns `projects` and
+`save_projects()`, next to `state.json`. Deviations:
+- `joins_project` judges the `Session` (its preview is the first typed message), not raw entries:
+  discovery already reads the first lines, so nothing is read twice.
+- Per-pane agent state and stopping a pane's session move to B5, where a tab first holds two
+  sessions; the demo `projects.json` moved to B4, where the walk first uses it.
+- **Pending:** the separator before `exit` in the typed command (`&& exit` or `; exit`) waits for
+  B0's interactive results.
+
+**B4 (2026-11-06).** `projectbar.py` (the dropdown: switch, create, rename, delete, blocked
+counts), `projectlist.py` (rows with state dot, Claude's name, folder name; group headings; the
+row menu), `addsession.py` (the history browser with Add / Added / "Move from …", and the New page
+with a required name). `SpacesPanel`, `SectionHeader`, the section settings and their Preferences
+toggles are gone; `TabStrip` stays in `spaces.py`. Deviations:
+- **The space→project switch of B5 was done here**: with the spaces panel gone, the strip had to
+  show the project's tabs or other folders' tabs would have been unreachable. `_page_space` holds
+  the project id; a selection that lands on another project's tab returns to this one's.
+- Opening a session makes it a member: of this project if it has none, or its own project is shown
+  first. "Advanced" and the header's provider items go through the dialog, so every new session
+  has a name.
+- A hidden session keeps its item in the store, so hiding one in the history does not take it out
+  of its project's list.
+- The demo has three projects (Default empty, "Client work" mixing two folders with a group,
+  "Dotfiles" in one folder). Walk steps: `project-list`, `project-dropdown` (after a restart, since
+  Broadway's popovers stop after a dialog), `add-session`. Clicks inside the Add session dialog do
+  not reach it under Broadway after the earlier steps, so its Add / Move / New are left to the
+  human's check; the step asserts the dialog, both pages and the history.
+- The blocked count in the dropdown is not in the walk: the demo runs no agent.
+
+
+**B5 (2026-11-06).** `PaneContainer` holds two panes at most (`split` returns `False` when full),
+lets the primary pane close (the other becomes primary) and swaps orientation (tab menu "Swap the
+split's orientation"). The window keeps the agent state per pane (`_pane_state`), rolls it up per
+tab, and finds a pane's page from the widget (`_page_of`), so a pane can move between tabs.
+"Open beside the current tab" (row menu) builds the session's terminal in the second pane, or moves
+it there without stopping when it was alone in its own tab. Closing a pane, the row's Stop, and the
+agent's own exit stop that pane's session only; closing the tab exits every agent in it. A tab of
+two sessions is titled "A │ B"; its strip button carries the group color when both are in one
+group. The typed command ends with `&& exit` (`typed_command`), **provisionally** until B0's
+interactive results: a failing start then leaves its message in the shell. Deviations:
+- The row's "⋯" builds its menu on each click and drops it on close, as the history's row menu
+  does: one popover per row made the walk's tool unable to tell which one was open.
+- The walk's isolated environment puts a stand-in `claude` first in `PATH`
+  (`tools/ui/session.py`, `FAKE_AGENT`): it waits for `/exit`, so opening a tab logs in nowhere.
+  Taking the agents' CLIs out of `PATH` instead was tried and dropped: the app then sees no
+  provider and lists no session.
+- Under Broadway, once a terminal is up, popovers and then clicks stop reaching the app; the walk's
+  `open-tab` step runs last, after a restart, and "Open beside", a pane closing and the tab's two
+  names are left to the human's check.
+
+**B6 (2026-11-06).** Each window keeps its own project (`MainWindow(project_id=…)`) and can say
+what would reopen (`snapshot()`); the application builds a `Layouts` from them when it needs one
+(`App.layouts`, `window_holding`, `held_elsewhere`, `all_states`), so nothing keeps a second copy
+of which tab is where. Every change to tabs saves `windows` in `projects.json`, debounced; a window
+closing on its own leaves the saved layout, and the last one keeps it whole before its tabs stop.
+Closing a window with agents running names them and stops them ("Stop and close"). On start,
+`restore(...)` with the new `reopen_tabs` setting (on by default; Preferences, "Start") opens each
+window on its project and resumes its tabs, their second panes and their orientation, once the
+store's first scan is in. "New window" takes a project in no window, or asks for a new project's
+name. Choosing a project another window holds brings that window forward; the dropdown marks it
+and counts blocked sessions across windows. "Move here" moves a lone tab across windows with
+`transfer_page`; a tab shared with another session is not moved. `Ctrl+B g` lists every window's
+tabs. Deviations:
+- The window reaches the application through a small `Protocol` (`_Host`), so a bare window
+  without the application still works (the tests' and the walk's).
+- The walk checks that a tab opens and that its layout is written (read from the session's
+  `projects.json` by hand once: `[{'current': 'demo-1', 'tabs': {'demo-1': [{'panes': [...],
+  'orientation': 'horizontal'}]}}]`); reopening on start needs a third restart, which the tool
+  cannot do, so it is the human's check. The two new Broadway traps are in `docs/ui-verification.md`.
+
+**B7 (2026-11-06), partial.** `README.md` was kept current block by block. `CLAUDE.md` has the two
+rules of the header (sessions, tabs, projects and windows in one rule; JSON state) and the
+`docs/projects.md` row; `docs/projects.md` and four `docs/NOT_BUILT_YET.md` entries are written.
+`docs/projects.md` states `&& exit` as built; if B0's interactive results contradict it, the
+separator, its test and that paragraph change together. **Not done:** deleting this plan and
+closing its row, which wait for B0's results and the human's check.
+
+**For the human, by hand** (their machine, their data; Broadway cannot reach these):
+1. Add session → Existing: "Add" puts a session in the project; one of another project shows
+   "Move from …" and moves, with its tab if open. New: a name and a folder (also "Another folder…")
+   start a session that joins the list after its first message; one closed before that does not.
+2. A row's ⋯: Stop closes its tab and leaves it *stopped*; "Open beside" puts it in the current
+   tab's second pane (moving it from its own tab if open); closing one pane stops only that one;
+   "Swap the split's orientation" from the tab's menu; groups: new, move, "No group".
+3. `/exit` and Ctrl+D inside Claude close the tab and leave the row *stopped*.
+4. The dropdown: create, rename, delete (the last one refuses); a blocked session in another
+   project shows its count.
+5. Quit with sessions running: the dialog names them; reopen: the tabs, their splits and their
+   windows come back, each session answering what it was doing. With "Reopen tabs on start" off:
+   one window, no tabs.
+6. Two windows (Ctrl+Shift+N) with two projects: choosing the first window's project in the second
+   brings the first forward; "Move from …" across windows moves the tab.
+

@@ -33,15 +33,14 @@
 | 1.16 | A new session joins its project only once Claude has created it (its transcript exists, after the first message); one closed before that leaves nothing behind | 2026-11-06 | plan 04 |
 | 1.17 | Upstream's other tab kinds stay, inside projects: chat and replay tabs belong to the current project but are not members and do not reopen; hidden sessions stay, in the "Add session" browser; fork and "continue last" join the current project like a new session; the quick switcher searches the current project; `Ctrl+B g` lists running sessions of every project; a new session's name is required, and the header's + opens "Add session" on "New" | 2026-11-06 | plan 04 |
 | 1.18 | Several windows are allowed, one project open in at most one window: choosing it elsewhere brings its window forward; a window shows one project at a time and keeps the tabs of the ones it showed; closing a window asks and stops its sessions, the last one quits; "Move here" moves the tab across windows; reopening restores each window with its project and tabs; the blocked count spans every window | 2026-11-06 | plan 04 |
+| 1.19 | Any project can be renamed; any but the last can be deleted. Deleting one with running sessions asks, then stops them; its sessions are only released, Claude's data untouched | 2026-11-06 | plan 04 |
 
 ## 2. Open
 
 | # | Question | Owner | Blocks |
 |---|---|---|---|
-| 2.2 | The real format of the `custom-title` entry, checked against the human's own transcripts | Executor of B2 | B2 |
 | 2.5 | Whether categories are assigned automatically (by name pattern, or otherwise) or only by hand | Human | B5 |
 | 2.9 | Tabs that are not agents — open, read and edit a file (text, Markdown, code) in the project's window — and whether a project names its folders to scope them | Human, in a design session of its own | Nothing yet |
-| 2.10 | Renaming and deleting a project. Recommended: any can be renamed; any but the last can be deleted, stopping its running sessions after a confirmation | Human | Plan 04 B1, B4 (written with the recommendation) |
 
 ## 3. Roadmap and plans in flight
 
@@ -49,10 +48,10 @@
 |---|---|---|
 | 1 | `01-agent-tablet-fork.md` B0 | Delivered 2026-11-05 |
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Delivered 2026-11-05 |
-| 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute |
+| 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Built 2026-11-06; pending the human's check by hand |
 | 5 | `01-agent-tablet-fork.md` B4–B6 | Stubs inside plan 01 — each needs `/design-plan`; B5 reopened 2026-11-06 (§1 1.14) |
+| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Built 2026-11-06 (B0–B6 and B7's documents); open: B0's interactive exit statuses, which confirm `&& exit`, and the human's check by hand. Not closed |
 | 7 | `05-context-and-integrations.md` (plan 01 B4 — context ring, `--settings`, the integrations menu, usage capture) | B1–B2 built 2026-11-06 (statusline script, context model, ring — not yet shown anywhere); B3–B5 after plan 04 closes |
-| 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Written 2026-11-06, ready to execute after B2; its B0 needs the human's go-ahead |
 
 ## 4. Next plan number
 

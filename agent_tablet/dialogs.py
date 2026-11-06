@@ -38,6 +38,26 @@ def rename_dialog(parent: Gtk.Widget, body: str, current: str, on_save: Callable
     dialog.present(parent)
 
 
+def text_dialog(
+    parent: Gtk.Widget,
+    heading: str,
+    body: str,
+    current: str,
+    placeholder: str,
+    on_save: Callable[[str], None],
+) -> None:
+    dialog = Adw.AlertDialog(heading=heading, body=body)
+    entry = Gtk.Entry(text=current, placeholder_text=placeholder)
+    entry.set_activates_default(True)
+    dialog.set_extra_child(entry)
+    dialog.add_response("cancel", _("Cancel"))
+    dialog.add_response("save", _("Save"))
+    dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+    dialog.set_default_response("save")
+    dialog.connect("response", lambda _d, response: on_save(entry.get_text()) if response == "save" else None)
+    dialog.present(parent)
+
+
 def confirm_dialog(
     parent: Gtk.Widget,
     heading: str,

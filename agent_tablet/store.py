@@ -20,9 +20,9 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gio, GLib, GObject
 
 from . import clock
-from .models import FAV_GROUP, SessionItem
+from .models import SessionItem
 from .providers import available_providers
-from .sessions import Session, discover_sessions
+from .sessions import Session, discover_sessions, session_title
 from .state import AppState
 
 _DEBOUNCE_MS = 2000
@@ -102,15 +102,13 @@ class SessionStore(GObject.Object):
         self.sessions = {s.session_id: s for s in sessions}
 
         visible = [s for s in sessions if self.show_hidden or not self.state.is_hidden(s.session_id)]
-        favorites = [s for s in visible if self.state.is_favorite(s.session_id)]
-        rest = [s for s in visible if not self.state.is_favorite(s.session_id)]
 
         # Input is mtime-sorted, so project groups order by most recent session.
         grouped: dict[tuple, list[Session]] = {}
-        for session in rest:
+        for session in visible:
             grouped.setdefault(("proj", session.project_name), []).append(session)
 
-        ordered: list[tuple[Session, tuple, str]] = [(s, FAV_GROUP, "Favorites") for s in favorites]
+        ordered: list[tuple[Session, tuple, str]] = []
         for key, group_sessions in grouped.items():
             ordered.extend((s, key, key[1]) for s in group_sessions)
 
@@ -125,7 +123,14 @@ class SessionStore(GObject.Object):
             items.append(item)
             self.group_counts[group_key] = self.group_counts.get(group_key, 0) + 1
 
-        wanted_ids = {item.session_id for item in items}
+        # A hidden session leaves the history, not its project's list: it keeps its item.
+        for session in sessions:
+            if session.session_id not in self._items:
+                self._items[session.session_id] = SessionItem(session)
+                key = ("proj", session.project_name)
+                self._update_item(self._items[session.session_id], session, key, key[1])
+
+        wanted_ids = set(self.sessions)
         for session_id in list(self._items):
             if session_id not in wanted_ids:
                 del self._items[session_id]
@@ -144,7 +149,6 @@ class SessionStore(GObject.Object):
             "display_name": self.display_name(session),
             "subtitle": f"{session.project_name} · {_relative_time(session.last_active)}",
             "preview": session.preview,
-            "favorite": self.state.is_favorite(session.session_id),
             "state": session.state,
         }
         for prop, value in updates.items():
@@ -152,7 +156,7 @@ class SessionStore(GObject.Object):
                 item.set_property(prop, value)
 
     def display_name(self, session: Session) -> str:
-        return self.state.get_name(session.session_id) or session.preview or session.session_id[:8]
+        return session_title(session, self.state.get_name(session.session_id))
 
     # -- file monitoring -------------------------------------------------------
 
@@ -196,18 +200,8 @@ class SessionStore(GObject.Object):
         self.state.set_name(session_id, name)
         self._apply()
 
-    def toggle_favorite(self, session_id: str) -> None:
-        self.state.toggle_favorite(session_id)
-        self._apply()
-
     def set_hidden(self, session_id: str, hidden: bool) -> None:
         self.state.set_hidden(session_id, hidden)
-        self._apply()
-
-    def set_favorites(self, session_ids: list[str], favorite: bool) -> None:
-        for session_id in session_ids:
-            if self.state.is_favorite(session_id) != favorite:
-                self.state.toggle_favorite(session_id)
         self._apply()
 
     def hide_many(self, session_ids: list[str]) -> None:

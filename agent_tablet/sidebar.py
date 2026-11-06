@@ -1,5 +1,5 @@
-"""Session sidebar: the spaces panel on top, then the session history
-(search, project accordion, favorites, selection mode).
+"""The session history: every session the agents know, with search, an accordion by folder and a
+selection mode. Shown in the "Add session" dialog, where each row adds its session to the project.
 
 Rows bind to SessionItem properties, so renames/stars/status changes update
 in place; the list is only rebuilt when the store reports an order change.
@@ -13,6 +13,7 @@ Emits:
 from __future__ import annotations
 
 import shutil
+from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar
 
@@ -24,9 +25,8 @@ from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
 
 from .formatting import format_size
 from .i18n import _
-from .models import FAV_GROUP, SessionItem
+from .models import SessionItem
 from .providers import get_provider
-from .spaces import SectionHeader, section_shown
 from .store import SessionStore
 
 _GHOSTTY = shutil.which("ghostty")
@@ -65,9 +65,7 @@ class GroupHeaderRow(Gtk.ListBoxRow):
         self._arrow.add_css_class("dim-label")
         box.append(self._arrow)
 
-        icon = Gtk.Image.new_from_icon_name(
-            "starred-symbolic" if group_key == FAV_GROUP else "folder-symbolic"
-        )
+        icon = Gtk.Image.new_from_icon_name("folder-symbolic")
         icon.add_css_class("dim-label")
         box.append(icon)
 
@@ -95,6 +93,7 @@ class SessionRow(Gtk.ListBoxRow):
         self.item = item
         self._sidebar = sidebar
         self.add_css_class("session-child")  # indented, with a left guide line
+        self.pick_button: Gtk.Button | None = None
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.set_margin_top(8)
@@ -126,14 +125,6 @@ class SessionRow(Gtk.ListBoxRow):
         self._state_badge = Gtk.Image(valign=Gtk.Align.CENTER)
         top.append(self._state_badge)
 
-        star = Gtk.Button(valign=Gtk.Align.CENTER)
-        star.add_css_class("flat")
-        star.connect(
-            "clicked",
-            lambda *_: self.activate_action("win.toggle-favorite", GLib.Variant("s", item.session_id)),
-        )
-        top.append(star)
-
         rename = Gtk.Button(icon_name="document-edit-symbolic", valign=Gtk.Align.CENTER)
         rename.add_css_class("flat")
         rename.set_tooltip_text(_("Rename session"))
@@ -142,6 +133,11 @@ class SessionRow(Gtk.ListBoxRow):
             lambda *_: self.activate_action("win.rename-session", GLib.Variant("s", item.session_id)),
         )
         top.append(rename)
+        if sidebar.pick_label is not None:
+            self.pick_button = Gtk.Button(valign=Gtk.Align.CENTER)
+            self.pick_button.connect("clicked", lambda *_: sidebar.pick(self.item))
+            top.append(self.pick_button)
+            self.refresh_pick()
         box.append(top)
 
         subtitle_label = Gtk.Label(xalign=0.0)
@@ -173,20 +169,6 @@ class SessionRow(Gtk.ListBoxRow):
         item.bind_property("subtitle", subtitle_label, "label", flags)
         item.bind_property("preview", preview_label, "label", flags)
         item.bind_property("preview", preview_label, "visible", flags, lambda _b, value: bool(value))
-        item.bind_property(
-            "favorite",
-            star,
-            "icon-name",
-            flags,
-            lambda _b, fav: "starred-symbolic" if fav else "non-starred-symbolic",
-        )
-        item.bind_property(
-            "favorite",
-            star,
-            "tooltip-text",
-            flags,
-            lambda _b, fav: _("Remove from favorites") if fav else _("Add to favorites"),
-        )
 
         # Status dot + state badge need CSS-class updates: plain signals,
         # detached on unroot.
@@ -210,6 +192,16 @@ class SessionRow(Gtk.ListBoxRow):
             self.item.disconnect(self._state_handler)
             self._state_handler = None
         Gtk.ListBoxRow.do_unroot(self)
+
+    def refresh_pick(self) -> None:
+        if self.pick_button is None or self._sidebar.pick_label is None:
+            return
+        label, enabled = self._sidebar.pick_label(self.item)
+        self.pick_button.set_label(label)
+        self.pick_button.set_sensitive(enabled)
+        for css in ("suggested-action", "flat"):
+            self.pick_button.remove_css_class(css)
+        self.pick_button.add_css_class("suggested-action" if enabled else "flat")
 
     def _on_status_changed(self, item: SessionItem, _pspec) -> None:
         for css in ("open", "attention"):
@@ -248,11 +240,17 @@ class SessionSidebar(Gtk.Box):
     }
 
     def __init__(
-        self, store: SessionStore, top: Gtk.Widget | None = None, menu: Gio.MenuModel | None = None
+        self,
+        store: SessionStore,
+        pick_label: Callable[[SessionItem], tuple[str, bool]] | None = None,
+        on_pick: Callable[[SessionItem], None] | None = None,
     ) -> None:
+        """pick_label: each row's button text and whether it is enabled; on_pick: what it does."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.add_css_class("app-sidebar")
         self.store = store
+        self.pick_label = pick_label
+        self._on_pick = on_pick
         self._view = Adw.ToolbarView(vexpand=True)
         self.append(self._view)
         self._collapsed: set[tuple] = set()
@@ -265,21 +263,6 @@ class SessionSidebar(Gtk.Box):
 
         store.connect("refreshed", self._on_store_refreshed)
 
-        # -- header: the app menu (cog) at the top of the window ----------------
-        header = Adw.HeaderBar()
-        # The content header (right pane) carries the window controls; without
-        # AdwOverlaySplitView coordinating the two bars, hide them here so they
-        # aren't duplicated at the pane boundary.
-        header.set_show_end_title_buttons(False)
-        header.set_title_widget(Gtk.Label())
-        if menu is not None:
-            menu_btn = Gtk.MenuButton(icon_name="emblem-system-symbolic", menu_model=menu)
-            menu_btn.set_tooltip_text(_("Main menu"))
-            header.pack_end(menu_btn)
-        self._view.add_top_bar(header)
-        if top is not None:  # spaces / agents panel
-            self._view.add_top_bar(top)
-
         # -- history section title ---------------------------------------------
         self.select_btn = Gtk.ToggleButton(icon_name="object-select-symbolic")
         self.select_btn.add_css_class("flat")
@@ -290,14 +273,6 @@ class SessionSidebar(Gtk.Box):
         refresh_btn.add_css_class("flat")
         refresh_btn.set_tooltip_text(_("Refresh session list"))
         refresh_btn.set_action_name("win.refresh")
-
-        history_actions = Gtk.Box(spacing=2)
-        history_actions.append(self.select_btn)
-        history_actions.append(refresh_btn)
-        self._history_header = SectionHeader(
-            "history", _("history"), store.state, self.apply_sections, history_actions
-        )
-        self._view.add_top_bar(self._history_header)
 
         # -- search + accordion controls --------------------------------------
         self.search_entry = Gtk.SearchEntry(placeholder_text=_("Search sessions…"), hexpand=True)
@@ -320,6 +295,8 @@ class SessionSidebar(Gtk.Box):
         search_box.append(self.search_entry)
         search_box.append(collapse_all)
         search_box.append(expand_all)
+        search_box.append(self.select_btn)
+        search_box.append(refresh_btn)
         self._view.add_top_bar(search_box)
 
         # -- list ------------------------------------------------------------
@@ -356,7 +333,6 @@ class SessionSidebar(Gtk.Box):
         self.footer.set_margin_bottom(6)
         self.footer.set_ellipsize(_ELLIPSIZE_END)
         self._view.add_bottom_bar(self.footer)
-        self.apply_sections()
 
         # Populate from whatever the shared store already holds (a sibling
         # window may have triggered the scan before this sidebar connected).
@@ -389,13 +365,11 @@ class SessionSidebar(Gtk.Box):
             parts.append(_("{n} open").format(n=open_tabs))
         self.footer.set_label(" · ".join(parts))
 
-    def apply_sections(self) -> None:
-        """Show / fold the history section per the preferences and title clicks."""
-        shown = section_shown(self.store.state, "history")
-        body = shown and not self._history_header.collapsed
-        self._history_header.set_visible(shown)
-        for widget in (self._search_box, self._content_stack, self.action_bar, self.footer):
-            widget.set_visible(body)
+    def pick(self, item: SessionItem) -> None:
+        if self._on_pick is not None:
+            self._on_pick(item)
+        for row in self._rows.values():
+            row.refresh_pick()
 
     def refresh_folder_path(self) -> None:
         """Re-read the 'show folder path' setting and update existing rows."""
@@ -425,7 +399,7 @@ class SessionSidebar(Gtk.Box):
             if item.group_key != previous_group:
                 header = GroupHeaderRow(
                     item.group_key,
-                    _("Favorites") if item.group_key == FAV_GROUP else item.group_label,
+                    item.group_label,
                     self.store.group_counts.get(item.group_key, 0),
                     item.group_key in self._collapsed,
                 )
@@ -492,6 +466,10 @@ class SessionSidebar(Gtk.Box):
         if self._selection_mode:
             row.check.set_active(not row.check.get_active())
             return
+        if self.pick_label is not None:
+            if self.pick_label(row.item)[1]:
+                self.pick(row.item)
+            return
         self.emit("open-session", row.item, False)
 
     # -- context menu ------------------------------------------------------------
@@ -526,10 +504,6 @@ class SessionSidebar(Gtk.Box):
 
         edit_section = Gio.Menu()
         edit_section.append_item(item(_("Rename…"), "rename-session"))
-        fav_label = (
-            _("Remove from favorites") if self.store.state.is_favorite(session_id) else _("Add to favorites")
-        )
-        edit_section.append_item(item(fav_label, "toggle-favorite"))
         edit_section.append_item(item(_("Details…"), "session-details"))
         edit_section.append_item(item(_("Replay…"), "replay-session"))
         edit_section.append_item(item(_("Copy session ID"), "copy-session-id"))
@@ -581,8 +555,6 @@ class SessionSidebar(Gtk.Box):
         for icon, tooltip, callback in (
             ("user-trash-symbolic", _("Move selected transcripts to trash…"), self._bulk_trash),
             ("view-conceal-symbolic", _("Hide selected"), self._bulk_hide),
-            ("non-starred-symbolic", _("Remove selected from favorites"), lambda: self._bulk_favorite(False)),
-            ("starred-symbolic", _("Add selected to favorites"), lambda: self._bulk_favorite(True)),
             ("tab-new-symbolic", _("Open selected in tabs"), self._bulk_open),
         ):
             button = Gtk.Button(icon_name=icon)
@@ -621,9 +593,6 @@ class SessionSidebar(Gtk.Box):
 
     def _bulk_open(self) -> None:
         self.emit("open-many", self._selected_items())
-
-    def _bulk_favorite(self, favorite: bool) -> None:
-        self.store.set_favorites([i.session_id for i in self._selected_items()], favorite)
 
     def _bulk_hide(self) -> None:
         self.store.hide_many([i.session_id for i in self._selected_items()])

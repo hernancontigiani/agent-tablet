@@ -1,6 +1,6 @@
 # Plan 01 — agent-tablet: the fork of Agent Session Manager
 
-> **Status:** B0 delivered 2026-11-05. B1 delivered 2026-11-05 (checked by hand by the human). **B2 is executable; B3 is replaced by plan 04; B4–B6 are stubs** (goal, behaviour
+> **Status:** B0 delivered 2026-11-05. B1 delivered 2026-11-05 (checked by hand by the human). B2 built 2026-11-06, pending the human's check by hand. **B3 is replaced by plan 04; B4–B6 are stubs** (goal, behaviour
 > and verification, but no test named per decision): each goes through `/design-plan` before it is
 > executed.
 >
@@ -283,3 +283,24 @@ written under the final rules; `plans/00-STATUS.md` holds the order.
 - **Checked by hand by the human, 2026-11-05:** installed with `./data/install.sh` next to the
   packaged Agent Session Manager; own entry, icon, title and About; `~/.config/agent-tablet/state.json`
   imported with the original's 2 names.
+
+**B2 (2026-11-06)**
+- The `custom-title` format was checked against the human's transcripts (read only):
+  `{"type":"custom-title","customTitle":"…","sessionId":"…"}`, as assumed. Every file that has one
+  also has an `agent-name` entry with the same value; the code reads `custom-title` only.
+- `sessions.read_titles` keeps, per transcript, the bytes already read and the last name and
+  `ai-title` found (`TITLE_SCANS`), and reads only complete lines appended since; a file that
+  shrank is read again from the start. `session_title` holds the order: Claude's name, the app's,
+  `ai-title`, the first message, the id. `SessionStore.display_name` calls it.
+- Renaming a session Claude already named shows "This name comes from Claude" and changes nothing.
+  A name the app stored earlier for such a session stays in `state.json`, unused.
+- Tests in `tests/test_sessions.py`: line 3 and line 5,000, the last rename wins, no name with an
+  `ai-title`, the incremental read (offset asserted, and the start overwritten so a re-read would
+  lose the name), a half-written last line, a file that shrank, the title order, discovery. Each
+  key one seen red against an injected defect from a throwaway test.
+- `scripts/make_demo_data.py` names one demo session inside Claude, and `make ui-check` has a step
+  `claude-name` that finds it under that name.
+- The exit "how names work → `docs/<subsystem>.md`" needed no file: the rule is in `CLAUDE.md` and
+  the why in `session_title`'s docstring.
+- **For the human, by hand:** `claude -n prueba-b2`, one message, and the list shows `prueba-b2`;
+  then `/rename prueba-b2-bis`, and the list follows on its next refresh.

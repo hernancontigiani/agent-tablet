@@ -3,13 +3,18 @@ import json
 import pytest
 
 from agent_tablet.sessions import (
+    TITLE_SCANS,
+    Session,
     configured_mcp_servers,
     discover_sessions,
     export_markdown,
     parse_details,
     read_mcp_config,
+    read_titles,
     session_from_file,
+    session_title,
 )
+from tests.conftest import make_transcript_lines
 
 
 def test_session_from_file_claude(tmp_path):
@@ -268,3 +273,117 @@ def test_discover_handles_missing_dir(monkeypatch, tmp_path):
 
     monkeypatch.setattr(sessions_mod, "CLAUDE_PROJECTS_DIR", tmp_path / "nope")
     assert discover_sessions() == []
+
+
+# -- Claude's own name (plan 01 B2) ----------------------------------------------------------
+
+
+def _title_line(kind: str, value: str) -> dict:
+    key = {"custom-title": "customTitle", "ai-title": "aiTitle"}[kind]
+    return {"type": kind, key: value, "sessionId": "s"}
+
+
+def _write_lines(path, entries) -> None:
+    path.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "position",
+    [pytest.param(2, id="line-3"), pytest.param(4_999, id="line-5000")],
+)
+def test_claudes_name_is_found_on_any_line(tmp_path, position):
+    filler = make_transcript_lines("/proj", "hello") * (position // 5 + 1)
+    entries = [*filler[:position], _title_line("custom-title", "lm-plan-200"), *filler[position:]]
+    path = tmp_path / "t.jsonl"
+    _write_lines(path, entries)
+    assert read_titles(path) == ("lm-plan-200", "")
+
+
+def test_the_last_rename_wins(tmp_path):
+    path = tmp_path / "t.jsonl"
+    _write_lines(
+        path,
+        [
+            _title_line("custom-title", "first"),
+            *make_transcript_lines("/p", "x"),
+            _title_line("custom-title", "second"),
+        ],
+    )
+    assert read_titles(path)[0] == "second"
+
+
+def test_a_session_with_no_name_reads_empty_and_keeps_its_ai_title(tmp_path):
+    path = tmp_path / "t.jsonl"
+    _write_lines(path, [*make_transcript_lines("/p", "x"), _title_line("ai-title", "Fix the bug")])
+    assert read_titles(path) == ("", "Fix the bug")
+
+
+def test_a_name_appended_later_is_read_without_rereading_the_start(tmp_path):
+    path = tmp_path / "t.jsonl"
+    _write_lines(path, [_title_line("custom-title", "old"), *make_transcript_lines("/p", "x")])
+    assert read_titles(path)[0] == "old"
+    assert TITLE_SCANS[path].offset == path.stat().st_size
+    # The start is replaced by bytes of the same length that hold no name: a reader that started
+    # over would lose "old"; one that resumes from its offset never sees them.
+    data = path.read_bytes()
+    first_line_end = data.index(b"\n")
+    path.write_bytes(b" " * first_line_end + data[first_line_end:])
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps({"type": "user", "message": {"content": "more"}}) + "\n")
+    assert read_titles(path)[0] == "old"
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(_title_line("custom-title", "new")) + "\n")
+    assert read_titles(path)[0] == "new"
+    assert TITLE_SCANS[path].offset == path.stat().st_size
+
+
+def test_a_line_still_being_written_is_read_once_it_is_complete(tmp_path):
+    path = tmp_path / "t.jsonl"
+    whole = json.dumps(_title_line("custom-title", "late")) + "\n"
+    path.write_text(whole[:10], encoding="utf-8")
+    assert read_titles(path)[0] == ""
+    path.write_text(whole, encoding="utf-8")
+    assert read_titles(path)[0] == "late"
+
+
+def test_a_file_that_shrank_is_read_again_from_the_start(tmp_path):
+    path = tmp_path / "t.jsonl"
+    _write_lines(path, [*make_transcript_lines("/p", "x"), _title_line("custom-title", "long-name")])
+    read_titles(path)
+    _write_lines(path, [_title_line("custom-title", "b")])
+    assert read_titles(path)[0] == "b"
+
+
+@pytest.mark.parametrize(
+    ("claude_name", "app_name", "ai_title", "preview", "expected"),
+    [
+        pytest.param("lm-plan", "mine", "AI", "first", "lm-plan", id="claude-wins-over-the-app"),
+        pytest.param("", "mine", "AI", "first", "mine", id="app-name-only-without-claudes"),
+        pytest.param("", "", "AI", "first", "AI", id="then-claudes-own-title"),
+        pytest.param("", "", "", "first", "first", id="then-the-first-message"),
+        pytest.param("", "", "", "", "12345678", id="then-the-id"),
+    ],
+)
+def test_a_sessions_title_follows_claudes_name_first(
+    tmp_path, claude_name, app_name, ai_title, preview, expected
+):
+    session = Session(
+        session_id="12345678-aaaa",
+        jsonl_path=tmp_path / "x.jsonl",
+        cwd="/p",
+        preview=preview,
+        mtime=0.0,
+        claude_name=claude_name,
+        ai_title=ai_title,
+    )
+    assert session_title(session, app_name or None) == expected
+
+
+def test_discovery_carries_claudes_name(projects_dir):
+    root, ids = projects_dir
+    path = next(root.glob(f"*/{ids['beta1']}.jsonl"))
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write("\n" + json.dumps(_title_line("custom-title", "beta-docs")) + "\n")
+    by_id = {s.session_id: s for s in discover_sessions()}
+    assert by_id[ids["beta1"]].claude_name == "beta-docs"
+    assert by_id[ids["alpha1"]].claude_name == ""

@@ -20,7 +20,7 @@ from gi.repository import Gdk, Gio, GLib, GObject, Gtk, Pango, Vte
 from . import agentstate, themes
 from .i18n import _
 from .promptcard import build_question_card
-from .providers import Provider, get_provider
+from .providers import Provider, get_provider, typed_command
 from .transcript import TranscriptModel
 
 _TRANSCRIPT_DEBOUNCE_MS = 400
@@ -53,10 +53,16 @@ class TerminalTab(Gtk.Box):
         options=None,
         command_override: str | None = None,
         shell: bool = False,
+        new_id: str | None = None,
+        name: str | None = None,
     ) -> None:
-        """shell=True: a plain shell pane (a split), no agent in it."""
+        """shell=True: a plain shell pane (a split), no agent in it. new_id: the id the app chose
+        for a new session or a fork; name: a new session's name."""
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
         self.session_id = session_id
+        self.new_id = new_id
+        self._name = name
+        self.transcript_id: str | None = None  # the session whose transcript is being followed
         self.cwd = cwd  # project folder = the tab's space
         self.fork = fork
         self.provider = provider or get_provider("claude")
@@ -115,7 +121,7 @@ class TerminalTab(Gtk.Box):
             self.apply_settings(settings)
         self.set_transcript_path(jsonl_path)
         self._spawn(cwd, session_id)
-        if jsonl_path is None and session_id is None and not shell:
+        if jsonl_path is None and (session_id is None or new_id) and not shell:
             self._start_transcript_resolver(cwd)  # find the new session's transcript
 
     # -- spawning ----------------------------------------------------------
@@ -137,15 +143,15 @@ class TerminalTab(Gtk.Box):
         elif self._command_override is not None:
             command = self._command_override
         elif session_id is not None:
-            command = self.provider.resume_command(session_id, fork=self.fork)
+            command = self.provider.resume_command(session_id, fork=self.fork, new_id=self.new_id)
         else:
-            command = self.provider.new_command(self._options)
+            command = self.provider.new_command(self._options, self.new_id, self._name)
         if command is None:
             self.feed_message(
                 _("warning: `{cli}` not found in PATH — starting a plain shell").format(cli=self.provider.cli)
             )
         else:
-            self._initial_command = command
+            self._initial_command = typed_command(command)
 
         shell = os.environ.get("SHELL") or "/bin/bash"
         argv = [shell]
@@ -289,6 +295,7 @@ class TerminalTab(Gtk.Box):
         """Tail a transcript to detect the agent's structured prompts. Used on
         resume, and again once a brand-new session's file appears on disk."""
         self._transcript.set_path(jsonl_path)
+        self.transcript_id = Path(jsonl_path).stem if jsonl_path else None
         self._current_question_id = None
         self._handled_question_id = None
         self._hide_card()
@@ -392,6 +399,15 @@ class TerminalTab(Gtk.Box):
             self._resolver_source = None
             return GLib.SOURCE_REMOVE
         self._resolver_attempts += 1
+        # With the id known, wait for that file for as long as the pane lives: the user may type
+        # the first message much later. Without it ("continue last"), the newest is what was asked.
+        known = self.provider.transcript_path(cwd, self.new_id) if self.new_id else None
+        if known is not None:
+            if known.exists():
+                self.set_transcript_path(str(known))
+                self._resolver_source = None
+                return GLib.SOURCE_REMOVE
+            return GLib.SOURCE_CONTINUE
         path = self.provider.latest_transcript_for_cwd(cwd)
         if path is not None:
             self.set_transcript_path(str(path))

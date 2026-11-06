@@ -30,6 +30,7 @@ from .sessions import (
     _extract_text,
     _scan_transcript,
     _tail_state,
+    read_titles,
 )
 from .sessions import parse_details as _claude_parse_details
 
@@ -38,6 +39,13 @@ CURSOR_PROJECTS_DIR = Path(os.environ.get("CSM_CURSOR_PROJECTS_DIR") or Path.hom
 
 _CURSOR_TAIL_BYTES = 64 * 1024
 _USER_QUERY_RE = re.compile(r"</?user_query>")
+
+
+def typed_command(command: str) -> str:
+    """What is typed into the tab's shell: the agent's command, then the shell's exit once the agent
+    ends cleanly, so the tab goes with the agent. Typing it into the user's shell, instead of
+    `exec`, keeps their aliases and functions."""
+    return f"{command} && exit"
 
 
 @dataclass(frozen=True)
@@ -103,26 +111,36 @@ class Provider:
         unsupported."""
         return None
 
+    def transcript_path(self, cwd: str, session_id: str) -> Path | None:
+        """Where the agent writes this session's transcript, or None if it is not known."""
+        return None
+
     def discover(self) -> list[Session]:
         raise NotImplementedError
 
-    def resume_command(self, session_id: str, fork: bool = False) -> str | None:
-        """Shell command to type into the terminal to resume a session."""
+    def resume_command(self, session_id: str, fork: bool = False, new_id: str | None = None) -> str | None:
+        """Shell command to type into the terminal to resume a session; a fork gets `new_id`."""
         cli = shutil.which(self.cli)
         if cli is None:
             return None
         cmd = f"{shlex.quote(cli)} --resume {shlex.quote(session_id)}"
         if fork and self.supports_fork:
-            cmd += " --fork-session"
+            cmd = " ".join([cmd, "--fork-session", *self._identity_flags(new_id, None)])
         return cmd
 
-    def new_command(self, options=None) -> str | None:
+    def new_command(self, options=None, session_id: str | None = None, name: str | None = None) -> str | None:
         """Shell command to start a fresh session, optionally with advanced
-        CLI flags (model / permission-mode / extra dirs)."""
+        CLI flags (model / permission-mode / extra dirs), its id and its name."""
         cli = shutil.which(self.cli)
         if cli is None:
             return None
-        return " ".join([shlex.quote(cli), *self._option_flags(options)])
+        return " ".join(
+            [shlex.quote(cli), *self._option_flags(options), *self._identity_flags(session_id, name)]
+        )
+
+    def _identity_flags(self, session_id: str | None, name: str | None) -> list[str]:
+        """The flags that set a new session's id and name. Base: the CLI has none."""
+        return []
 
     def _option_flags(self, options) -> list[str]:
         """Translate SessionOptions into this agent's CLI flags. Base: none."""
@@ -250,12 +268,26 @@ class ClaudeProvider(Provider):
             argv += ["--resume", session_id]
         return argv
 
+    def _identity_flags(self, session_id: str | None, name: str | None) -> list[str]:
+        flags: list[str] = []
+        if session_id:
+            flags += ["--session-id", shlex.quote(session_id)]
+        if name:
+            flags += ["-n", shlex.quote(name)]
+        return flags
+
+    def _project_dir(self, cwd: str) -> Path:
+        # Claude encodes the cwd into the project dir by replacing every
+        # non-alphanumeric char with '-' (e.g. /a/b_c -> -a-b-c).
+        return self.projects_dir / re.sub(r"[^A-Za-z0-9]", "-", cwd)
+
+    def transcript_path(self, cwd: str, session_id: str) -> Path | None:
+        return self._project_dir(cwd) / f"{session_id}.jsonl" if cwd else None
+
     def latest_transcript_for_cwd(self, cwd: str) -> Path | None:
         if not cwd:
             return None
-        # Claude encodes the cwd into the project dir by replacing every
-        # non-alphanumeric char with '-' (e.g. /a/b_c -> -a-b-c).
-        directory = self.projects_dir / re.sub(r"[^A-Za-z0-9]", "-", cwd)
+        directory = self._project_dir(cwd)
         if not directory.is_dir():
             return None
         cands = [p for p in directory.glob("*.jsonl") if _UUID_RE.match(p.stem)]
@@ -296,6 +328,7 @@ class ClaudeProvider(Provider):
                 if stat.st_size == 0:
                     continue
                 cwd, preview = _scan_transcript(jsonl)
+                claude_name, ai_title = read_titles(jsonl)
                 found.append(
                     Session(
                         session_id=jsonl.stem,
@@ -306,6 +339,8 @@ class ClaudeProvider(Provider):
                         size=stat.st_size,
                         state=_tail_state(jsonl),
                         provider=self.id,
+                        claude_name=claude_name,
+                        ai_title=ai_title,
                     )
                 )
         return found

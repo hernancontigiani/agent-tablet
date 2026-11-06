@@ -1,5 +1,10 @@
 # History of `CLAUDE.md`
 
+## Introduction
+
+> Left the introduction on 2026-11-06, when plan 04 removed favorites.
+running in an embedded VTE terminal on the right, with tabs, split panes, favorites, search and a
+
 ## Where each thing lives
 
 > Left the subsystem docs table on 2026-11-05, when `docs/ui-verification.md` became its first row.

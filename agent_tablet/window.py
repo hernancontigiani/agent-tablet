@@ -5,8 +5,11 @@ from __future__ import annotations
 import shutil
 import subprocess
 import threading
+import uuid
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol, cast
 
 import gi
 
@@ -15,16 +18,21 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from . import __version__, dialogs, themes
+from .addsession import EXISTING, NEW, AddSessionDialog
+from .agentstate import rollup
 from .chatsessionview import ChatSessionTab
 from .i18n import _
+from .layout import MAX_PANES, Orientation, TabLayout, WindowLayout
 from .models import SessionItem
 from .panes import PaneContainer
 from .prefs import PreferencesDialog
-from .providers import available_providers, get_provider
+from .projectbar import ProjectBar
+from .projectlist import ProjectList
+from .projects import ProjectError, blocked_elsewhere, folder_labels, joins_project
+from .providers import Provider, SessionOptions, available_providers, get_provider
 from .replayview import ReplayTab
 from .sessions import Session, export_markdown, session_from_file
-from .sidebar import SessionSidebar
-from .spaces import SpacesPanel, TabInfo, TabStrip, space_name
+from .spaces import TabInfo, TabStrip
 from .state import AppState
 from .store import SessionStore
 from .switcher import QuickSwitcher, SwitchEntry
@@ -73,8 +81,29 @@ def _add_remove_button(chooser: Gtk.EmojiChooser, on_remove) -> None:
     bar.append(button)
 
 
+class _Host(Protocol):
+    """What a window asks of the application about the other windows."""
+
+    def windows(self) -> list[MainWindow]: ...
+    def save_layout(self) -> None: ...
+    def window_closing(self, window: MainWindow) -> None: ...
+    def window_holding(self, project_id: str, but: MainWindow | None = None) -> MainWindow | None: ...
+    def held_elsewhere(self, window: MainWindow) -> set[str]: ...
+    def all_states(self) -> dict[str, str]: ...
+
+
+@dataclass
+class _Joining:
+    """A tab whose session joins `project_id` once Claude has a typed message for it."""
+
+    project_id: str
+    tab: TerminalTab
+    page: Adw.TabPage
+    closed: bool = False
+
+
 class MainWindow(Adw.ApplicationWindow):
-    def __init__(self, state: AppState, store: SessionStore, **kwargs) -> None:
+    def __init__(self, state: AppState, store: SessionStore, project_id: str | None = None, **kwargs) -> None:
         super().__init__(**kwargs)
         self.set_title("Agent Tablet")
         self.set_icon_name("io.github.hernancontigiani.AgentTablet")
@@ -93,6 +122,14 @@ class MainWindow(Adw.ApplicationWindow):
         self._page_space: dict[Adw.TabPage, tuple[str, str]] = {}
         self._space_last: dict[str, Adw.TabPage] = {}  # last selected tab per space
         self._spaces_refresh_source: int | None = None
+        self._joining: list[_Joining] = []
+        self._pane_state: dict[TerminalTab, str] = {}  # working | blocked | done | idle, per pane
+        self._moving: set[Adw.TabPage] = set()  # pages closed because their pane moved to another tab
+        self._project_id = project_id or state.projects.current  # the project this window shows
+        self._layout_save_source: int | None = None
+        self._closing_confirmed = False
+        self.connect("close-request", self._on_close_request)
+        store.connect("refreshed", self._on_store_refreshed)
 
         self._prefix = False  # Ctrl+B pressed, waiting for the command key
         self._install_actions()
@@ -112,6 +149,7 @@ class MainWindow(Adw.ApplicationWindow):
         tab_menu.append(_("Set emoji…"), "win.set-tab-emoji")
         tab_menu.append(_("Remove emoji"), "win.remove-tab-emoji")
         tab_menu.append(_("Copy session ID"), "win.copy-tab-session-id")
+        tab_menu.append(_("Swap the split's orientation"), "win.toggle-split")
         tab_menu.append(_("Close"), "win.close-menu-tab")
 
         # Shows only the current space's tabs (Adw.TabBar can't filter).
@@ -160,7 +198,7 @@ class MainWindow(Adw.ApplicationWindow):
         new_btn = Adw.SplitButton(icon_name="tab-new-symbolic")
         new_btn.set_tooltip_text(_("New session (Ctrl+Shift+T)"))
         new_btn.set_menu_model(new_menu)
-        new_btn.connect("clicked", lambda *_: self._new_session())
+        new_btn.connect("clicked", lambda *_: self._add_session(NEW))
         content_header.pack_start(new_btn)
 
         self.close_all_btn = Gtk.Button(icon_name="tab-close-symbolic", visible=False)
@@ -188,14 +226,34 @@ class MainWindow(Adw.ApplicationWindow):
         self.toasts = Adw.ToastOverlay(child=self.content_stack)
         content_view.set_content(self.toasts)
 
-        # --- sidebar: spaces + agents on top, session history below ---
-        self.spaces_panel = SpacesPanel(self.state)
-        self.spaces_panel.connect("select-space", self._on_select_space)
-        self.spaces_panel.connect("select-page", lambda _p, page: self.tab_view.set_selected_page(page))
-        self.sidebar = SessionSidebar(self.store, top=self.spaces_panel, menu=app_menu)
-        self.sidebar.connect("open-session", self._on_sidebar_open)
-        self.sidebar.connect("open-many", self._on_sidebar_open_many)
-        self.sidebar.connect("trash-many", self._on_sidebar_trash_many)
+        # --- sidebar: the project dropdown, its sessions, "Add session" ---
+        self.project_bar = ProjectBar()
+        self.project_bar.connect("select", lambda _b, pid: self._select_project(pid))
+        self.project_bar.connect("create", lambda _b, name: self._create_project(name))
+        self.project_bar.connect("rename", lambda _b, pid: self._rename_project(pid))
+        self.project_bar.connect("delete", lambda _b, pid: self._delete_project(pid))
+        menu_btn = Gtk.MenuButton(icon_name="emblem-system-symbolic", menu_model=app_menu)
+        menu_btn.set_tooltip_text(_("Main menu"))
+        side_header = Adw.HeaderBar()
+        # The content header carries the window controls; without AdwOverlaySplitView
+        # coordinating the two bars, hide them here so they are not duplicated.
+        side_header.set_show_end_title_buttons(False)
+        side_header.set_title_widget(self.project_bar)
+        side_header.pack_end(menu_btn)
+
+        self.project_list = ProjectList()
+        self.project_list.connect("open", lambda _l, sid: self._open_member(sid))
+        add_btn = Gtk.Button(
+            label=_("Add session"), margin_top=6, margin_bottom=6, margin_start=8, margin_end=8
+        )
+        add_btn.set_action_name("win.add-session")
+
+        side_view = Adw.ToolbarView(content=self.project_list, vexpand=True)
+        side_view.add_top_bar(side_header)
+        side_view.add_bottom_bar(add_btn)
+        self.sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.sidebar.add_css_class("app-sidebar")
+        self.sidebar.append(side_view)
 
         self.sidebar.set_size_request(220, -1)  # minimum drag width
         self.split = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
@@ -216,6 +274,16 @@ class MainWindow(Adw.ApplicationWindow):
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
         self.sidebar_toggle.connect("toggled", lambda b: self.sidebar.set_visible(b.get_active()))
+        self._refresh_project()
+        if state.projects.broken is not None:
+            self.toasts.add_toast(
+                Adw.Toast(
+                    title=_(
+                        "The projects file could not be read; it was kept as {name} and a new one started"
+                    ).format(name=state.projects.broken.name),
+                    timeout=0,
+                )
+            )
 
     # -- sidebar width persistence -------------------------------------------
 
@@ -238,15 +306,16 @@ class MainWindow(Adw.ApplicationWindow):
     def _install_actions(self) -> None:
         plain = {
             "refresh": lambda *_: self.store.refresh(),
-            "new-session": lambda *_: self._new_session(),
+            "new-session": lambda *_: self._add_session(NEW),
+            "add-session": lambda *_: self._add_session(EXISTING),
             "preferences": lambda *_: self._show_preferences(),
             "mcp-servers": lambda *_: dialogs.mcp_browser_dialog(self),
-            "focus-search": lambda *_: self.sidebar.focus_search(),
+            "focus-search": lambda *_: self._add_session(EXISTING),
             "close-tab": lambda *_: self._close_current_tab(),
             "next-tab": lambda *_: self._cycle_space_tab(1),
             "prev-tab": lambda *_: self._cycle_space_tab(-1),
-            "new-space": lambda *_: self._choose_new_session_folder(),
-            "new-in-space": lambda *_: self._new_in_space(),
+            "new-space": lambda *_: self._add_session(EXISTING),
+            "new-in-space": lambda *_: self._add_session(NEW),
             "about": lambda *_: self._show_about(),
             "quick-switch": lambda *_: self._quick_switch(),
             "rename-tab": lambda *_: self._rename_tab(),
@@ -256,6 +325,7 @@ class MainWindow(Adw.ApplicationWindow):
             "open-session-file": lambda *_: self._open_session_file(),
             "copy-tab-session-id": lambda *_: self._copy_tab_session_id(),
             "close-menu-tab": lambda *_: self._close_menu_tab(),
+            "toggle-split": lambda *_: (panes := self._panes()) and panes.toggle_orientation(),
             "toggle-sidebar": lambda *_: self.sidebar.set_visible(not self.sidebar.get_visible()),
         }
         for name, callback in plain.items():
@@ -264,8 +334,8 @@ class MainWindow(Adw.ApplicationWindow):
             self.add_action(action)
 
         per_session = {
-            "new-session-provider": lambda _a, p: self._choose_new_session_folder(
-                get_provider(p.get_string())
+            "new-session-provider": lambda _a, p: self._add_session(
+                NEW, provider=get_provider(p.get_string())
             ),
             "new-chat-provider": lambda _a, p: self._new_chat_session_target(p.get_string()),
             "new-session-advanced": lambda _a, p: self._new_session_advanced(get_provider(p.get_string())),
@@ -277,13 +347,17 @@ class MainWindow(Adw.ApplicationWindow):
             "delete-session": self._on_delete_session,
             "open-ghostty": self._on_open_ghostty,
             "rename-session": self._on_rename_action,
-            "toggle-favorite": lambda _a, p: self.store.toggle_favorite(p.get_string()),
             "copy-session-id": lambda _a, p: self.get_clipboard().set(p.get_string()),
             "reveal-transcript": self._on_reveal_transcript,
             "export-session": self._on_export_session,
             "session-details": self._on_session_details,
             "hide-session": self._on_hide_session,
             "trash-session": self._on_trash_session,
+            "stop-session": lambda _a, p: self._stop_session(p.get_string()),
+            "remove-from-project": lambda _a, p: self._remove_from_project(p.get_string()),
+            "set-group": lambda _a, p: self._set_group(*p.get_string().split("\x1f", 1)),
+            "new-group": lambda _a, p: self._new_group(p.get_string()),
+            "open-beside": lambda _a, p: self._open_beside(p.get_string()),
         }
         for name, callback in per_session.items():
             action = Gio.SimpleAction(name=name, parameter_type=GLib.VariantType("s"))
@@ -324,9 +398,6 @@ class MainWindow(Adw.ApplicationWindow):
 
     # -- sidebar signal handlers -------------------------------------------------
 
-    def _on_sidebar_open(self, _sidebar, item: SessionItem, fork: bool) -> None:
-        self.open_session(item.session, fork=fork)
-
     def _on_sidebar_open_many(self, _sidebar, items: list[SessionItem]) -> None:
         for item in items:
             self.open_session(item.session)
@@ -359,6 +430,7 @@ class MainWindow(Adw.ApplicationWindow):
         provider = get_provider(session.provider)
         fork = fork and provider.supports_fork
         if not fork:
+            self._make_member(session.session_id)
             page = self._pages.get(session.session_id)
             if page is not None:
                 self.tab_view.set_selected_page(page)
@@ -370,11 +442,14 @@ class MainWindow(Adw.ApplicationWindow):
             fork=fork,
             settings=self.state.settings,
             provider=provider,
-            jsonl_path=session.jsonl_path,
+            jsonl_path=None if fork else session.jsonl_path,
+            new_id=str(uuid.uuid4()) if fork else None,
         )
         title = f"{self.store.display_name(session)} (fork)" if fork else self._tab_title(session)
         page = self._add_tab(tab, title, f"{session.project_name} — {session.session_id}")
-        if not fork:
+        if fork:
+            self._join_when_created(tab, page)
+        else:
             self._pages[session.session_id] = page
             self._sync_status(session.session_id)
 
@@ -389,35 +464,7 @@ class MainWindow(Adw.ApplicationWindow):
         providers = available_providers()
         return providers[0] if providers else get_provider("claude")
 
-    def _new_session(self, provider=None) -> None:
-        """Start in the remembered folder if it still exists, else ask."""
-        provider = provider or self._default_provider()
-        default = self.state.get_setting("new_session_dir")
-        if default and Path(default).is_dir():
-            self._start_new_session(default, provider)
-        else:
-            self._choose_new_session_folder(provider)
-
-    def _choose_new_session_folder(self, provider=None) -> None:
-        self._new_session_provider = provider or self._default_provider()
-        dialog = Gtk.FileDialog(title=_("Choose project directory"))
-        default = self.state.get_setting("new_session_dir")
-        if default and Path(default).is_dir():
-            dialog.set_initial_folder(Gio.File.new_for_path(default))
-        dialog.select_folder(self, None, self._on_new_session_folder)
-
-    def _on_new_session_folder(self, dialog: Gtk.FileDialog, result) -> None:
-        try:
-            folder = dialog.select_folder_finish(result)
-        except GLib.Error:
-            return  # cancelled
-        cwd = dialogs.require_local_path(folder, self, _("Choose a local folder"))
-        if cwd is None:
-            return
-        self.state.set_setting("new_session_dir", cwd)  # remember for next time
-        self._start_new_session(cwd, getattr(self, "_new_session_provider", None))
-
-    def _start_new_session(self, cwd: str, provider=None, options=None) -> None:
+    def _start_new_session(self, cwd: str, provider=None, options=None, name: str | None = None) -> None:
         provider = provider or self._default_provider()
         tab = TerminalTab(
             cwd=cwd,
@@ -425,12 +472,419 @@ class MainWindow(Adw.ApplicationWindow):
             settings=self.state.settings,
             provider=provider,
             options=options,
+            new_id=str(uuid.uuid4()),
+            name=name,
         )
-        self._add_tab(
+        page = self._add_tab(
             tab,
-            GLib.path_get_basename(cwd),
+            name or GLib.path_get_basename(cwd),
             f"new {provider.name} session — {cwd}",
         )
+        self._join_when_created(tab, page)
+
+    # -- a new session joins the current project -------------------------------------
+
+    def _join_when_created(self, tab: TerminalTab, page: Adw.TabPage) -> None:
+        self._joining.append(_Joining(self.state.projects.current, tab, page))
+
+    def _on_store_refreshed(self, _store, _order_changed: bool) -> None:
+        self._join_created()
+        self._refresh_project()
+
+    def _join_created(self) -> None:
+        projects = self.state.projects
+        for joining in list(self._joining):
+            session_id = joining.tab.transcript_id or joining.tab.new_id
+            session = self.store.get_session(session_id) if session_id else None
+            if session is not None and session_id and joins_project(session):
+                target = joining.project_id
+                if all(p.id != target for p in projects.projects):
+                    target = projects.current  # its project was deleted meanwhile
+                projects.add(target, session_id)
+                self.state.save_projects()
+                self._joining.remove(joining)
+                if not joining.closed:
+                    joining.tab.session_id = session_id
+                    joining.tab.fork = False
+                    self._pages[session_id] = joining.page
+                    self._sync_status(session_id)
+            elif joining.closed:
+                self._joining.remove(joining)
+
+    # -- projects --------------------------------------------------------------------------
+
+    def _project_name(self, project_id: str) -> str:
+        try:
+            return self.state.projects.get(project_id).name
+        except KeyError:
+            return ""
+
+    def _display(self, session_id: str) -> str:
+        session = self.store.get_session(session_id)
+        return self.store.display_name(session) if session else session_id[:8]
+
+    def _session_states(self) -> dict[str, str]:
+        states = {}
+        for page in set(self._pages.values()):
+            for pane in self._panes_of(page):
+                if sid := self._pane_session(pane):
+                    states[sid] = self._pane_state.get(pane, "idle")
+        return states
+
+    def _update_project_bar(self, states: dict[str, str]) -> None:
+        app = self._app()
+        elsewhere: set[str] = set()
+        if app is not None:
+            states = app.all_states()
+            elsewhere = app.held_elsewhere(self)
+        projects = self.state.projects
+        blocked = {
+            p.id: sum(1 for sid in p.members if states.get(sid) == "blocked") for p in projects.projects
+        }
+        others = blocked_elsewhere(projects, self._project_id, states)
+        self.project_bar.update(projects, self._project_id, blocked, elsewhere, others)
+
+    def _refresh_project(self) -> None:
+        projects = self.state.projects
+        project = projects.get(self._project_id)
+        items = {sid: item for sid in project.members if (item := self.store.get_item(sid)) is not None}
+        folders = folder_labels({sid: item.session.cwd for sid, item in items.items()})
+        states = self._session_states()
+        self.project_list.update(
+            project.name, projects.rows(project.id), items, folders, self._menu_for, states
+        )
+        self._update_project_bar(states)
+
+    def _menu_for(self, session_id: str) -> Gio.Menu:
+        def item(label: str, action: str, value: str = session_id) -> Gio.MenuItem:
+            menu_item = Gio.MenuItem.new(label, None)
+            menu_item.set_action_and_target_value(f"win.{action}", GLib.Variant("s", value))
+            return menu_item
+
+        run = Gio.Menu()
+        run.append_item(item(_("Open"), "open-session"))
+        run.append_item(item(_("Open beside the current tab"), "open-beside"))
+        run.append_item(item(_("Stop"), "stop-session"))
+        groups = Gio.Menu()
+        for group in self.state.projects.get(self._project_id).groups:
+            groups.append_item(item(group.name, "set-group", f"{session_id}\x1f{group.name}"))
+        groups.append_item(item(_("No group"), "set-group", f"{session_id}\x1f"))
+        groups.append_item(item(_("New group…"), "new-group"))
+        run.append_submenu(_("Group"), groups)
+
+        more = Gio.Menu()
+        more.append_item(item(_("Rename…"), "rename-session"))
+        more.append_item(item(_("Details…"), "session-details"))
+        more.append_item(item(_("Replay…"), "replay-session"))
+        more.append_item(item(_("Copy session ID"), "copy-session-id"))
+        more.append_item(item(_("Export as Markdown…"), "export-session"))
+        more.append_item(item(_("Reveal transcript"), "reveal-transcript"))
+
+        leave = Gio.Menu()
+        leave.append_item(item(_("Remove from project"), "remove-from-project"))
+
+        menu = Gio.Menu()
+        menu.append_section(None, run)
+        menu.append_section(None, more)
+        menu.append_section(None, leave)
+        return menu
+
+    def _open_member(self, session_id: str) -> None:
+        session = self.store.get_session(session_id)
+        if session is not None:
+            self.open_session(session)
+
+    def _make_member(self, session_id: str) -> None:
+        """Opening a session puts it in a project: its own, shown first, or this one if it has none."""
+        projects = self.state.projects
+        owner = projects.owner(session_id)
+        if owner is None:
+            projects.add(self._project_id, session_id)
+            self.state.save_projects()
+            self._refresh_project()
+        elif owner.id != self._project_id:
+            self._select_project(owner.id)
+
+    def _select_project(self, project_id: str) -> None:
+        if project_id == self._project_id:
+            return
+        app = self._app()
+        holder = app.window_holding(project_id, but=self) if app is not None else None
+        if holder is not None:
+            holder.present()
+            return
+        self._project_id = project_id
+        self.state.projects.current = project_id
+        self.state.save_projects()
+        self._show_project_tabs()
+        self._refresh_project()
+        self._queue_spaces_refresh()
+
+    def _show_project_tabs(self) -> None:
+        page = self._space_last.get(self._project_id)
+        if page is None or page not in self._page_space:
+            page = next((p for p, (space, _a) in self._page_space.items() if space == self._project_id), None)
+        if page is None:
+            self.content_stack.set_visible_child_name("empty")
+            return
+        self.content_stack.set_visible_child_name("tabs")
+        if self.tab_view.get_selected_page() is not page:
+            self.tab_view.set_selected_page(page)
+
+    def _create_project(self, name: str) -> None:
+        try:
+            project = self.state.projects.create(name)
+        except ProjectError as error:
+            self.project_bar.show_error(str(error))
+            return
+        self.state.save_projects()
+        self._select_project(project.id)
+
+    def _rename_project(self, project_id: str) -> None:
+        def save(name: str) -> None:
+            try:
+                self.state.projects.rename(project_id, name)
+            except ProjectError as error:
+                dialogs.error_dialog(self, _("The project was not renamed"), str(error))
+                return
+            self.state.save_projects()
+            self._refresh_project()
+
+        dialogs.text_dialog(self, _("Rename project"), "", self._project_name(project_id), _("Name"), save)
+
+    def _delete_project(self, project_id: str) -> None:
+        projects = self.state.projects
+        if len(projects.projects) == 1:
+            dialogs.error_dialog(
+                self, _("The project was not deleted"), _("The last project cannot be deleted.")
+            )
+            return
+        project = projects.get(project_id)
+        running = [sid for sid in project.members if sid in self._pages]
+        body = _("Its sessions leave the list; their conversations stay in Claude.")
+        if running:
+            body += " " + _("{n} running session(s) will be stopped first.").format(n=len(running))
+
+        def delete() -> None:
+            for sid in running:
+                self._stop_session(sid)
+            for page, (space, _agent) in list(self._page_space.items()):
+                if space == project_id and self._session_id_of(page) is None:
+                    self.tab_view.close_page(page)  # its chat and replay tabs go with it
+            projects.delete(project_id)
+            if self._project_id == project_id:
+                self._project_id = projects.projects[0].id
+                projects.current = self._project_id
+            self.state.save_projects()
+            self._show_project_tabs()
+            self._refresh_project()
+            self._queue_spaces_refresh()
+
+        dialogs.confirm_dialog(
+            self, _("Delete “{name}”?").format(name=project.name), body, _("Delete"), delete
+        )
+
+    def _stop_session(self, session_id: str) -> None:
+        page = self._pages.get(session_id)
+        if page is None:
+            return
+        panes = self._panes_of(page)
+        if len(panes) > 1:
+            pane = next(p for p in panes if self._pane_session(p) == session_id)
+            self._stop_pane(pane)
+        else:
+            self.tab_view.close_page(page)
+
+    def _open_beside(self, session_id: str) -> None:
+        """Put a session in the second pane of the current tab; one already open alone in its own
+        tab moves here without stopping."""
+        page = self.tab_view.get_selected_page()
+        panes = self._panes()
+        session = self.store.get_session(session_id)
+        if (
+            page is None
+            or panes is None
+            or session is None
+            or self._page_space.get(page, (None,))[0] != self._project_id
+        ):
+            if session is not None:
+                self.open_session(session)
+            return
+        owner = self.state.projects.owner(session_id)
+        if owner is not None and owner.id != self._project_id:
+            self.toasts.add_toast(
+                Adw.Toast(title=_("It belongs to another project; add it here first"), timeout=4)
+            )
+            return
+        if self._pages.get(session_id) is page:
+            return
+        if len(panes.panes()) >= MAX_PANES:
+            self.toasts.add_toast(Adw.Toast(title=_("A tab holds two panes at most"), timeout=4))
+            return
+        self._make_member(session_id)
+        existing = self._pages.get(session_id)
+        if existing is not None:
+            other = existing.get_child()
+            if not isinstance(other, PaneContainer) or len(other.panes()) > 1:
+                self.toasts.add_toast(Adw.Toast(title=_("It is already beside another session"), timeout=4))
+                return
+            pane = other.primary
+            other.remove(pane)
+            self._moving.add(existing)
+            self.tab_view.close_page(existing)
+        else:
+            pane = TerminalTab(
+                cwd=session.cwd,
+                session_id=session_id,
+                settings=self.state.settings,
+                provider=get_provider(session.provider),
+                jsonl_path=session.jsonl_path,
+            )
+            self._watch_pane(pane)
+        panes.split(pane, Gtk.Orientation.HORIZONTAL)
+        self._pages[session_id] = page
+        self._sync_status(session_id)
+        self._retitle(page)
+        self._refresh_page_state(page)
+
+    def _window_with_session(self, session_id: str) -> MainWindow | None:
+        app = self._app()
+        windows = app.windows() if app is not None else [self]
+        return next((w for w in windows if session_id in w._pages), None)
+
+    def _take_tab(self, other: MainWindow, session_id: str) -> bool:
+        """Move a session's tab from another window into this one, without stopping it."""
+        page = other._pages[session_id]
+        if len(other._session_ids_of(page)) > 1:
+            self.toasts.add_toast(Adw.Toast(title=_("It shares a tab with another session there"), timeout=4))
+            return False
+        panes = other._panes_of(page)
+        states = other._forget_page(page)
+        for pane in panes:
+            pane.disconnect_by_func(other._on_pane_exited)
+            pane.disconnect_by_func(other._on_pane_state)
+        other.tab_view.transfer_page(page, self.tab_view, self.tab_view.get_n_pages())
+        self._page_space[page] = (self._project_id, panes[0].provider.id if panes else "")
+        self._pages[session_id] = page
+        for pane in panes:
+            self._watch_pane(pane)
+            self._pane_state[pane] = states.get(pane, "idle")
+        other._show_project_tabs()
+        other._refresh_project()
+        self.content_stack.set_visible_child_name("tabs")
+        self.tab_view.set_selected_page(page)
+        return True
+
+    def _forget_page(self, page: Adw.TabPage) -> dict[TerminalTab, str]:
+        """Drop what this window keeps about a page that leaves it; returns its panes' states."""
+        states = {pane: self._pane_state.pop(pane, "idle") for pane in self._panes_of(page)}
+        for session_id, open_page in list(self._pages.items()):
+            if open_page is page:
+                del self._pages[session_id]
+        self._page_space.pop(page, None)
+        self._page_state.pop(page, None)
+        self._base_titles.pop(page, None)
+        self._space_last = {k: v for k, v in self._space_last.items() if v is not page}
+        return states
+
+    def _retitle(self, page: Adw.TabPage) -> None:
+        """A tab of two sessions is named after both."""
+        sessions = [s for sid in self._session_ids_of(page) if (s := self.store.get_session(sid))]
+        if len(sessions) > 1:
+            page.set_title(" │ ".join(self.store.display_name(s) for s in sessions))
+        elif len(sessions) == 1:
+            page.set_title(self._tab_title(sessions[0]))
+
+    def _remove_from_project(self, session_id: str) -> None:
+        projects = self.state.projects
+        owner = projects.owner(session_id)
+        if owner is None:
+            return
+
+        def remove() -> None:
+            self._stop_session(session_id)
+            projects.remove(owner.id, session_id)
+            self.state.save_projects()
+            self._refresh_project()
+
+        if session_id not in self._pages:
+            remove()
+            return
+        dialogs.confirm_dialog(
+            self,
+            _("Remove “{name}” from the project?").format(name=self._display(session_id)),
+            _("It is running, so it is stopped first. Its conversation stays in Claude."),
+            _("Stop and remove"),
+            remove,
+        )
+
+    def _set_group(self, session_id: str, group: str = "") -> None:
+        self.state.projects.set_group(self._project_id, session_id, group or None)
+        self.state.save_projects()
+        self._refresh_project()
+
+    def _new_group(self, session_id: str) -> None:
+        def save(name: str) -> None:
+            try:
+                self.state.projects.new_group(self._project_id, name, session_id)
+            except ProjectError as error:
+                dialogs.error_dialog(self, _("The group was not created"), str(error))
+                return
+            self.state.save_projects()
+            self._refresh_project()
+
+        dialogs.text_dialog(
+            self,
+            _("New group"),
+            _("Groups belong to this project; they never change a session's name."),
+            "",
+            _("Name"),
+            save,
+        )
+
+    def _add_session(
+        self,
+        page: str,
+        provider: Provider | None = None,
+        folder: str | None = None,
+        options: SessionOptions | None = None,
+    ) -> None:
+        projects = self.state.projects
+        project = projects.get(self._project_id)
+
+        def label(item: SessionItem) -> tuple[str, bool]:
+            owner = projects.owner(item.session_id)
+            if owner is None:
+                return _("Add"), True
+            if owner.id == self._project_id:
+                return _("Added"), False
+            return _("Move from {name}").format(name=owner.name), True
+
+        def pick(item: SessionItem) -> None:
+            holder = self._window_with_session(item.session_id)
+            if holder is not None and holder is not self and not self._take_tab(holder, item.session_id):
+                return
+            previous = projects.add(self._project_id, item.session_id)
+            open_page = self._pages.get(item.session_id)
+            if previous is not None and open_page is not None:
+                self._page_space[open_page] = (self._project_id, self._page_space[open_page][1])
+            self.state.save_projects()
+            self._refresh_project()
+            self._queue_spaces_refresh()
+
+        def start(cwd: str, chosen: Provider, name: str, chosen_options: SessionOptions | None) -> None:
+            self.state.set_setting("new_session_dir", cwd)
+            self._start_new_session(cwd, chosen, chosen_options, name)
+
+        remembered = self.state.get_setting("new_session_dir")
+        if folder is None and remembered and Path(remembered).is_dir():
+            folder = remembered
+        dialog = AddSessionDialog(
+            self.store, project.name, label, pick, start, page, folder, provider, options
+        )
+        dialog.browser.connect("open-many", self._on_sidebar_open_many)
+        dialog.browser.connect("trash-many", self._on_sidebar_trash_many)
+        dialog.present(self)
 
     # -- advanced new session / continue -----------------------------------
 
@@ -453,7 +907,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.state.set_setting("new_session_dir", cwd)
         provider = getattr(self, "_adv_provider", None) or self._default_provider()
         dialogs.new_session_options_dialog(
-            self, provider, lambda opts: self._start_new_session(cwd, provider, opts)
+            self, provider, lambda opts: self._add_session(NEW, provider=provider, folder=cwd, options=opts)
         )
 
     def _continue_session(self, provider) -> None:
@@ -480,16 +934,15 @@ class MainWindow(Adw.ApplicationWindow):
             provider=provider,
             command_override=provider.continue_command(),
         )
-        self._add_tab(tab, GLib.path_get_basename(cwd), f"continue {provider.name} — {cwd}")
+        page = self._add_tab(tab, GLib.path_get_basename(cwd), f"continue {provider.name} — {cwd}")
+        self._join_when_created(tab, page)
 
-    def _append_page(
-        self, tab: Gtk.Widget, title: str, tooltip: str, cwd: str | None, agent: str
-    ) -> Adw.TabPage:
-        """Append a tab into the space of its folder and select it."""
+    def _append_page(self, tab: Gtk.Widget, title: str, tooltip: str, agent: str) -> Adw.TabPage:
+        """Append a tab into the project this window shows and select it."""
         page = self.tab_view.append(tab)
         page.set_title(title)
         page.set_tooltip(tooltip)
-        self._page_space[page] = (cwd or str(Path.home()), agent)
+        self._page_space[page] = (self._project_id, agent)
         page.connect("notify::title", lambda *_: self._queue_spaces_refresh())
         page.connect("notify::needs-attention", lambda *_: self._queue_spaces_refresh())
         self.tab_view.set_selected_page(page)
@@ -498,9 +951,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _add_tab(self, tab: TerminalTab, title: str, tooltip: str) -> Adw.TabPage:
         panes = PaneContainer(tab)  # splits live in here; `tab` stays the primary
-        page = self._append_page(panes, title, tooltip, tab.cwd, tab.provider.id)
-        tab.connect("process-exited", self._on_process_exited, page)
-        tab.connect("agent-state", self._on_agent_state, page)
+        page = self._append_page(panes, title, tooltip, tab.provider.id)
+        self._watch_pane(tab)
         GLib.idle_add(tab.grab_terminal_focus)
         return page
 
@@ -545,7 +997,6 @@ class MainWindow(Adw.ApplicationWindow):
             tab,
             _("Chat — {dir}").format(dir=GLib.path_get_basename(cwd)),
             f"{provider.name} chat — {cwd}",
-            cwd,
             f"{provider.id} chat",
         )
 
@@ -566,7 +1017,6 @@ class MainWindow(Adw.ApplicationWindow):
             tab,
             _("Chat — {name}").format(name=self.store.display_name(session)),
             f"{provider.name} chat — {session.session_id}",
-            session.cwd,
             f"{provider.id} chat",
         )
 
@@ -583,7 +1033,6 @@ class MainWindow(Adw.ApplicationWindow):
             tab,
             _("Replay — {name}").format(name=self.store.display_name(session)),
             f"replay — {session.project_name} — {session.session_id}",
-            session.cwd,
             "replay",
         )
 
@@ -603,27 +1052,25 @@ class MainWindow(Adw.ApplicationWindow):
         self.tab_view.close_page(page)
 
     def _graceful_close(self, page: Adw.TabPage) -> None:
-        """Ask the agent to exit cleanly (e.g. Claude's /exit), then close once the
-        shell returns. Falls back to a force-close after a timeout. Agents with no
+        """Ask every agent in the tab to exit cleanly (e.g. Claude's /exit), then close once the
+        shells return. Falls back to a force-close after a timeout. Agents with no
         clean-exit command (e.g. Cursor) are force-closed directly."""
-        tab = self._tab_of(page)
-        if not isinstance(tab, TerminalTab):
-            self._close_confirmed(page)
-            return
-        exit_text = tab.provider.graceful_exit()
-        if not exit_text:
+        running = [pane for pane in self._panes_of(page) if pane.has_running_command()]
+        if not running or any(not pane.provider.graceful_exit() for pane in running):
             self._close_confirmed(page)
             return
         self._closing_pages[page] = 0
-        # Enter in a raw-mode TUI is carriage return, not newline.
-        tab.feed_child_text(exit_text)
-        GLib.timeout_add(300, self._poll_graceful, page, tab)
+        for pane in running:
+            pane.feed_child_text(pane.provider.graceful_exit() or "")
+        GLib.timeout_add(300, self._poll_graceful, page)
 
-    def _poll_graceful(self, page: Adw.TabPage, tab: TerminalTab) -> bool:
+    def _poll_graceful(self, page: Adw.TabPage) -> bool:
         if page not in self._closing_pages:
             return GLib.SOURCE_REMOVE  # already closed
-        if not tab.has_running_command():
-            tab.feed_child_text("exit\r")  # close the shell → child-exited closes the tab
+        panes = self._panes_of(page)
+        if not any(pane.has_running_command() for pane in panes):
+            for pane in panes:
+                pane.feed_child_text("exit\r")  # a shell left over closes, and the tab with it
             return GLib.SOURCE_REMOVE
         self._closing_pages[page] += 1
         if self._closing_pages[page] >= 40:  # ~12s safety net
@@ -640,7 +1087,7 @@ class MainWindow(Adw.ApplicationWindow):
         else:
             status = "open"
         self.store.set_status(session_id, status)
-        self.sidebar.update_footer()
+        self._queue_spaces_refresh()
 
     def _tab_of(self, page: Adw.TabPage) -> Gtk.Widget:
         """A page's own tab widget: for terminals, the primary pane."""
@@ -649,40 +1096,69 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _session_id_of(self, page: Adw.TabPage) -> str | None:
         tab = self._tab_of(page)
-        if isinstance(tab, TerminalTab) and tab.session_id and not tab.fork:
-            return tab.session_id
+        if isinstance(tab, TerminalTab):
+            return self._pane_session(tab)
         return None
+
+    @staticmethod
+    def _pane_session(pane: TerminalTab) -> str | None:
+        return pane.session_id if pane.session_id and not pane.fork else None
+
+    def _panes_of(self, page: Adw.TabPage) -> list[TerminalTab]:
+        child = page.get_child()
+        return child.panes() if isinstance(child, PaneContainer) else []
+
+    def _session_ids_of(self, page: Adw.TabPage) -> list[str]:
+        return [sid for pane in self._panes_of(page) if (sid := self._pane_session(pane))]
+
+    def _page_of(self, pane: TerminalTab) -> Adw.TabPage | None:
+        container = pane.get_ancestor(PaneContainer)
+        return self.tab_view.get_page(container) if isinstance(container, PaneContainer) else None
+
+    def _watch_pane(self, pane: TerminalTab) -> None:
+        pane.connect("process-exited", self._on_pane_exited)
+        pane.connect("agent-state", self._on_pane_state)
 
     # -- agent states ----------------------------------------------------------
 
-    def _on_agent_state(self, _tab, raw: str, page: Adw.TabPage) -> None:
+    def _on_pane_state(self, pane: TerminalTab, raw: str) -> None:
         """working / blocked / idle from the terminal; an agent that finished
         while you weren't looking is "done" until you view it (as in herdr)."""
-        previous = self._page_state.get(page, "idle")
+        page = self._page_of(pane)
+        if page is None:
+            return
+        previous = self._pane_state.get(pane, "idle")
         unseen = page is not self.tab_view.get_selected_page() or not self.is_active()
         state = raw
         if raw == "idle" and previous in ("working", "done") and unseen:
             state = "done"
-        self._set_page_state(page, state)
+        self._pane_state[pane] = state
+        self._refresh_page_state(page)
         if unseen and state != previous and state in ("done", "blocked"):
-            self._notify_state(page, state)
+            self._notify_state(page, state, pane)
+
+    def _refresh_page_state(self, page: Adw.TabPage) -> None:
+        self._set_page_state(page, rollup([self._pane_state.get(p, "idle") for p in self._panes_of(page)]))
 
     def _set_page_state(self, page: Adw.TabPage, state: str) -> None:
-        if self._page_state.get(page) == state:
-            return
+        changed = self._page_state.get(page) != state
         self._page_state[page] = state
         page.set_needs_attention(state in ("done", "blocked"))
-        session_id = self._session_id_of(page)
-        if session_id:
+        for session_id in self._session_ids_of(page):
             self._sync_status(session_id)
-        self._queue_spaces_refresh()
+        if changed:
+            self._queue_spaces_refresh()
 
     def _mark_seen(self, *_args) -> None:
         page = self.tab_view.get_selected_page()
-        if page is not None and self.is_active() and self._page_state.get(page) == "done":
-            self._set_page_state(page, "idle")
+        if page is None or not self.is_active():
+            return
+        for pane in self._panes_of(page):
+            if self._pane_state.get(pane) == "done":
+                self._pane_state[pane] = "idle"
+        self._refresh_page_state(page)
 
-    def _notify_state(self, page: Adw.TabPage, state: str) -> None:
+    def _notify_state(self, page: Adw.TabPage, state: str, pane: TerminalTab | None = None) -> None:
         """Like herdr: a sound, plus a toast while you're in the window or a
         desktop notification while you're not."""
         if self.state.get_setting("notify_sound"):
@@ -690,13 +1166,13 @@ class MainWindow(Adw.ApplicationWindow):
         app = self.get_application()
         if app is None or not self.state.get_setting("notify_idle"):
             return
-        tab = self._tab_of(page)
+        tab = pane or self._tab_of(page)
         agent = tab.provider.name if isinstance(tab, TerminalTab) else ""
         if state == "blocked":
             body = _("{agent} needs your input.").format(agent=agent)
         else:
             body = _("{agent} finished.").format(agent=agent)
-        target = self._session_id_of(page) or page.get_title()
+        target = (self._pane_session(pane) if pane else self._session_id_of(page)) or page.get_title()
         if self.is_active():
             toast = Adw.Toast(title=f"{page.get_title()}: {body}", timeout=6)
             toast.set_button_label(_("Show"))
@@ -725,6 +1201,9 @@ class MainWindow(Adw.ApplicationWindow):
         self._queue_spaces_refresh()
         if page is None:
             return
+        if self._page_space.get(page, (None,))[0] != self._project_id:
+            self._show_project_tabs()  # the view moved to another project's tab: come back
+            return
         if page in self._page_space:
             self._space_last[self._page_space[page][0]] = page
         self._mark_seen()
@@ -746,33 +1225,158 @@ class MainWindow(Adw.ApplicationWindow):
             page = self.tab_view.get_nth_page(i)
             space, agent = self._page_space.get(page, (str(Path.home()), ""))
             state = self._page_state.get(page, "idle")
-            infos.append(TabInfo(page, page.get_title(), space, agent, state, self._tab_emoji(page)))
+            infos.append(
+                TabInfo(
+                    page, page.get_title(), space, agent, state, self._tab_emoji(page), self._tab_color(page)
+                )
+            )
         return infos
+
+    def _tab_color(self, page: Adw.TabPage) -> str:
+        """The group's color when every session in the tab is in that one group."""
+        session_ids = self._session_ids_of(page)
+        owner = self.state.projects.owner(session_ids[0]) if session_ids else None
+        if owner is None:
+            return ""
+        groups = {g.name: g for g in owner.groups for sid in session_ids if sid in g.members}
+        in_one = len(groups) == 1 and all(sid in next(iter(groups.values())).members for sid in session_ids)
+        return next(iter(groups.values())).color if in_one else ""
 
     def _queue_spaces_refresh(self) -> None:
         if self._spaces_refresh_source is None:
             self._spaces_refresh_source = GLib.idle_add(self._refresh_spaces)
+        self._queue_layout_save()
+
+    # -- the saved layout, several windows ---------------------------------------------------
+
+    @property
+    def project_id(self) -> str:
+        return self._project_id
+
+    @property
+    def closing(self) -> bool:
+        return self._closing_confirmed
+
+    def _app(self) -> _Host | None:
+        """The application, when it is the one that keeps the windows (not in a bare test window)."""
+        app = self.get_application()
+        return cast("_Host", app) if hasattr(app, "save_layout") else None
+
+    def snapshot(self) -> WindowLayout:
+        """This window's project and the sessions in its tabs, as they would reopen."""
+        layout = WindowLayout(self._project_id)
+        for i in range(self.tab_view.get_n_pages()):
+            page = self.tab_view.get_nth_page(i)
+            session_ids = self._session_ids_of(page)
+            if not session_ids or page not in self._page_space:
+                continue
+            child = page.get_child()
+            split = child.get_first_child() if isinstance(child, PaneContainer) else None
+            vertical = isinstance(split, Gtk.Paned) and split.get_orientation() == Gtk.Orientation.VERTICAL
+            orientation = Orientation.VERTICAL if vertical else Orientation.HORIZONTAL
+            layout.tabs.setdefault(self._page_space[page][0], []).append(TabLayout(session_ids, orientation))
+        return layout
+
+    def _queue_layout_save(self) -> None:
+        if self._layout_save_source is None:
+            self._layout_save_source = GLib.timeout_add(500, self._save_layout)
+
+    def _save_layout(self) -> bool:
+        self._layout_save_source = None
+        app = self._app()
+        if app is not None:
+            app.save_layout()
+        return GLib.SOURCE_REMOVE
+
+    def restore_when_ready(self, layout: WindowLayout) -> None:
+        """Reopen saved tabs once the store knows the sessions (its first scan is off the thread)."""
+        if self.store.sessions:
+            self._restore(layout)
+            return
+        handler: list[int] = []
+
+        def once(*_args) -> None:
+            self.store.disconnect(handler[0])
+            self._restore(layout)
+
+        handler.append(self.store.connect("refreshed", once))
+
+    def _restore(self, layout: WindowLayout) -> None:
+        shown = layout.current
+        for project_id, tabs in layout.tabs.items():
+            self._project_id = project_id  # a new tab belongs to the project this window shows
+            for tab in tabs:
+                first = self.store.get_session(tab.panes[0])
+                if first is None:
+                    continue
+                self.open_session(first)
+                for other in tab.panes[1:]:
+                    self._open_beside(other)
+                if tab.orientation == Orientation.VERTICAL and (panes := self._panes()) is not None:
+                    panes.toggle_orientation()
+        self._project_id = shown
+        self._show_project_tabs()
+        self._refresh_project()
+        self._queue_spaces_refresh()
+
+    def running_names(self) -> list[str]:
+        names = []
+        for i in range(self.tab_view.get_n_pages()):
+            for pane in self._panes_of(self.tab_view.get_nth_page(i)):
+                if pane.has_running_command():
+                    session_id = self._pane_session(pane)
+                    names.append(self._display(session_id) if session_id else pane.provider.name)
+        return names
+
+    def _on_close_request(self, _window) -> bool:
+        if self._closing_confirmed:
+            return False
+        names = self.running_names()
+        app = self._app()
+        if not names:
+            self._closing_confirmed = True
+            if app is not None:
+                app.window_closing(self)
+            return False
+
+        def confirm() -> None:
+            self._closing_confirmed = True
+            if app is not None:
+                app.window_closing(self)  # the layout is kept before the tabs go
+            for i in reversed(range(self.tab_view.get_n_pages())):
+                self.tab_view.close_page(self.tab_view.get_nth_page(i))
+            GLib.timeout_add(300, self._close_when_empty, [0])
+
+        dialogs.confirm_dialog(
+            self,
+            _("Stop {n} running session(s)?").format(n=len(names)),
+            ", ".join(names) + "\n\n" + _("Their conversations stay in Claude."),
+            _("Stop and close"),
+            confirm,
+        )
+        return True
+
+    def _close_when_empty(self, polls: list[int]) -> bool:
+        polls[0] += 1
+        if self.tab_view.get_n_pages() == 0 or polls[0] > 50:  # ~15 s, past the force-close
+            self.close()
+            return GLib.SOURCE_REMOVE
+        return GLib.SOURCE_CONTINUE
 
     def _refresh_spaces(self) -> bool:
         self._spaces_refresh_source = None
         infos = self._tab_infos()
         selected = self.tab_view.get_selected_page()
         current = next((t for t in infos if t.page is selected), None)
-        self.spaces_panel.update(infos, current)
-        space = current.space if current else None
-        self.tab_strip.update([t for t in infos if t.space == space], current)
+        mine = [t for t in infos if t.space == self._project_id]
+        self.tab_strip.update(mine, current if current in mine else None)
+        states = self._session_states()
+        self.project_list.set_states(states)
+        self._update_project_bar(states)
         return GLib.SOURCE_REMOVE
 
     def _current_space(self) -> str | None:
-        page = self.tab_view.get_selected_page()
-        return self._page_space[page][0] if page is not None and page in self._page_space else None
-
-    def _on_select_space(self, _panel, space: str) -> None:
-        page = self._space_last.get(space)
-        if page is None:
-            page = next((t.page for t in self._tab_infos() if t.space == space), None)
-        if page is not None:
-            self.tab_view.set_selected_page(page)
+        return self._project_id
 
     def _cycle_space_tab(self, step: int) -> None:
         space = self._current_space()
@@ -781,14 +1385,6 @@ class MainWindow(Adw.ApplicationWindow):
         if len(pages) > 1 and selected is not None and selected in pages:
             index = (pages.index(selected) + step) % len(pages)
             self.tab_view.set_selected_page(pages[index])
-
-    def _new_in_space(self) -> None:
-        """The strip's "+": another agent in the current space's folder."""
-        space = self._current_space()
-        if space and Path(space).is_dir():
-            self._start_new_session(space)
-        else:
-            self._choose_new_session_folder()
 
     def _on_tab_strip_menu(self, _strip, page: Adw.TabPage, widget: Gtk.Widget) -> None:
         self._menu_page = page
@@ -906,11 +1502,14 @@ class MainWindow(Adw.ApplicationWindow):
         panes = self._panes()
         if panes is None:
             return
+        if len(panes.panes()) >= MAX_PANES:
+            self.toasts.add_toast(Adw.Toast(title=_("A tab holds two panes at most"), timeout=4))
+            return
         primary = panes.primary
         pane = TerminalTab(
             cwd=primary.cwd, settings=self.state.settings, provider=primary.provider, shell=True
         )
-        pane.connect("process-exited", lambda p, _status: panes.close(p))
+        self._watch_pane(pane)
         panes.split(pane, orientation)
 
     def _close_pane(self) -> None:
@@ -919,11 +1518,10 @@ class MainWindow(Adw.ApplicationWindow):
         if panes is None:
             return
         pane = panes.focused
-        if pane is panes.primary:
+        if len(panes.panes()) == 1:
             self._close_current_tab()
             return
-        panes.close(pane)
-        pane.hangup()
+        self._stop_pane(pane)
 
     def _goto_tab(self, number: int) -> None:
         space = self._current_space()
@@ -962,7 +1560,7 @@ class MainWindow(Adw.ApplicationWindow):
             ([k.KEY_Tab], "Tab", _("next pane"), panes("cycle", 1)),
             ([k.KEY_z], "z", _("zoom the pane"), panes("toggle_zoom")),
             ([k.KEY_x], "x", _("close the pane"), lambda _kv: self._close_pane()),
-            ([k.KEY_c], "c", _("new agent in this space"), act("new-in-space")),
+            ([k.KEY_c], "c", _("new session in this project"), act("new-in-space")),
             ([k.KEY_n], "n", _("next tab"), act("next-tab")),
             ([k.KEY_p], "p", _("previous tab"), act("prev-tab")),
             (
@@ -971,7 +1569,7 @@ class MainWindow(Adw.ApplicationWindow):
                 _("go to tab"),
                 lambda kv: self._goto_tab(kv - k.KEY_0),
             ),
-            ([k.KEY_N], "N", _("new space"), act("new-space")),
+            ([k.KEY_N], "N", _("add a session"), act("new-space")),
             ([k.KEY_T], "T", _("rename tab"), act("rename-tab")),
             ([k.KEY_X], "X", _("close tab"), act("close-tab")),
             ([k.KEY_g], "g", _("go to agent"), lambda _kv: self._goto_picker()),
@@ -1018,33 +1616,61 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.add_response("ok", _("OK"))
         dialog.present(self)
 
-    def _on_process_exited(self, _tab: TerminalTab, _status: int, page: Adw.TabPage) -> None:
-        self.tab_view.close_page(page)
+    def _on_pane_exited(self, pane: TerminalTab, _status: int) -> None:
+        page = self._page_of(pane)
+        if page is None:
+            return
+        panes = page.get_child()
+        if not isinstance(panes, PaneContainer) or len(panes.panes()) == 1:
+            self.tab_view.close_page(page)
+            return
+        panes.close(pane)
+        self._pane_state.pop(pane, None)
+        session_id = self._pane_session(pane)
+        if session_id:
+            self._pages.pop(session_id, None)
+            self._sync_status(session_id)
+        self._retitle(page)
+        self._refresh_page_state(page)
+
+    def _stop_pane(self, pane: TerminalTab) -> None:
+        """Stop one pane of a split: an agent exits cleanly (its shell ends with it), a shell hangs up."""
+        exit_text = pane.provider.graceful_exit() if self._pane_session(pane) else None
+        if exit_text and pane.has_running_command():
+            pane.feed_child_text(exit_text)
+        else:
+            pane.hangup()
 
     def _on_close_page(self, view: Adw.TabView, page: Adw.TabPage) -> bool:
-        tab = self._tab_of(page)
-        if isinstance(tab, TerminalTab) and page not in self._confirmed_closes and tab.has_running_command():
+        moving = page in self._moving
+        running = any(pane.has_running_command() for pane in self._panes_of(page))
+        if not moving and page not in self._confirmed_closes and running:
             if page not in self._closing_pages:  # start a graceful /exit in the background
                 self._graceful_close(page)
             view.close_page_finish(page, False)  # keep the tab until it exits cleanly
             return True
         child = page.get_child()
-        if isinstance(child, PaneContainer):  # end the split shells with the tab
+        if isinstance(child, PaneContainer) and not moving:  # end the split shells with the tab
             for pane in child.panes():
                 if pane is not child.primary:
                     pane.hangup()
+                self._pane_state.pop(pane, None)
+        self._moving.discard(page)
+        for joining in self._joining:
+            if joining.page is page:
+                joining.closed = True  # a message typed just before closing still counts
         self._confirmed_closes.discard(page)
         self._closing_pages.pop(page, None)
         self._base_titles.pop(page, None)
         self._page_space.pop(page, None)
         self._page_state.pop(page, None)
         self._space_last = {k: v for k, v in self._space_last.items() if v is not page}
-        session_id = self._session_id_of(page)
-        if session_id:
-            self._pages.pop(session_id, None)
-            self._sync_status(session_id)
+        for session_id, open_page in list(self._pages.items()):
+            if open_page is page:
+                self._pages.pop(session_id, None)
+                self._sync_status(session_id)
         view.close_page_finish(page, True)
-        if view.get_n_pages() == 0:
+        if not any(space == self._project_id for space, _agent in self._page_space.values()):
             self.content_stack.set_visible_child_name("empty")
         return True  # we handled it
 
@@ -1082,6 +1708,14 @@ class MainWindow(Adw.ApplicationWindow):
             self._prompt_rename_session(session)
 
     def _prompt_rename_session(self, session: Session) -> None:
+        if session.claude_name:
+            dialogs.error_dialog(
+                self,
+                _("This name comes from Claude"),
+                _("Change it with /rename inside the session; the list follows on its next refresh."),
+            )
+            return
+
         def save(name: str) -> None:
             self.store.rename(session.session_id, name)
             page = self._pages.get(session.session_id)
@@ -1256,7 +1890,10 @@ class MainWindow(Adw.ApplicationWindow):
         if self._switcher is not None:  # already open — don't stack another
             return
         entries = []
+        members = set(self.state.projects.get(self._project_id).members)
         for item in self.store.model_items():
+            if item.session_id not in members:
+                continue
             subtitle = item.session.project_name
             if item.session.preview:
                 subtitle += f" · {item.session.preview}"
@@ -1282,21 +1919,31 @@ class MainWindow(Adw.ApplicationWindow):
         state ("blocked", "working"…) filters by it, as herdr's b/w/i/d do."""
         if self._switcher is not None:
             return
-        infos = self._tab_infos()
-        order = list(dict.fromkeys(t.space for t in infos))  # spaces in tab order
-        entries = [
-            SwitchEntry(
-                f"{space_name(t.space)} · {t.title}",
-                f"{t.agent} · {t.status}",
-                t.page,
-                f"{t.title} {t.space} {t.agent} {t.status}",
-                t.status,
-            )
-            for t in sorted(infos, key=lambda t: order.index(t.space))
-        ]
-        self._switcher = QuickSwitcher(
-            entries, self.tab_view.set_selected_page, _("Go to agent"), _("Agent, space or state…")
-        )
+        app = self._app()
+        windows = app.windows() if app is not None else [self]
+        entries = []
+        for window in windows:
+            infos = window._tab_infos()
+            order = list(dict.fromkeys(t.space for t in infos))  # projects in tab order
+            entries += [
+                SwitchEntry(
+                    f"{self._project_name(t.space)} · {t.title}",
+                    f"{t.agent} · {t.status}",
+                    (window, t),
+                    f"{t.title} {self._project_name(t.space)} {t.agent} {t.status}",
+                    t.status,
+                )
+                for t in sorted(infos, key=lambda t: order.index(t.space))
+            ]
+
+        def go(target: tuple[MainWindow, TabInfo]) -> None:
+            window, info = target
+            window.present()
+            window._select_project(info.space)
+            window.content_stack.set_visible_child_name("tabs")
+            window.tab_view.set_selected_page(info.page)
+
+        self._switcher = QuickSwitcher(entries, go, _("Go to agent"), _("Agent, project or state…"))
         self._switcher.connect("closed", self._on_switcher_closed)
         self._switcher.present(self)
 
@@ -1306,9 +1953,6 @@ class MainWindow(Adw.ApplicationWindow):
     def apply_preferences(self) -> None:
         themes.apply_ui_style(self.state.settings)
         self._apply_settings_to_tabs()
-        self.spaces_panel.apply_sections()
-        self.sidebar.apply_sections()
-        self.sidebar.refresh_folder_path()
 
     def _apply_settings_to_tabs(self) -> None:
         for i in range(self.tab_view.get_n_pages()):
