@@ -51,6 +51,7 @@
 | 2 | `01-agent-tablet-fork.md` B1 (identity and package rename) | Delivered 2026-11-05 |
 | 4 | `01-agent-tablet-fork.md` B2 (Claude's name) | Written, ready to execute |
 | 5 | `01-agent-tablet-fork.md` B4–B6 | Stubs inside plan 01 — each needs `/design-plan`; B5 reopened 2026-11-06 (§1 1.14) |
+| 7 | `05-context-and-integrations.md` (plan 01 B4 — context ring, `--settings`, the integrations menu, usage capture) | B1–B2 built 2026-11-06 (statusline script, context model, ring — not yet shown anywhere); B3–B5 after plan 04 closes |
 | 6 | `04-projects-and-tabs.md` (projects, the session list, tabs, windows; replaces B3) | Written 2026-11-06, ready to execute after B2; its B0 needs the human's go-ahead |
 
 ## 4. Next plan number

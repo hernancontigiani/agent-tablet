@@ -1,0 +1,47 @@
+{
+  "session_id": "5f1c2a90-0000-4000-8000-000000000001",
+  "session_name": "lm-plan-200",
+  "transcript_path": "/home/demo/.claude/projects/-home-demo-app/5f1c2a90-0000-4000-8000-000000000001.jsonl",
+  "version": "2.1.300",
+  "cwd": "/home/demo/app",
+  "workspace": {
+    "current_dir": "/home/demo/app",
+    "project_dir": "/home/demo/app",
+    "added_dirs": []
+  },
+  "model": {
+    "id": "claude-opus-5-5",
+    "display_name": "Opus 5.5"
+  },
+  "cost": {
+    "total_cost_usd": 1.2345,
+    "total_duration_ms": 3600000,
+    "total_api_duration_ms": 900000,
+    "total_lines_added": 120,
+    "total_lines_removed": 30
+  },
+  "context_window": {
+    "total_input_tokens": 124000,
+    "total_output_tokens": 8000,
+    "context_window_size": 200000,
+    "used_percentage": 62.0,
+    "remaining_percentage": 38.0,
+    "current_usage": {
+      "input_tokens": 10,
+      "output_tokens": 500,
+      "cache_creation_input_tokens": 2000,
+      "cache_read_input_tokens": 121990
+    }
+  },
+  "exceeds_200k_tokens": false,
+  "rate_limits": {
+    "five_hour": {
+      "used_percentage": 41.0,
+      "resets_at": 1793955600
+    },
+    "seven_day": {
+      "used_percentage": 12.5,
+      "resets_at": 1794400000
+    }
+  }
+}

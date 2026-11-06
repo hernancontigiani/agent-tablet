@@ -19,6 +19,10 @@
 > Left "Local CI" on 2026-11-05, when the history check joined the gate.
 and a change is not done until it passes: `ruff check` and `pytest -n auto`. Report the result with
 
+> Left "Python" on 2026-11-06, when agent_tablet/log.py became the one place.
+- **Logging is configured in one place**, and nothing else calls `basicConfig`. Identifiers go in
+  `extra={...}`, not in the message.
+
 > Left "Local CI" on 2026-11-06, when format, pyright and the midnight run joined.
 and a change is not done until it passes: `ruff check`, `pytest -n auto`, and
 Report the result with

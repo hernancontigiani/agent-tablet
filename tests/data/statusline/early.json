@@ -1,0 +1,18 @@
+{
+  "session_id": "5f1c2a90-0000-4000-8000-000000000002",
+  "transcript_path": "/home/demo/t.jsonl",
+  "cwd": "/home/demo/app",
+  "model": {
+    "id": "claude-opus-5-5",
+    "display_name": "Opus 5.5"
+  },
+  "cost": {
+    "total_cost_usd": 0,
+    "total_duration_ms": 1000
+  },
+  "context_window": {
+    "context_window_size": 200000,
+    "used_percentage": null,
+    "current_usage": null
+  }
+}

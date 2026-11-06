@@ -84,8 +84,9 @@ Each one is broken by an ordinary-looking line of code.
   the AST and fails on `datetime.now()`, `time.time()` and their kin anywhere else.
 - **Errors are handled at the boundary they come from, once.** No `except Exception: pass`; a
   broad `except` names what it expects and logs what it swallows.
-- **Logging is configured in one place**, and nothing else calls `basicConfig`. Identifiers go in
-  `extra={...}`, not in the message.
+- **Logging is configured in one place, `agent_tablet/log.py`**; a module only does
+  `logging.getLogger(__name__)` (a test walks the AST for any other configuration). Identifiers go
+  in `extra={...}`, not in the message. `AGENT_TABLET_LOG=debug` raises the level.
 - **Enums that are serialized are `(str, Enum)`**, not `StrEnum`: it changes what `str(member)`
   returns.
 - **Type hints on every signature, and pyright (basic) stays at zero errors.** An ignore is

@@ -204,8 +204,30 @@ the sessions of the three. The rest is written once the open questions are answe
   the maximum of each stretch, not the last value), and it is an estimate at list price, not the
   bill. On a subscription what matters is the % of the limit, which also comes in the statusline
   (`rate_limits`).
-- The time the statusline gives is wall-clock, not active time. Real active time only comes from
-  Claude Code's official telemetry (OpenTelemetry): a future block if needed.
+- **What the human wants measured (2026-11-06): execution time and tokens, per session, summed
+  per category and per project.** Both come from the transcripts, for past sessions too: each
+  entry has a timestamp and each assistant message its `usage` (input, output, cache write, cache
+  read). Measured on six sessions 2026-11-06: active time = from a typed prompt to the last
+  activity before the next one. To design: telling a typed prompt from a cross-session message or
+  a tool result (both are `user` entries), and subtracting time blocked on a permission prompt.
+  Also available: tool calls and their durations, models, compactions, subagents' tokens (all in
+  the transcript); lines changed and the subscription's limits (statusline only, captured by plan
+  05). The statusline's `total_duration_ms` is wall-clock, not active time.
+- **Learned from ccusage and agent-deck (read 2026-11-06), to hold in B6's design:**
+  - **Deduplicate assistant entries by (`message.id`, `requestId`) across all transcripts**, keeping
+    the non-sidechain copy, then the larger usage; without it the counts are 2–3× too high
+    (measured 2026-11-06 on six sessions: output tokens 1.09M raw → 380k deduplicated in one).
+    Responses are copied into resumed and forked transcripts and replayed by sidechains.
+  - **Count every assistant record**, not one per turn (agent-deck's Stop-hook sampling undercounts
+    tool loops); records whose only tokens are cache tokens still count; `<synthetic>` and
+    `isApiErrorMessage` do not.
+  - **`subagents/*.jsonl` roll up to the parent session**, after deduplication.
+  - **Price per token kind from a table shipped with the app** (no network, `CLAUDE.md`), with
+    1-hour cache writes at 2× input and the rate in force at each entry's time; the statusline's
+    `cost.total_cost_usd` is the exact figure when present.
+  - **Group by local date through `clock.py`**: both tools group in UTC, wrong outside UTC.
+  - **Neither tool measures active time**; ours (prompt to last activity, minus blocked time) is
+    new, so its definition and its tests are B6's main design work.
 
 **Verification:** after a day of use, the report's total matches the sum of the statusline costs of
 those sessions, and a `/clear` in the middle of a session does not lower the total.
