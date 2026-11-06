@@ -1,5 +1,10 @@
 # History of `docs/ui-verification.md`
 
+## The commands
+
+> Left on 2026-11-06, when the walk was split into runs of their own.
+| `make ui-check` | Starts an isolated instance with the demo sessions, walks the main screens, saves `NN-<step>.png` and `app.log`, prints where. Exit 1 on the first failing step, with its screenshot |
+
 ## Traps, each already paid for
 
 > Left on 2026-11-06: the human checked the native app, which opens popovers after typing.
@@ -16,3 +21,6 @@
   2026-11-06: text in the search, then the gear, and the menu opens), so it is Broadway's, not a
   bug to fix in the app. Event timestamps were checked and are monotonic; the cause is not found.
   A walk opens menus before it types (`check.py`'s step order).
+
+> Left on 2026-11-06 (line extended with more Broadway findings from plan 05 B5).
+  after one that used a dialog (`check.py`).

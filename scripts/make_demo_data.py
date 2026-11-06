@@ -109,6 +109,7 @@ CLAUDE_NAMES = {"Write integration tests for the todo endpoints": "todo-api-test
 
 def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | None) -> tuple[str, str]:
     iso = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(timestamp))
+    asked = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(timestamp - 90))  # a 90-second turn
     session_id = str(uuid.uuid4())
     content: list[dict] = [{"type": "text", "text": "On it — here's the plan, then I'll start."}]
     if mcp_server:
@@ -119,7 +120,8 @@ def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | N
             "type": "user",
             "cwd": cwd,
             "sessionId": session_id,
-            "timestamp": iso,
+            "timestamp": asked,
+            "turnOrigin": "human",
             "message": {"role": "user", "content": prompt},
         },
         {
@@ -127,7 +129,9 @@ def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | N
             "cwd": cwd,
             "sessionId": session_id,
             "timestamp": iso,
+            "requestId": f"req_demo_{session_id[:8]}",
             "message": {
+                "id": f"msg_demo_{session_id[:8]}",
                 "role": "assistant",
                 "model": "claude-opus-4-8",
                 "content": content,
@@ -168,7 +172,7 @@ def write_demo(root: Path) -> None:
 
     (config_dir / "state.json").write_text(
         json.dumps(
-            {"names": names, "emojis": emojis, "hidden": [], "settings": {}},
+            {"names": names, "emojis": emojis, "hidden": [], "settings": {"font": "Sans 12"}},
             indent=2,
         ),
         encoding="utf-8",
@@ -191,6 +195,24 @@ def write_demo(root: Path) -> None:
         json.dumps({"mcpServers": MCP_GLOBAL, "projects": MCP_PER_PROJECT}, indent=2),
         encoding="utf-8",
     )
+
+    # What the app's statusline would have left for one session (exact, 65 %); the others have none
+    # and are estimated from their transcripts. Read where XDG_CACHE_HOME=<root>/cache points.
+    jwt = next(sid for sid, name in names.items() if name == "JWT auth")
+    sessions_cache = root / "cache" / "agent-tablet" / "sessions"
+    sessions_cache.mkdir(parents=True, exist_ok=True)
+    reading = {
+        "session_id": jwt,
+        "session_name": "JWT auth",
+        "transcript_path": None,
+        "cwd": None,
+        "model": "claude-opus-4-8",
+        "percentage": 65.0,
+        "window": 200000,
+        "input_tokens": 130000,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(now + 60)),
+    }
+    (sessions_cache / f"{jwt}.json").write_text(json.dumps(reading), encoding="utf-8")
 
 
 def main() -> None:

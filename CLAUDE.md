@@ -38,6 +38,8 @@ what matters from being lost when a plan is deleted.
 |---|---|
 | `docs/ui-verification.md` | Looking at a UI change, or writing a step of `make ui-check` |
 | `docs/projects.md` | Changing projects, tabs or windows, or how a session is started or stopped |
+| `docs/context.md` | Touching the context ring, the statusline script, `--settings` or the integrations menu |
+| `docs/usage.md` | Touching execution time, tokens, prices, the Usage window or `agent-tablet usage` |
 
 ## Product rules the code must hold
 
@@ -50,7 +52,8 @@ Each one is broken by an ordinary-looking line of code.
 - **What the app adds to Claude's settings (`~/.claude/settings.json`) — a statusline, hooks —
   goes through one integrations menu** (decided 2026-11-06): nothing is installed by default or as
   a side effect, each piece is accepted on its own with the user's explicit consent, and each one
-  can be removed on its own at any time, leaving the rest of the file as the user had it.
+  can be removed on its own at any time, leaving the rest of the file as the user had it. **What
+  the app needs in the sessions it starts goes with `--settings`**, never into that file.
 - **The app's own state lives in its own directories** (`$XDG_CONFIG_HOME/agent-tablet/`,
   `$XDG_CACHE_HOME/agent-tablet/` once the identity changes), never next to an agent's files.
 - **A session's name is the one Claude has** (`claude -n`, `/rename`). The app never keeps a second
@@ -90,6 +93,8 @@ Each one is broken by an ordinary-looking line of code.
   the AST and fails on `datetime.now()`, `time.time()` and their kin anywhere else.
 - **Errors are handled at the boundary they come from, once.** No `except Exception: pass`; a
   broad `except` names what it expects and logs what it swallows.
+- **Usage numbers come only from `agent_tablet/usage.py`** (execution time, tokens, cost): the window,
+  the command line and anything later read them there, so one definition of a turn holds everywhere.
 - **Logging is configured in one place, `agent_tablet/log.py`**; a module only does
   `logging.getLogger(__name__)` (a test walks the AST for any other configuration). Identifiers go
   in `extra={...}`, not in the message. `AGENT_TABLET_LOG=debug` raises the level.

@@ -18,6 +18,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from datetime import UTC
@@ -27,6 +28,36 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import clock
 
 FALLBACK = "agent-tablet"
+
+
+CHAINED_TIMEOUT = 2.0  # Claude Code cancels a statusline run when the next trigger comes
+
+
+def _chained_command() -> str | None:
+    """The user's own statusline, which the app's runs and shows: written by the app, which knows it."""
+    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    try:
+        data = json.loads(
+            (Path(base) / "agent-tablet" / "chained-statusline.json").read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return None
+    command = data.get("command") if isinstance(data, dict) else None
+    return command if isinstance(command, str) and command.strip() else None
+
+
+def chained_bar(stdin: str) -> str | None:
+    command = _chained_command()
+    if command is None:
+        return None
+    try:
+        result = subprocess.run(
+            command, shell=True, input=stdin, capture_output=True, text=True, timeout=CHAINED_TIMEOUT
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    output = result.stdout.rstrip("\n")
+    return output if result.returncode == 0 and output.strip() else None
 
 
 def _cache_dir() -> Path:
@@ -111,7 +142,7 @@ def main(stdin: str) -> str:
         return FALLBACK
     with contextlib.suppress(OSError):  # a full disk costs the app a reading, never the bar
         record(payload)
-    return bar(payload)
+    return chained_bar(stdin) or bar(payload)
 
 
 if __name__ == "__main__":

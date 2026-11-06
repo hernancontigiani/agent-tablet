@@ -15,6 +15,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
 
+from .context import ContextReading
+from .contextring import ContextRing
 from .i18n import _
 from .models import SessionItem
 from .projects import Group
@@ -59,6 +61,8 @@ class _SessionRow(Gtk.ListBoxRow):
             folder_label.add_css_class("caption")
             text.append(folder_label)
         box.append(text)
+        self.ring = ContextRing()
+        box.append(self.ring)
 
         self._menu = menu
         more = Gtk.Button(icon_name="view-more-symbolic", valign=Gtk.Align.CENTER)
@@ -145,6 +149,11 @@ class ProjectList(Gtk.Box):
     def set_states(self, states: dict[str, str]) -> None:
         for sid, row in self._rows.items():
             row.set_state(states.get(sid, "stopped"))
+
+    def set_reading(self, session_id: str, reading: ContextReading | None) -> None:
+        row = self._rows.get(session_id)
+        if row is not None:
+            row.ring.set_reading(reading)
 
     def _on_activated(self, _list: Gtk.ListBox, row: Gtk.ListBoxRow) -> None:
         if isinstance(row, _SessionRow):

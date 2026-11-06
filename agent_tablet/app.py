@@ -14,6 +14,7 @@ gi.require_version("Vte", "3.91")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from . import dialogs, themes
+from .context import ContextModel
 from .i18n import _
 from .layout import Layouts, new_window_project, restore
 from .prefs import apply_color_scheme
@@ -170,6 +171,7 @@ class App(Adw.Application):
         Adw.StyleManager.get_default().connect("notify::dark", self._on_dark_changed)
         self.store = SessionStore(self.state)
         self.store.start()
+        self.context = ContextModel()
 
         focus = Gio.SimpleAction.new("focus-session", GLib.VariantType("s"))
         focus.connect("activate", self._on_focus_session)
@@ -187,7 +189,9 @@ class App(Adw.Application):
                 window.apply_preferences()
 
     def _new_window(self, project_id: str | None = None) -> MainWindow:
-        window = MainWindow(application=self, state=self.state, store=self.store, project_id=project_id)
+        window = MainWindow(
+            application=self, state=self.state, store=self.store, project_id=project_id, context=self.context
+        )
         window.present()
         return window
 
@@ -284,6 +288,10 @@ def main() -> int:
     from . import i18n, log
     from .state import AppState
 
+    if sys.argv[1:2] == ["usage"]:  # `agent-tablet usage`: the report in the terminal, no window
+        from . import usage
+
+        return usage.main(sys.argv[2:])
     log.configure(os.environ)
     i18n.init(AppState().get_setting("language"))
     app = App()

@@ -62,3 +62,13 @@ On Wayland the app cannot place its windows; reopened windows land where the sys
 **Trigger:** the human rearranges windows by hand after every start. First question: does the
 compositor offer a portal for it by then?
 
+
+### Claude Code hooks
+
+The statusline gives the context, the cost and the limits; the transcripts give tokens and time.
+No hook event carries any of them, so the app installs none. The integrations menu is where a hook
+would go, consented to and removable like the statusline.
+
+**Trigger:** a feature needs an event the statusline and the transcript cannot give (for example,
+knowing the instant a permission prompt appears). First question: can it ride `--settings` for the
+sessions the app starts, before asking for a global install?

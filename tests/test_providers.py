@@ -1,4 +1,7 @@
+import json
+import shlex
 import shutil
+from pathlib import Path
 
 from agent_tablet import providers
 from agent_tablet.providers import (
@@ -87,8 +90,10 @@ def test_available_providers_gating(monkeypatch):
 def test_resume_and_new_commands(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     claude = ClaudeProvider()
-    assert claude.resume_command("abc") == "/usr/bin/claude --resume abc"
-    assert claude.resume_command("abc", fork=True) == "/usr/bin/claude --resume abc --fork-session"
+    assert claude.resume_command("abc") == "/usr/bin/claude --resume abc" + _settings()
+    assert (
+        claude.resume_command("abc", fork=True) == "/usr/bin/claude --resume abc --fork-session" + _settings()
+    )
     cursor = CursorProvider()
     assert cursor.resume_command("xyz") == "/usr/bin/cursor-agent --resume xyz"
     # Cursor doesn't support forking, so --fork-session is never appended.
@@ -163,10 +168,10 @@ def test_new_command_options(monkeypatch):
     claude = ClaudeProvider()
     opts = SessionOptions(model="opus", permission_mode="plan", add_dirs=("/extra",))
     assert claude.new_command(opts) == (
-        "/usr/bin/claude --model opus --permission-mode plan --add-dir /extra"
+        "/usr/bin/claude --model opus --permission-mode plan --add-dir /extra" + _settings()
     )
-    assert claude.new_command() == "/usr/bin/claude"  # no options → bare command
-    assert claude.continue_command() == "/usr/bin/claude --continue"
+    assert claude.new_command() == "/usr/bin/claude" + _settings()  # no options → no option flags
+    assert claude.continue_command() == "/usr/bin/claude --continue" + _settings()
     # Cursor maps permission mode to --mode and has no --add-dir.
     cursor = CursorProvider()
     copts = SessionOptions(model="gpt-5", permission_mode="ask", add_dirs=("/x",))
@@ -229,7 +234,7 @@ def test_a_new_session_command_carries_its_id_and_name(monkeypatch):
     """The app picks the new session's id, so it never guesses which transcript is the new one."""
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     assert ClaudeProvider().new_command(session_id="u-1", name="lm plan") == (
-        "/usr/bin/claude --session-id u-1 -n 'lm plan'"
+        "/usr/bin/claude --session-id u-1 -n 'lm plan'" + _settings()
     )
     # Cursor's CLI takes neither flag; the app does not invent them for it.
     assert CursorProvider().new_command(session_id="u-1", name="lm plan") == "/usr/bin/cursor-agent"
@@ -238,9 +243,11 @@ def test_a_new_session_command_carries_its_id_and_name(monkeypatch):
 def test_a_fork_takes_the_id_the_app_chose(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     assert ClaudeProvider().resume_command("abc", fork=True, new_id="u-2") == (
-        "/usr/bin/claude --resume abc --fork-session --session-id u-2"
+        "/usr/bin/claude --resume abc --fork-session --session-id u-2" + _settings()
     )
-    assert ClaudeProvider().resume_command("abc", new_id="u-2") == "/usr/bin/claude --resume abc"
+    assert (
+        ClaudeProvider().resume_command("abc", new_id="u-2") == "/usr/bin/claude --resume abc" + _settings()
+    )
 
 
 def test_a_sessions_transcript_path_is_known_from_its_folder_and_id(projects_dir):
@@ -256,3 +263,46 @@ def test_the_typed_command_ends_the_shell_with_the_agent():
     from agent_tablet.providers import typed_command
 
     assert typed_command("/usr/bin/claude --resume abc") == "/usr/bin/claude --resume abc && exit"
+
+
+def _settings() -> str:
+    """The flag every Claude command the app types ends with."""
+    from agent_tablet import claudesettings
+
+    return f" --settings {shlex.quote(str(claudesettings.settings_path()))}"
+
+
+def test_every_claude_command_carries_the_app_settings(monkeypatch):
+    """The statusline reaches the sessions the app starts through --settings, so nothing is written
+    to ~/.claude/settings.json for it."""
+    monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
+    claude = ClaudeProvider()
+    commands = [
+        claude.resume_command("abc"),
+        claude.resume_command("abc", fork=True, new_id="u-2"),
+        claude.new_command(session_id="u-1", name="n"),
+        claude.continue_command(),
+    ]
+    assert len(commands) == 4
+    for command in commands:
+        assert command is not None and command.endswith(_settings()), command
+
+
+def test_cursor_commands_do_not(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
+    cursor = CursorProvider()
+    for command in (cursor.resume_command("x"), cursor.new_command(), cursor.continue_command()):
+        assert command is not None and "--settings" not in command, command
+
+
+def test_the_settings_file_points_at_this_checkouts_script(monkeypatch):
+    from agent_tablet import claudesettings
+
+    monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
+    ClaudeProvider().new_command()
+    settings = json.loads(claudesettings.settings_path().read_text(encoding="utf-8"))
+    status = settings["statusLine"]
+    assert status["type"] == "command"
+    python, script = shlex.split(status["command"])
+    assert Path(python).exists()
+    assert Path(script) == Path(providers.__file__).resolve().parent / "statusline.py"

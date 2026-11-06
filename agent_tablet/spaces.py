@@ -15,6 +15,8 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, GLib, GObject, Gtk, Pango
 
+from .context import ContextReading
+from .contextring import ContextRing
 from .i18n import _
 
 _ELLIPSIZE_END = Pango.EllipsizeMode.END
@@ -29,6 +31,7 @@ class TabInfo:
     status: str  # agent state: "working" | "blocked" | "done" | "idle"
     emoji: str = ""  # the tab's emoji, also the start of its title
     color: str = ""  # its sessions' group color, when they share one
+    context: ContextReading | None = None  # the fullest context among its sessions
 
 
 def _dot(status: str) -> Gtk.Widget:
@@ -105,6 +108,10 @@ class TabStrip(Gtk.Box):
             box.append(swatch)
         if tab.status != "idle":
             box.append(_dot(tab.status))
+        if tab.context is not None:
+            ring = ContextRing()
+            ring.set_reading(tab.context)
+            box.append(ring)
         title = tab.title
         if tab.emoji and title.startswith(tab.emoji):
             # the emoji is its own click target: it opens the picker

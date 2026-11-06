@@ -19,7 +19,7 @@ from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import sessions
+from . import claudesettings, sessions
 from .sessions import (
     _MAX_SCAN_BYTES,
     _MAX_SCAN_LINES,
@@ -126,7 +126,7 @@ class Provider:
         cmd = f"{shlex.quote(cli)} --resume {shlex.quote(session_id)}"
         if fork and self.supports_fork:
             cmd = " ".join([cmd, "--fork-session", *self._identity_flags(new_id, None)])
-        return cmd
+        return " ".join([cmd, *self._session_flags()])
 
     def new_command(self, options=None, session_id: str | None = None, name: str | None = None) -> str | None:
         """Shell command to start a fresh session, optionally with advanced
@@ -135,7 +135,12 @@ class Provider:
         if cli is None:
             return None
         return " ".join(
-            [shlex.quote(cli), *self._option_flags(options), *self._identity_flags(session_id, name)]
+            [
+                shlex.quote(cli),
+                *self._option_flags(options),
+                *self._identity_flags(session_id, name),
+                *self._session_flags(),
+            ]
         )
 
     def _identity_flags(self, session_id: str | None, name: str | None) -> list[str]:
@@ -146,10 +151,14 @@ class Provider:
         """Translate SessionOptions into this agent's CLI flags. Base: none."""
         return []
 
+    def _session_flags(self) -> list[str]:
+        """Flags every session the app starts carries, last on the line. Base: none."""
+        return []
+
     def continue_command(self) -> str | None:
         """Shell command to continue the most recent session in the cwd."""
         cli = shutil.which(self.cli)
-        return f"{shlex.quote(cli)} --continue" if cli else None
+        return " ".join([shlex.quote(cli), "--continue", *self._session_flags()]) if cli else None
 
     def session_models(self) -> list[tuple[str, str]]:
         """(flag value, label) model choices for the advanced dialog; the first
@@ -267,6 +276,11 @@ class ClaudeProvider(Provider):
         if session_id:
             argv += ["--resume", session_id]
         return argv
+
+    def _session_flags(self) -> list[str]:
+        # The app's statusline, layered for this session only: nothing is written to the user's
+        # ~/.claude/settings.json for it.
+        return ["--settings", shlex.quote(str(claudesettings.ensure()))]
 
     def _identity_flags(self, session_id: str | None, name: str | None) -> list[str]:
         flags: list[str] = []

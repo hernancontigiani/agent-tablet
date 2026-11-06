@@ -21,6 +21,7 @@ from . import __version__, dialogs, themes
 from .addsession import EXISTING, NEW, AddSessionDialog
 from .agentstate import rollup
 from .chatsessionview import ChatSessionTab
+from .context import ContextModel, ContextReading
 from .i18n import _
 from .layout import MAX_PANES, Orientation, TabLayout, WindowLayout
 from .models import SessionItem
@@ -37,6 +38,7 @@ from .state import AppState
 from .store import SessionStore
 from .switcher import QuickSwitcher, SwitchEntry
 from .terminal import TerminalTab
+from .usagewindow import UsageWindow
 
 _GHOSTTY = shutil.which("ghostty")
 
@@ -103,8 +105,20 @@ class _Joining:
 
 
 class MainWindow(Adw.ApplicationWindow):
-    def __init__(self, state: AppState, store: SessionStore, project_id: str | None = None, **kwargs) -> None:
+    def __init__(
+        self,
+        state: AppState,
+        store: SessionStore,
+        project_id: str | None = None,
+        context: ContextModel | None = None,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
+        # One model per app, shared by its windows; a window built alone (a test) makes its own.
+        self.context = context if context is not None else ContextModel()
+        context_handler = self.context.connect("changed", self._on_context_changed)
+        # The model outlives a closed window; a handler left behind would call into a dead one.
+        self.connect("destroy", lambda *_: self.context.disconnect(context_handler))
         self.set_title("Agent Tablet")
         self.set_icon_name("io.github.hernancontigiani.AgentTablet")
         self.set_default_size(1280, 800)
@@ -164,6 +178,7 @@ class MainWindow(Adw.ApplicationWindow):
         app_menu.append(_("Open session file…"), "win.open-session-file")
         app_menu.append(_("Show hidden sessions"), "win.show-hidden")
         app_menu.append(_("MCP servers"), "win.mcp-servers")
+        app_menu.append(_("Usage"), "win.usage")
         app_menu.append(_("Preferences"), "win.preferences")
         app_menu.append(_("About Agent Tablet"), "win.about")
 
@@ -317,6 +332,7 @@ class MainWindow(Adw.ApplicationWindow):
             "new-space": lambda *_: self._add_session(EXISTING),
             "new-in-space": lambda *_: self._add_session(NEW),
             "about": lambda *_: self._show_about(),
+            "usage": lambda *_: self._show_usage(),
             "quick-switch": lambda *_: self._quick_switch(),
             "rename-tab": lambda *_: self._rename_tab(),
             "set-tab-emoji": lambda *_: self._set_tab_emoji(),
@@ -553,6 +569,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.project_list.update(
             project.name, projects.rows(project.id), items, folders, self._menu_for, states
         )
+        for sid, item in items.items():
+            self.context.track(sid, item.session.jsonl_path)
+            self.project_list.set_reading(sid, self.context.get(sid))
         self._update_project_bar(states)
 
     def _menu_for(self, session_id: str) -> Gio.Menu:
@@ -1227,10 +1246,26 @@ class MainWindow(Adw.ApplicationWindow):
             state = self._page_state.get(page, "idle")
             infos.append(
                 TabInfo(
-                    page, page.get_title(), space, agent, state, self._tab_emoji(page), self._tab_color(page)
+                    page,
+                    page.get_title(),
+                    space,
+                    agent,
+                    state,
+                    self._tab_emoji(page),
+                    self._tab_color(page),
+                    self._tab_context(page),
                 )
             )
         return infos
+
+    def _tab_context(self, page: Adw.TabPage) -> ContextReading | None:
+        """The fullest context among the tab's sessions: the one about to run out is what matters."""
+        readings = [r for sid in self._session_ids_of(page) if (r := self.context.get(sid)) is not None]
+        return max(readings, key=lambda reading: reading.percentage, default=None)
+
+    def _on_context_changed(self, _model: ContextModel, session_id: str) -> None:
+        self.project_list.set_reading(session_id, self.context.get(session_id))
+        self._queue_spaces_refresh()
 
     def _tab_color(self, page: Adw.TabPage) -> str:
         """The group's color when every session in the tab is in that one group."""
@@ -1862,6 +1897,15 @@ class MainWindow(Adw.ApplicationWindow):
         self._open_replay(session)
 
     # -- preferences / about -------------------------------------------------
+
+    def _show_usage(self) -> None:
+        def memberships() -> dict[str, str]:
+            return {sid: project.name for project in self.state.projects.projects for sid in project.members}
+
+        def names() -> dict[str, str]:
+            return {item.session_id: item.display_name for item in self.store.model_items()}
+
+        UsageWindow(memberships, names, transient_for=self).present()
 
     def _show_about(self) -> None:
         about = Adw.AboutDialog(

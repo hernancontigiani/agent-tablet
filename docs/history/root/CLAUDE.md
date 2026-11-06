@@ -43,3 +43,8 @@ its output when a change is reported done; a skipped step is said to be skipped.
 
 > Left on 2026-11-05: plan 03 was delivered, and the rule points at its doc.
   costs a fraction; the human's Chrome is theirs. How: plan 03 (`plans/00-STATUS.md`).
+
+## Product rules the code must hold
+
+> Left on 2026-11-06, when plan 05 added `--settings` to the rule (the bullet's last line changed).
+  can be removed on its own at any time, leaving the rest of the file as the user had it.

@@ -279,3 +279,31 @@ def test_a_new_session_needs_a_name_and_a_folder(tmp_path, name, folder, ok):
     (tmp_path / "exists").mkdir()
     error = validate_new_session(name, str(tmp_path / folder) if folder else "")
     assert (error is None) == ok
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        pytest.param("HOME/git/agent-tablet", ("agent-tablet", "~/git"), id="under-home"),
+        pytest.param("HOME/marvik/ccai/guardian", ("guardian", "~/marvik/ccai"), id="deeper"),
+        pytest.param("/srv/data", ("data", "/srv"), id="outside-home"),
+    ],
+)
+def test_a_folder_is_offered_by_its_name_then_where_it_is(path, expected):
+    """In the New page's folder list, full paths cut at the end all start alike."""
+    from pathlib import Path
+
+    from agent_tablet.addsession import folder_parts
+
+    assert folder_parts(path.replace("HOME", str(Path.home()))) == expected
+
+
+def test_the_folders_to_start_in_come_most_recent_first(tmp_path):
+    from agent_tablet.addsession import recent_folders
+    from agent_tablet.sessions import Session
+
+    def session(cwd, mtime):
+        return Session(session_id=str(mtime), jsonl_path=tmp_path / "x", cwd=cwd, preview="", mtime=mtime)
+
+    sessions = [session("/a", 10.0), session("/b", 30.0), session("/a", 20.0), session(None, 99.0)]
+    assert recent_folders(sessions) == ["/b", "/a"]

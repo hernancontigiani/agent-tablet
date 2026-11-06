@@ -65,6 +65,7 @@ ignore = [
 "po/generate.py" = ["T201", "E501"]
 "tools/ui/check.py" = ["T201"]
 "agent_tablet/statusline.py" = ["T201"]
+"agent_tablet/usage.py" = ["T201"]
 "tools/ui/serve.py" = ["T201"]
 "tools/ui/session.py" = ["T201"]
 "docs/history/nothing_lost.py" = ["T201"]

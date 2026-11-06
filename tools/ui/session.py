@@ -84,8 +84,19 @@ while read -r line; do [ "$line" = "/exit" ] && exit 0; done
 """
 
 
-def build_env(base: Path, display: int, base_env: Mapping[str, str]) -> dict[str, str]:
-    env = dict(base_env)
+def _is_claude_code_marker(name: str) -> bool:
+    return name == "CLAUDECODE" or name.startswith(("CLAUDE_CODE_", "CLAUDE_PID", "CLAUDE_EFFORT"))
+
+
+def build_env(
+    base: Path, display: int, base_env: Mapping[str, str], real_agent: bool = False
+) -> dict[str, str]:
+    """The isolated instance's environment. With real_agent, `claude` is the user's own CLI with
+    their login: HOME and the transcripts are theirs (read, and written by Claude itself in the
+    walk's own folder), while the app's config and cache stay in the session."""
+    # A walk run from a Claude Code session would pass its markers on, and a `claude` that sees
+    # them saves no transcript.
+    env = {k: v for k, v in base_env.items() if not _is_claude_code_marker(k)}
     env.update(
         {
             "GDK_BACKEND": "broadway",
@@ -107,6 +118,16 @@ def build_env(base: Path, display: int, base_env: Mapping[str, str]) -> dict[str
             "PATH": f"{base / 'bin'}:{base_env.get('PATH', '')}",
         }
     )
+    if real_agent:
+        home = Path(base_env.get("HOME", str(Path.home())))
+        env.update(
+            {
+                "HOME": str(home),
+                "CSM_PROJECTS_DIR": str(home / ".claude" / "projects"),
+                "CSM_CLAUDE_CONFIG": str(home / ".claude.json"),
+                "PATH": base_env.get("PATH", ""),
+            }
+        )
     return env
 
 
@@ -173,11 +194,20 @@ _SURFACES_JS = """() => [...document.body.children].filter(e => e.style.position
 class UiSession:
     """`with UiSession(out) as ui: ui.click(type="SearchEntry"); ui.type("jwt")`."""
 
-    def __init__(self, out: Path, *, theme: str = "dark", demo: bool = True, browser: bool = True) -> None:
+    def __init__(
+        self,
+        out: Path,
+        *,
+        theme: str = "dark",
+        demo: bool = True,
+        browser: bool = True,
+        real_agent: bool = False,
+    ) -> None:
         self.out = Path(out)
         self.with_browser = browser
         self.theme = theme
-        self.demo = demo
+        self.demo = demo and not real_agent
+        self.real_agent = real_agent
         self.base = self.out / "session"
         self._procs = ProcessGroup()
         self._app: subprocess.Popen | None = None
@@ -186,7 +216,7 @@ class UiSession:
         self.page = None
         self.display = allocate(socket_taken, _port_taken)
         self.url = f"http://127.0.0.1:{port_of(self.display)}/"
-        self.env = build_env(self.base, self.display, os.environ)
+        self.env = build_env(self.base, self.display, os.environ, real_agent=real_agent)
 
     # -- lifecycle -----------------------------------------------------------
 
@@ -223,7 +253,7 @@ class UiSession:
     def _prepare_data(self) -> None:
         self.base.mkdir(parents=True, exist_ok=True)
         for key in PATH_VARS:
-            if key.endswith("HOME"):
+            if key.endswith("HOME") and Path(self.env[key]).is_relative_to(self.base):
                 Path(self.env[key]).mkdir(parents=True, exist_ok=True)
         if self.demo:
             subprocess.run(
@@ -231,10 +261,15 @@ class UiSession:
                 check=True,
                 capture_output=True,
             )
-        else:
+        elif not self.real_agent:
             (self.base / "projects").mkdir(exist_ok=True)
         write_isolated_state(self.base / "config", self.theme)
-        write_fake_agent(self.base / "bin")
+        if self.real_agent:
+            from tools.ui.check import write_real_project
+
+            write_real_project(self.base / "config")
+        else:
+            write_fake_agent(self.base / "bin")
 
     def _start_broadway(self) -> None:
         socket_path(self.display).unlink(missing_ok=True)  # free per allocate(): nobody listens
@@ -338,8 +373,9 @@ class UiSession:
 
     # -- acting --------------------------------------------------------------
 
-    def click(self, settle_ms: int = 400, **match) -> dict:
-        window, widget = self.find(**match)
+    def click(self, settle_ms: int = 400, nth: int | None = None, **match) -> dict:
+        """Click the one widget that matches; with nth, the nth of several that match alike."""
+        window, widget = self.find(**match) if nth is None else locate.find_all(self.tree(), **match)[nth]
         x, y = locate.page_point(window, widget, self._surfaces())
         # Held for a moment: a press and release in the same instant toggles a GtkMenuButton
         # open and shut before it paints.
@@ -362,6 +398,33 @@ class UiSession:
                     print(f"  (click on {match} took {attempt} tries)")
                 return tree
         raise LookupError(f"clicking {match} {tries} times did not bring up what was expected")
+
+    def call(self, method: str, *args, on: str | None = None, **kwargs):
+        """Run a main-window method by its dotted name, as the click that cannot reach it would.
+        on: the window showing that project; "app.<name>" runs on the application."""
+        tree = Path(self.env["AT_UI_TREE"])
+        out = tree.with_name(tree.name + ".call.out")
+        out.unlink(missing_ok=True)
+        request = tree.with_name(tree.name + ".call")
+        request.write_text(
+            json.dumps({"method": method, "args": list(args), "kwargs": kwargs}), encoding="utf-8"
+        )
+        _wait(out.exists, 10, f"the app did not answer the call to {method}")
+        answer = json.loads(out.read_text(encoding="utf-8"))
+        out.unlink()
+        if not answer["ok"]:
+            raise RuntimeError(f"{method}: {answer['error']}")
+        self.settle()
+        return answer["result"]
+
+    def terminal_text(self) -> str:
+        """What the terminals on screen show, joined."""
+        return "\n".join(
+            w.get("terminal", "") for window in self.tree() for w in window["widgets"] if "terminal" in w
+        )
+
+    def wait(self, ms: int) -> None:
+        self._page().wait_for_timeout(ms)
 
     def type(self, text: str, settle_ms: int = 600) -> None:
         self._page().keyboard.type(text, delay=40)

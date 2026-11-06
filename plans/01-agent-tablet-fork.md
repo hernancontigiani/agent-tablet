@@ -157,25 +157,9 @@ analogy.
 Projects are designed in `plans/04-projects-and-tabs.md`: a project is a list of sessions from any
 folder, not a set of folders, in one window. This block's earlier text is in git.
 
-### B4 — Context % in the list (stub)
+### B4 — Context % in the list
 
-**Where the number comes from:** the only exact figure is the one Claude passes to the statusline
-(`context_window.used_percentage`). So the statusline becomes the source:
-
-1. The statusline script (shipped in the repo, `contrib/statusline.sh`), besides showing the bar,
-   writes `~/.cache/agent-tablet/sessions/<session_id>.json` with the %, the cost, the name and the
-   time.
-2. The app watches that folder and shows the % on each row of the list and on each tab: a ring or a
-   number, in green, yellow (60 %) and red (80 %).
-3. **With no statusline configured**, it is estimated from the token usage of the last message in
-   the conversation file and marked as approximate (the context window size is not in the file). In
-   the integrations menu, the user can install the script into `~/.claude/settings.json` — one
-   piece, consented to and removable on its own (`CLAUDE.md`, decided 2026-11-06). The menu itself
-   is designed with B4 or before it, whichever first needs a write there.
-
-**Verification:** with two sessions open, the % in the list matches each one's statusline (±1
-point) and updates within 5 seconds of each reply. A closed session shows its last known value,
-dimmed.
+Replaced by plan 05 and delivered 2026-11-06: `docs/context.md` says how it works.
 
 ### B5 — Categories (stub)
 
@@ -193,44 +177,10 @@ dimmed.
 survives a restart; filtering by one category in a project with sessions from three repos shows
 the sessions of the three. The rest is written once the open questions are answered.
 
-### B6 — Cost and time per category (stub)
+### B6 — Cost and time per category
 
-- The same script from B4 appends one line per refresh to `~/.cache/agent-tablet/usage.jsonl`.
-  SQLite (standard library, no new dependency) is the alternative to weigh when designing B6: the
-  history grows every day and the report queries it by period; the app's other state is JSON.
-- `agent-tablet report --period 7d` (and a view in the app): a **project × category** table with
-  estimated cost, duration and number of sessions.
-- **Two traps, to handle in the code:** a session's cost goes back to zero with `/clear` (add up
-  the maximum of each stretch, not the last value), and it is an estimate at list price, not the
-  bill. On a subscription what matters is the % of the limit, which also comes in the statusline
-  (`rate_limits`).
-- **What the human wants measured (2026-11-06): execution time and tokens, per session, summed
-  per category and per project.** Both come from the transcripts, for past sessions too: each
-  entry has a timestamp and each assistant message its `usage` (input, output, cache write, cache
-  read). Measured on six sessions 2026-11-06: active time = from a typed prompt to the last
-  activity before the next one. To design: telling a typed prompt from a cross-session message or
-  a tool result (both are `user` entries), and subtracting time blocked on a permission prompt.
-  Also available: tool calls and their durations, models, compactions, subagents' tokens (all in
-  the transcript); lines changed and the subscription's limits (statusline only, captured by plan
-  05). The statusline's `total_duration_ms` is wall-clock, not active time.
-- **Learned from ccusage and agent-deck (read 2026-11-06), to hold in B6's design:**
-  - **Deduplicate assistant entries by (`message.id`, `requestId`) across all transcripts**, keeping
-    the non-sidechain copy, then the larger usage; without it the counts are 2–3× too high
-    (measured 2026-11-06 on six sessions: output tokens 1.09M raw → 380k deduplicated in one).
-    Responses are copied into resumed and forked transcripts and replayed by sidechains.
-  - **Count every assistant record**, not one per turn (agent-deck's Stop-hook sampling undercounts
-    tool loops); records whose only tokens are cache tokens still count; `<synthetic>` and
-    `isApiErrorMessage` do not.
-  - **`subagents/*.jsonl` roll up to the parent session**, after deduplication.
-  - **Price per token kind from a table shipped with the app** (no network, `CLAUDE.md`), with
-    1-hour cache writes at 2× input and the rate in force at each entry's time; the statusline's
-    `cost.total_cost_usd` is the exact figure when present.
-  - **Group by local date through `clock.py`**: both tools group in UTC, wrong outside UTC.
-  - **Neither tool measures active time**; ours (prompt to last activity, minus blocked time) is
-    new, so its definition and its tests are B6's main design work.
-
-**Verification:** after a day of use, the report's total matches the sum of the statusline costs of
-those sessions, and a `/clear` in the middle of a session does not lower the total.
+Replaced by plan 06 and delivered 2026-11-06: `docs/usage.md` says how it works. What remains
+is grouping by category, which waits for B5.
 
 ## 4. Out of scope, with the reason
 

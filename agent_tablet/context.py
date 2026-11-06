@@ -127,6 +127,8 @@ class ContextModel(GObject.Object):
         self._cache = cache or cache_dir()
         self._transcripts: dict[str, Path] = {}
         self._readings: dict[str, ContextReading | None] = {}
+        self._in_flight: set[str] = set()
+        self._again: set[str] = set()
         sessions = self._cache / "sessions"
         sessions.mkdir(parents=True, exist_ok=True)
         self._monitor = Gio.File.new_for_path(str(sessions)).monitor_directory(
@@ -142,9 +144,15 @@ class ContextModel(GObject.Object):
         self.refresh(session_id)
 
     def refresh(self, session_id: str) -> None:
+        """Read the session again off the main thread. One read in flight per session: a request
+        that arrives meanwhile runs once more when it lands, so a burst costs two reads, not N."""
         transcript = self._transcripts.get(session_id)
         if transcript is None:
             return
+        if session_id in self._in_flight:
+            self._again.add(session_id)
+            return
+        self._in_flight.add(session_id)
 
         def work() -> None:
             reading = reading_for(session_id, transcript, self._cache)
@@ -153,6 +161,10 @@ class ContextModel(GObject.Object):
         threading.Thread(target=work, daemon=True).start()
 
     def _apply(self, session_id: str, reading: ContextReading | None) -> bool:
+        self._in_flight.discard(session_id)
+        if session_id in self._again:
+            self._again.discard(session_id)
+            self.refresh(session_id)
         if self._readings.get(session_id) != reading:
             self._readings[session_id] = reading
             self.emit("changed", session_id)

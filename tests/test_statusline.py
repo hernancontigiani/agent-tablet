@@ -79,3 +79,33 @@ def test_the_script_writes_every_field_the_app_reads(tmp_path):
     (written,) = (tmp_path / "agent-tablet" / "sessions").iterdir()
     assert len(context_fields.SESSION_FIELDS) >= 6
     assert set(json.loads(written.read_text())) == set(context_fields.SESSION_FIELDS)
+
+
+def _run_with_chain(
+    stdin: str, cache: Path, config: Path, command: str | None
+) -> subprocess.CompletedProcess:
+    chain = config / "agent-tablet" / "chained-statusline.json"
+    chain.parent.mkdir(parents=True, exist_ok=True)
+    chain.write_text(json.dumps({"command": command}), encoding="utf-8")
+    env = {**os.environ, "XDG_CACHE_HOME": str(cache), "XDG_CONFIG_HOME": str(config)}
+    return subprocess.run(
+        [sys.executable, str(SCRIPT)], input=stdin, capture_output=True, text=True, env=env, timeout=20
+    )
+
+
+def test_the_human_s_own_bar_is_shown_and_the_app_still_records(tmp_path):
+    """Their bar does not change; the app only adds what it records on the side."""
+    command = 'read payload; echo "theirs: $(echo "$payload" | head -c 1)"'
+    result = _run_with_chain(
+        _payload("full").replace("\n", " "), tmp_path / "cache", tmp_path / "config", command
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "theirs: {"
+    assert (tmp_path / "cache" / "agent-tablet" / "sessions").exists()
+
+
+@pytest.mark.parametrize("command", ["exit 3", "true"], ids=["fails", "prints-nothing"])
+def test_a_chained_bar_that_fails_or_prints_nothing_falls_back_to_the_app_s(tmp_path, command):
+    result = _run_with_chain(_payload("full"), tmp_path / "cache", tmp_path / "config", command)
+    assert result.returncode == 0
+    assert result.stdout.strip() == "lm-plan-200 · 62% · $1.23"

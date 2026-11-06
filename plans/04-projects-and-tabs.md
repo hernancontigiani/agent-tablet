@@ -558,3 +558,28 @@ transcript. Every clean way out returns 0 and a failing start returns 1, so `&& 
 `/exit`-only transcript holds the name and the `/exit` command but no typed message: its preview is
 empty and `joins_project` refuses it, as the rule wants. B3 is complete.
 
+**More of the human's check automated (2026-11-06).** `tools/ui/check.py` runs several walks, each in
+a fresh isolated instance (`RUNS`): `main`, `exit-closes-tab` (typing `/exit` into the stand-in
+closes the tab and leaves the row stopped), `reopen` (a tab open at quit is back after a restart),
+`remove-from-project` and `delete-project` (read back from the session's `projects.json`, since
+the dropdown does not reopen after the confirmation dialog). `UiSession.click` takes `nth=`, and
+`UiSession.wait` replaces reaching into the page. Clicks inside the Add session dialog never reach
+it, so adding and moving from it stay with the human. What is left by hand: the real `claude` (a
+new session joining after its first message, resuming a conversation, Ctrl+D), "Open beside" and
+its panes, adding and moving from the Add session dialog, groups, and two windows.
+
+**The rest of the human's check, automated (2026-11-06).** A bug found by the human's test was the
+session's own: the app launched from Claude Code passed `CLAUDE_CODE_CHILD_SESSION` on, and Claude
+saved no transcript, so a new session never joined; launched without it, a new session joined after
+its first message (seen by the human, `prueba-5`). `tools/ui/session.py` now drops those markers.
+`UiSession.call` runs a window's or the application's method where Broadway drops the click, and
+`terminal_text()` reads the terminals. New runs: `new-session-page`, `two-windows` (a new window
+takes a free project; choosing one held elsewhere leaves it there). `--real-claude` runs, with the
+human's own `claude` in `~/.cache/agent-tablet-ui/dummy`: a new session joins only after its first
+message; "Open beside" makes "at-check-b │ at-check-a" and `/exit` closes only that pane; after a
+restart the tab resumes and the session answers "PING" to "repeat the word you replied with";
+Ctrl+D twice closes the tab. All passed on 2026-11-06. The New page was redesigned at the human's
+request: pick the folder from a filtered list (name first, then where it is, most recent first),
+then name the session. Still by hand only: the clicks inside the Add session dialog ("Add", "Move
+from …") and the dialogs behind "New group…" and "Rename project".
+

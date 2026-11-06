@@ -14,6 +14,7 @@ gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
 from gi.repository import Adw, Gio, Gtk, Pango, Vte
 
+from . import integrations
 from .i18n import LANGUAGES, N_, _
 from .state import AppState
 from .themes import DEFAULT_THEME, DEFAULT_UI_STYLE, THEME_NAMES, get_theme
@@ -240,6 +241,47 @@ class PreferencesDialog(Adw.PreferencesDialog):
         page.add(start_group)
 
         self.add(page)
+        self.add(self._integrations_page())
+
+    def _integrations_page(self) -> Adw.PreferencesPage:
+        """What the app may add to Claude Code's own settings: one row per piece, each accepted and
+        removed on its own. Nothing here is on until the user turns it on."""
+        page = Adw.PreferencesPage(title=_("Integrations"), icon_name="application-x-addon-symbolic")
+        group = Adw.PreferencesGroup(
+            title=_("Claude Code settings"),
+            description=_(
+                "Each piece is added to ~/.claude/settings.json only when you turn it on, and taken "
+                "out when you turn it off. A copy of the file is kept before every change."
+            ),
+        )
+        self._statusline_row = Adw.SwitchRow(
+            title=_("Status line in every Claude session"),
+            subtitle=_(
+                "Context and usage for sessions started outside Agent Tablet too. Your own status "
+                "line, if you have one, keeps showing."
+            ),
+        )
+        self._statusline_row.set_active(integrations.statusline_installed())
+        self._statusline_row.connect("notify::active", self._on_statusline_toggled)
+        group.add(self._statusline_row)
+        page.add(group)
+        return page
+
+    def _on_statusline_toggled(self, row: Adw.SwitchRow, _pspec) -> None:
+        wanted = row.get_active()
+        if wanted == integrations.statusline_installed():
+            return
+        try:
+            if wanted:
+                integrations.install_statusline()
+            else:
+                integrations.remove_statusline()
+        except integrations.IntegrationError as err:
+            # Put the switch back to what the file says, without coming back here.
+            row.handler_block_by_func(self._on_statusline_toggled)
+            row.set_active(integrations.statusline_installed())
+            row.handler_unblock_by_func(self._on_statusline_toggled)
+            self.add_toast(Adw.Toast(title=str(err), timeout=8))
 
     def _on_font_changed(self, button: Gtk.FontDialogButton, _pspec) -> None:
         desc = button.get_font_desc()

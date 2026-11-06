@@ -184,3 +184,28 @@ def test_the_isolated_app_runs_the_fake_agent_first(tmp_path):
     session.write_fake_agent(tmp_path / "bin")
     assert env["PATH"].split(":") == [str(tmp_path / "bin"), "/usr/bin", "/bin"]
     assert (tmp_path / "bin" / "claude").stat().st_mode & 0o111
+
+
+def test_the_isolated_app_never_inherits_claude_codes_markers(tmp_path):
+    """A `claude` started with these saves no transcript; a walk is often run from Claude Code."""
+    base = {
+        "PATH": "/usr/bin",
+        "CLAUDECODE": "1",
+        "CLAUDE_CODE_CHILD_SESSION": "1",
+        "CLAUDE_PID": "7",
+        "KEEP": "x",
+    }
+    env = session.build_env(tmp_path, display=20, base_env=base)
+    assert not [k for k in env if k == "CLAUDECODE" or k.startswith("CLAUDE_")]
+    assert env["KEEP"] == "x"
+
+
+def test_with_the_real_agent_only_the_apps_own_state_is_isolated(tmp_path):
+    env = session.build_env(
+        tmp_path, display=20, base_env={"HOME": "/home/someone", "PATH": "/usr/bin"}, real_agent=True
+    )
+    assert env["HOME"] == "/home/someone"
+    assert env["CSM_PROJECTS_DIR"] == "/home/someone/.claude/projects"
+    for key in ("XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME"):
+        assert env[key].startswith(str(tmp_path)), key
+    assert env["PATH"] == "/usr/bin"  # the user's own claude, not the stand-in

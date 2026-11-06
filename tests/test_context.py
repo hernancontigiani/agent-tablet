@@ -107,3 +107,28 @@ def test_a_reported_window_of_zero_falls_back_to_200k(tmp_path):
     transcript = _transcript(tmp_path / "s.jsonl", T0, 0, 0, 100_000)
     _session_file(tmp_path, "s", None, 0, T0 - timedelta(minutes=1))
     assert context.reading_for("s", transcript, tmp_path) == context.ContextReading(50.0, 200_000, "estimate")
+
+
+def test_a_burst_of_refreshes_reads_at_most_twice(tmp_path, monkeypatch):
+    """Every project refresh asks for every session; reads must not pile up in threads."""
+    import time
+
+    from gi.repository import GLib
+
+    calls = []
+
+    def slow_read(*_args):
+        calls.append(1)
+        time.sleep(0.05)
+
+    monkeypatch.setattr(context, "reading_for", slow_read)
+    model = context.ContextModel(tmp_path)
+    model.track("s", tmp_path / "t.jsonl")
+    for _ in range(5):
+        model.refresh("s")
+    main = GLib.MainContext.default()
+    deadline = time.monotonic() + 5
+    while (calls == [] or model._in_flight or model._again) and time.monotonic() < deadline:
+        main.iteration(False)
+        time.sleep(0.01)
+    assert len(calls) == 2

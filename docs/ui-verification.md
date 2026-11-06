@@ -9,7 +9,7 @@ Chrome, headless. It never uses the human's Chrome, their running instance, or t
 
 | Command | What it does |
 |---|---|
-| `make ui-check` | Starts an isolated instance with the demo sessions, walks the main screens, saves `NN-<step>.png` and `app.log`, prints where. Exit 1 on the first failing step, with its screenshot |
+| `make ui-check` | Runs each walk of `tools/ui/check.py` (`RUNS`) in its own isolated instance with the demo sessions, saves `<run>/NN-<step>.png` and `app.log`, prints where. A run stops at its first failing step, with its screenshot; exit 1 if any run failed. `uv run python -m tools.ui.check --run <name>` runs one |
 | `make ui` | Starts it and prints a URL; stays up until Ctrl+C |
 | `make ui-watch` | The same, and restarts the app on every change under `agent_tablet/`; a page already open on the URL shows the new window without reloading |
 | `uv run python -m tools.ui.session --smoke` | Starts, reports the windows and widget count, one screenshot, stops |
@@ -56,11 +56,29 @@ ambiguous one lists the candidates.
   opens), so it is Broadway's, not a bug to fix in the app. Event timestamps were checked and are
   monotonic; the cause is not found. **`ui.restart_app()` gives a clean process** in the same page:
   a walk orders its steps by what they disturb, and restarts the app before a step that needs input
-  after one that used a dialog (`check.py`).
+  after one that used a dialog (`check.py`). Also seen (2026-11-06): a second click inside the same
+  dialog can drop Playwright's connection altogether (`write EINVAL`), a click on a page tab can go
+  unanswered, and keyboard shortcuts such as `Ctrl+,` stop working after such clicks. So a step
+  clicks at most once inside a dialog and reads the rest from the tree.
 - **Dialogs come out narrower than on the desktop**, so their text wraps (the About title on two
   lines, Preferences' labels letter by letter). Do not judge a dialog's width from Broadway.
 - **Once a terminal tab is up, popovers stop opening, and after a dialog, clicks stop reaching the
   window** (seen 2026-11-06). A step that opens a tab runs last, after `restart_app()`.
+- **A walk run from a Claude Code session would pass its markers on** (`CLAUDECODE`,
+  `CLAUDE_CODE_*`), and a `claude` that sees them saves no transcript ("Transcript saving is off";
+  seen 2026-11-06). `build_env` drops them; an app launched by hand from Claude Code needs the same.
+- **Where a click cannot reach, `UiSession.call` runs the method the click would have run**
+  (`tools/ui/launcher.py` answers it inside the app: a window's method by dotted name, `on=` the
+  window showing a project, `app.` for the application), so what follows the dialog runs as in the
+  app. `UiSession.terminal_text()` reads what the terminals show.
+- **`--real-claude`** runs the walks that need the user's own, logged-in `claude`
+  (`tools/ui/check.py`, `REAL_STEPS`): it sends one-word prompts from a folder of its own
+  (`~/.cache/agent-tablet-ui/dummy`), whose transcripts Claude writes as usual. It is opt-in and
+  never part of `make ui-check`.
+- **Clicks inside the Add session dialog never reach it** (seen 2026-11-06, a folder's row and the
+  "Expand all groups" button alike, with retries); the pointer does, as its tooltips show. What
+  needs a click there is checked by hand. A walk that needs a dialog, a typed key or a terminal
+  gets a run of its own (`RUNS`), so the rest keep their menus.
 - **A third `restart_app()` in one run fails to reach the display** ("A connection to the bus
   can't be made", seen twice on 2026-11-06): a walk restarts the app twice at most.
 - **The walk's `claude` is a stand-in** that `tools/ui/session.py` puts first in `PATH`: it waits

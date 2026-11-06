@@ -1,4 +1,4 @@
-"""Run the app unchanged, plus a widget-tree dump a UiSession can request.
+"""Run the app unchanged, plus a widget-tree dump and a method call a UiSession can request.
 
 The only code of these tools that runs inside the app's process. It answers a request file instead
 of a signal: a SIGUSR1 handler installed through GLib never fired under Broadway, a 300 ms poll did.
@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from typing import Any
 
 import gi
 
@@ -17,6 +18,11 @@ from gi.repository import GLib, Gtk
 
 TREE = os.environ["AT_UI_TREE"]
 REQUEST = TREE + ".req"
+# A call on the main window, for what a click cannot reach under Broadway (inside a dialog): the
+# method the click would have run, by name, so what follows it runs as in the app.
+CALL = TREE + ".call"
+CALL_OUT = TREE + ".call.out"
+_TERMINAL_TAIL = 4000
 _TEXT_GETTERS = ("get_label", "get_text", "get_tooltip_text", "get_title", "get_placeholder_text")
 
 
@@ -58,6 +64,12 @@ def _describe(widget: Gtk.Widget, natives: dict) -> dict:
             round(bounds.get_height()),
         ]
     entry["focus"] = widget.has_focus()
+    text_format = getattr(widget, "get_text_format", None)  # a VTE terminal: what it shows
+    if text_format is not None:
+        from gi.repository import Vte
+
+        text = text_format(Vte.Format.TEXT) or ""
+        entry["terminal"] = text[-_TERMINAL_TAIL:]
     return entry
 
 
@@ -87,6 +99,7 @@ def dump() -> list[dict]:
 
 
 _pending = False
+_calling = False
 
 
 def _answer() -> bool:
@@ -102,8 +115,41 @@ def _answer() -> bool:
     return GLib.SOURCE_REMOVE
 
 
+def _call() -> bool:
+    global _calling
+    try:
+        with open(CALL, encoding="utf-8") as handle:
+            request = json.load(handle)
+        os.remove(CALL)
+        windows = [w for w in Gtk.Window.list_toplevels() if type(w).__name__ == "MainWindow"]
+        # "on": the window showing that project; a method starting with "app." runs on the application.
+        on = request.get("on")
+        window: Any = next(w for w in windows if on is None or getattr(w, "project_id", None) == on)
+        target: Any = window.get_application() if request["method"].startswith("app.") else window
+        method = request["method"].removeprefix("app.")
+        for part in method.split("."):
+            target = getattr(target, part)
+        result = target(*request.get("args", []), **request.get("kwargs", {}))
+        answer = {
+            "ok": True,
+            "result": result if isinstance(result, (str, int, float, bool, type(None))) else repr(result),
+        }
+    except Exception as error:
+        answer = {"ok": False, "error": f"{type(error).__name__}: {error}"}
+    tmp = CALL_OUT + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as handle:
+        json.dump(answer, handle)
+    os.replace(tmp, CALL_OUT)
+    _calling = False
+    return GLib.SOURCE_REMOVE
+
+
 def _poll() -> bool:
     global _pending
+    global _calling
+    if os.path.exists(CALL) and not _calling:
+        _calling = True
+        GLib.idle_add(_call)
     if os.path.exists(REQUEST) and not _pending:
         _pending = True
         # Below layout and paint: a widget mapped in this frame has no size until they run.
