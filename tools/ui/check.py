@@ -53,6 +53,7 @@ def step_history(ui: UiSession, shot: Callable[[], None]) -> str:
 
 
 def step_search(ui: UiSession, shot: Callable[[], None]) -> str:
+    ui.restart_app()  # a fresh process: Broadway's input is unreliable after a dialog was used
     ui.click(type="SearchEntry")
     ui.type("jwt")
     sessions = _texts(ui.settle(), "heading")
@@ -84,9 +85,17 @@ def step_preferences(ui: UiSession, shot: Callable[[], None]) -> str:
     tree = _open_from_main_menu(ui, "Preferences")
     types = {widget["type"] for window in tree for widget in window["widgets"]}
     _expect("PreferencesDialog" in types, "the Preferences item opened no PreferencesDialog")
+    ui.click(type="Button", text="Reset to default font")
+    fonts = [
+        widget.get("label", "")
+        for window in ui.settle()
+        for widget in window["widgets"]
+        if "monospace" in widget.get("label", "").lower()
+    ]
+    _expect(bool(fonts), "after resetting the font, the font button does not show the terminal's monospace")
     shot()
     _close_dialog(ui, "PreferencesDialog")
-    return "preferences dialog opens and closes"
+    return f"preferences opens, resets the font to {fonts[0]!r}, closes"
 
 
 def step_about(ui: UiSession, shot: Callable[[], None]) -> str:
@@ -107,13 +116,14 @@ def step_no_traceback(ui: UiSession, shot: Callable[[], None]) -> str:
     return "no traceback in the app's output"
 
 
-# Typing goes after the menus: once a key has reached the app under Broadway, popovers stop
-# opening for the rest of the run. The native app does not do this; it is Broadway's.
+# Under Broadway, once a key or a click inside a dialog has reached the app, popovers stop opening
+# for the rest of the run; the native app does not do this. So the step that only opens and closes
+# a dialog goes first, and the ones that act inside the app come after the last menu they need.
 STEPS = (
     ("title", step_title),
     ("history", step_history),
-    ("preferences", step_preferences),
     ("about", step_about),
+    ("preferences", step_preferences),
     ("search", step_search),
     ("no-traceback", step_no_traceback),
 )

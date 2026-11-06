@@ -191,14 +191,18 @@ class UiSession:
         self.close()
 
     def close(self) -> None:
-        if self._browser is not None:
-            self._browser.close()
+        # The app and gtk4-broadwayd are stopped whatever the browser does on its way out: a
+        # Playwright driver that already died raises here, and its error must not orphan them.
+        try:
+            if self._browser is not None:
+                self._browser.close()
+            if self._playwright is not None:
+                self._playwright.stop()
+        finally:
             self._browser = None
-        if self._playwright is not None:
-            self._playwright.stop()
             self._playwright = None
-        self._procs.close()
-        socket_path(self.display).unlink(missing_ok=True)
+            self._procs.close()
+            socket_path(self.display).unlink(missing_ok=True)
 
     def _prepare_data(self) -> None:
         self.base.mkdir(parents=True, exist_ok=True)
@@ -279,6 +283,11 @@ class UiSession:
             previous = current
         raise TimeoutError(f"the UI kept changing for {timeout}s")
 
+    def _page(self):
+        if self.page is None:
+            raise RuntimeError("this UiSession was started without a browser")
+        return self.page
+
     # -- looking -------------------------------------------------------------
 
     def tree(self, timeout: float = 5) -> list[dict]:
@@ -301,9 +310,9 @@ class UiSession:
 
     def screenshot(self, name: str) -> Path:
         self.settle()
-        self.page.wait_for_timeout(300)  # Broadway paints after GTK lays out
+        self._page().wait_for_timeout(300)  # Broadway paints after GTK lays out
         path = self.out / f"{name}.png"
-        self.page.screenshot(path=str(path))
+        self._page().screenshot(path=str(path))
         return path
 
     def app_log(self) -> str:
@@ -317,11 +326,11 @@ class UiSession:
         x, y = locate.page_point(window, widget, self._surfaces())
         # Held for a moment: a press and release in the same instant toggles a GtkMenuButton
         # open and shut before it paints.
-        self.page.mouse.move(x, y)
-        self.page.mouse.down()
-        self.page.wait_for_timeout(120)
-        self.page.mouse.up()
-        self.page.wait_for_timeout(settle_ms)
+        self._page().mouse.move(x, y)
+        self._page().mouse.down()
+        self._page().wait_for_timeout(120)
+        self._page().mouse.up()
+        self._page().wait_for_timeout(settle_ms)
         self.settle()
         return widget
 
@@ -338,12 +347,12 @@ class UiSession:
         raise LookupError(f"clicking {match} {tries} times did not bring up what was expected")
 
     def type(self, text: str, settle_ms: int = 600) -> None:
-        self.page.keyboard.type(text, delay=40)
-        self.page.wait_for_timeout(settle_ms)
+        self._page().keyboard.type(text, delay=40)
+        self._page().wait_for_timeout(settle_ms)
 
     def key(self, keys: str, settle_ms: int = 400) -> None:
-        self.page.keyboard.press(keys)
-        self.page.wait_for_timeout(settle_ms)
+        self._page().keyboard.press(keys)
+        self._page().wait_for_timeout(settle_ms)
 
 
 def _wait(condition: Callable[[], bool], timeout: float, message: str) -> None:

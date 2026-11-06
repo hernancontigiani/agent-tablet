@@ -50,7 +50,7 @@ def _isolate_claude(monkeypatch):
 
 
 def test_discover_finds_only_real_sessions(projects_dir):
-    root, ids = projects_dir
+    _root, ids = projects_dir
     sessions = discover_sessions()
     assert len(sessions) == 3  # noise files excluded
     assert {s.session_id for s in sessions} == set(ids.values())
@@ -159,8 +159,8 @@ def test_read_mcp_config(monkeypatch, tmp_path):
     mcp = read_mcp_config()
     assert not mcp.is_empty
     assert [s.name for s in mcp.global_servers] == ["gitlab", "linear"]
-    assert "stdio · npx -y gitlab-mcp" == mcp.global_servers[0].summary
-    assert "http · https://mcp.linear.app/sse" == mcp.global_servers[1].summary
+    assert mcp.global_servers[0].summary == "stdio · npx -y gitlab-mcp"
+    assert mcp.global_servers[1].summary == "http · https://mcp.linear.app/sse"
     # only the project with servers shows up
     assert [p for p, _ in mcp.project_servers] == ["/home/u/proj"]
 

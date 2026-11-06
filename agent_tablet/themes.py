@@ -278,7 +278,9 @@ def effective_theme(settings: dict, dark: bool) -> dict | None:
     theme = get_theme(settings.get("terminal_theme"))
     if theme is None and settings.get("ui_style", DEFAULT_UI_STYLE) == "tui":
         name = "Catppuccin Mocha" if dark else "Catppuccin Latte"
-        theme = {**_THEMES[name], "name": name}
+        palette = _THEMES[name]
+        assert palette is not None  # only "Default" has no palette of its own
+        theme = {**palette, "name": name}
     elif theme is not None:
         theme = {**theme, "name": settings.get("terminal_theme")}
     return theme
@@ -309,8 +311,8 @@ def tui_css(theme: dict) -> str:
     """Stylesheet that recolors libadwaita with the theme and flattens the
     chrome into a terminal-workspace look (herdr's layout and color roles)."""
     bg, fg = f"#{theme['bg']}", f"#{theme['fg']}"
-    accent = f"#{_ACCENTS.get(theme.get('name'), theme['palette'][5])}"
-    exact = _UI_TOKENS.get(theme.get("name"))
+    accent = f"#{_ACCENTS.get(theme.get('name', ''), theme['palette'][5])}"
+    exact = _UI_TOKENS.get(theme.get("name", ""))
     if exact:
         tokens = {k: f"#{v}" for k, v in exact.items()}
     else:
@@ -426,12 +428,14 @@ def apply_ui_style(settings: dict) -> None:
 
     global _ui_provider
     display = Gdk.Display.get_default()
+    assert display is not None
     if _ui_provider is not None:
         Gtk.StyleContext.remove_provider_for_display(display, _ui_provider)
         _ui_provider = None
     if settings.get("ui_style", DEFAULT_UI_STYLE) != "tui":
         return
     theme = effective_theme(settings, Adw.StyleManager.get_default().get_dark())
+    assert theme is not None  # the TUI style always resolves to a palette
     _ui_provider = Gtk.CssProvider()
     _ui_provider.load_from_data(tui_css(theme).encode())
     # above the app's base stylesheet (APPLICATION priority) so it wins ties

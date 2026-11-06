@@ -9,6 +9,7 @@ top-level `role`, user text wrapped in <user_query> tags, no cwd/usage/timestamp
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -92,10 +93,8 @@ class Provider:
         """
         base = self.projects_dir
         dirs = [base]
-        try:
+        with contextlib.suppress(OSError):
             dirs += [p for p in base.iterdir() if p.is_dir()]
-        except OSError:
-            pass
         return dirs
 
     def latest_transcript_for_cwd(self, cwd: str) -> Path | None:
@@ -548,10 +547,8 @@ def _cursor_parse_details(path: Path) -> SessionDetails:
     """Partial details: message counts + recent peek (no tokens/models/timestamps)."""
     details = SessionDetails()
     recent: deque[tuple[str, str]] = deque(maxlen=PEEK_MESSAGES)
-    try:
+    with contextlib.suppress(OSError):
         details.file_size = path.stat().st_size
-    except OSError:
-        pass
     try:
         with path.open("r", encoding="utf-8", errors="replace") as fh:
             for line in fh:

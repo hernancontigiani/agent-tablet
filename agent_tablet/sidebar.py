@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import ClassVar
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango
 
 from .formatting import format_size
 from .i18n import _
@@ -29,8 +30,8 @@ from .spaces import SectionHeader, section_shown
 from .store import SessionStore
 
 _GHOSTTY = shutil.which("ghostty")
-_ELLIPSIZE_END = 3  # Pango.EllipsizeMode.END
-_ELLIPSIZE_START = 1  # Pango.EllipsizeMode.START
+_ELLIPSIZE_END = Pango.EllipsizeMode.END
+_ELLIPSIZE_START = Pango.EllipsizeMode.START
 
 
 def _abbreviate_path(path: str | None) -> str:
@@ -240,7 +241,7 @@ class SessionRow(Gtk.ListBoxRow):
 class SessionSidebar(Gtk.Box):
     """AdwToolbarView is a final type, so we wrap one instead of subclassing."""
 
-    __gsignals__ = {
+    __gsignals__: ClassVar[dict] = {
         "open-session": (GObject.SignalFlags.RUN_FIRST, None, (object, bool)),
         "open-many": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "trash-many": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
@@ -410,8 +411,8 @@ class SessionSidebar(Gtk.Box):
         # Collapse project groups by default — but only the first time each is
         # seen, so manual expand/collapse choices survive live refreshes.
         groups = []
-        for i in range(self.store.model.get_n_items()):
-            key = self.store.model.get_item(i).group_key
+        for item in self.store.model_items():
+            key = item.group_key
             if key not in groups:
                 groups.append(key)
         for key in groups:
@@ -420,8 +421,7 @@ class SessionSidebar(Gtk.Box):
         self._known_groups = set(groups)
 
         previous_group: tuple | None = None
-        for i in range(self.store.model.get_n_items()):
-            item = self.store.model.get_item(i)
+        for item in self.store.model_items():
             if item.group_key != previous_group:
                 header = GroupHeaderRow(
                     item.group_key,
@@ -451,8 +451,7 @@ class SessionSidebar(Gtk.Box):
         self.list.invalidate_filter()
 
     def _group_has_match(self, group_key: tuple, query: str) -> bool:
-        for i in range(self.store.model.get_n_items()):
-            item = self.store.model.get_item(i)
+        for item in self.store.model_items():
             if item.group_key == group_key and query in item.search_text:
                 return True
         return False
@@ -462,6 +461,7 @@ class SessionSidebar(Gtk.Box):
         if isinstance(row, GroupHeaderRow):
             # Headers stay visible when collapsed; during search, only for groups with matches.
             return self._group_has_match(row.group_key, query) if query else True
+        assert isinstance(row, SessionRow)  # the list holds only headers and session rows
         if query:
             return query in row.item.search_text  # search ignores collapsed state
         return row.item.group_key not in self._collapsed
@@ -488,6 +488,7 @@ class SessionSidebar(Gtk.Box):
         if isinstance(row, GroupHeaderRow):
             self._toggle_group(row.group_key)
             return
+        assert isinstance(row, SessionRow)  # the list holds only headers and session rows
         if self._selection_mode:
             row.check.set_active(not row.check.get_active())
             return

@@ -2,6 +2,7 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -156,3 +157,21 @@ def test_a_socket_file_nobody_listens_on_does_not_take_a_display(tmp_path, monke
         assert session.socket_taken(21)
     finally:
         live.close()
+
+
+def test_a_browser_that_fails_to_close_does_not_orphan_the_app(tmp_path, monkeypatch):
+    monkeypatch.setattr(session, "allocate", lambda *_a: 20)
+    ui = session.UiSession(tmp_path, browser=False)
+    child = ui._procs.spawn(["sleep", "60"], env=dict(os.environ), log=tmp_path / "app.log")
+
+    class DeadBrowser:
+        def close(self):
+            raise RuntimeError("write EINVAL")
+
+    ui._browser = cast(Any, DeadBrowser())  # a stand-in for Playwright's Browser
+    with pytest.raises(RuntimeError):
+        ui.close()
+    deadline = time.monotonic() + 5
+    while _alive(child.pid) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert not _alive(child.pid)

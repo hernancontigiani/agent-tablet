@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
 _CONFIG_BASE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
 _CONFIG_DIR = _CONFIG_BASE / "agent-tablet"
@@ -148,7 +149,7 @@ class AppState:
 
     # -- settings ------------------------------------------------------------
 
-    def get_setting(self, key: str):
+    def get_setting(self, key: str) -> Any:
         return self.settings.get(key, DEFAULT_SETTINGS.get(key))
 
     def set_setting(self, key: str, value) -> None:

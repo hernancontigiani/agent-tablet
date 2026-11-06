@@ -95,7 +95,7 @@ MCP_PER_PROJECT = {
 def make_transcript(cwd: str, prompt: str, timestamp: float, mcp_server: str | None) -> tuple[str, str]:
     iso = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(timestamp))
     session_id = str(uuid.uuid4())
-    content = [{"type": "text", "text": "On it — here's the plan, then I'll start."}]
+    content: list[dict] = [{"type": "text", "text": "On it — here's the plan, then I'll start."}]
     if mcp_server:
         content.append({"type": "tool_use", "id": "t1", "name": f"mcp__{mcp_server}__query", "input": {}})
     lines = [

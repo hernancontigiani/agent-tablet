@@ -6,6 +6,7 @@ discover_sessions() aggregates every installed agent's sessions.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -224,10 +225,8 @@ def parse_details(path: Path) -> SessionDetails:
     details = SessionDetails()
     models: set[str] = set()
     recent: deque[tuple[str, str]] = deque(maxlen=PEEK_MESSAGES)
-    try:
+    with contextlib.suppress(OSError):
         details.file_size = path.stat().st_size
-    except OSError:
-        pass
     try:
         with path.open("r", encoding="utf-8", errors="replace") as fh:
             for line in fh:

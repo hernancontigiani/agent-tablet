@@ -1,6 +1,6 @@
 # Plan 01 — agent-tablet: the fork of Agent Session Manager
 
-> **Status:** B0 delivered 2026-11-05. B1 delivered 2026-11-05 (checked by hand by the human). **B2 is executable; B3–B6 are stubs** (goal, behaviour
+> **Status:** B0 delivered 2026-11-05. B1 delivered 2026-11-05 (checked by hand by the human). **B2 is executable; B3 is replaced by plan 04; B4–B6 are stubs** (goal, behaviour
 > and verification, but no test named per decision): each goes through `/design-plan` before it is
 > executed.
 >
@@ -31,7 +31,7 @@ What it lacks are additions on top of that base, not another base:
 | Missing | Block |
 |---|---|
 | Showing the name the session has in Claude (`claude -n`, `/rename`) | B2 |
-| Projects that remember their open sessions and reopen the next day, with several folders | B3 |
+| Projects that remember their sessions, from any folder, and reopen the next day | Plan 04 (replaces B3) |
 | Context % in the list | B4 |
 | Categories (design, execution, review, delivery…) | B5 |
 | Cost and time per category and per project | B6 |
@@ -152,37 +152,10 @@ analogy.
   the next refresh.
 - The `asm-sync-names.py` script is no longer needed.
 
-### B3 — Projects that remember their sessions (stub)
+### B3 — Replaced by plan 04 (2026-11-06)
 
-**What a project is:** a name, **one or several folders**, and the sessions that were open.
-
-| Project | Folders |
-|---|---|
-| laburomenos | `/home/hernan/git/lm-app` |
-| Confidential Core | `/home/hernan/marvik/ccai/guardian`, `…/guardian-control-plane`, `…/alignment-fabric` |
-
-The original's "spaces" are one folder each and disappear when the last tab closes. A project sits
-above them: it groups folders, survives closing, and is what you open each day.
-
-**Behaviour:**
-- **One window per project.** Opening "Confidential Core" opens its window, with its history
-  filtered to its folders.
-- **On closing the window** (or the app, or shutting down) it saves which sessions were open, in
-  what order and with which pane split.
-- **On opening the project** those tabs reopen, each with `claude --resume <id>` in its folder (the
-  mechanism the app already uses when opening from the history).
-- **On starting the app** it offers to reopen the projects that were open when it closed.
-- Stored in `~/.config/agent-tablet/projects.json`, apart from `state.json`.
-
-**Before designing:** the original's roadmap lists "Persistent spaces" as planned (`docs/releases.md`
-at `07f72bd`, now `git show upstream/main:docs/releases.md`). Check whether upstream has started it
-since; if so, decide with the human whether to bring it in by hand before building on top.
-
-**Verification:** open Confidential Core with one session from each repo and a split pane, close
-the app, reopen the project: the three come back, in their order, with their split, each with its
-conversation (ask it what you were talking about). Repeat after rebooting the machine. **And the
-same conversation is never open twice**: if a session of the project is already open in another
-window, that one is focused instead of opening another.
+Projects are designed in `plans/04-projects-and-tabs.md`: a project is a list of sessions from any
+folder, not a set of folders, in one window. This block's earlier text is in git.
 
 ### B4 — Context % in the list (stub)
 
@@ -206,25 +179,25 @@ dimmed.
 
 ### B5 — Categories (stub)
 
-- **A global list**, the same for every project so they can be added up: `orchestration`, `design`,
-  `execution`, `review`, `documentation`, `delivery`, `troubleshooting`, `thematic`. Editable in
-  Preferences.
-- **Each project picks the ones it uses.** Confidential Core: delivery (shared by the three repos),
-  and per repo guardian → design, execution, review; control-plane → design, execution,
-  documentation; fabric → design, execution.
-- **Assigned automatically by name rule**, so the orchestrator does not have to do anything new:
-  per project, a list of patterns (`*-plan-*` → execution, `*-diseno-*` → design). Right-click to
-  correct by hand; the manual choice wins.
+- **A fixed list**, the phases of the software development life cycle: `plan`, `design`, `build`,
+  `test`, `deploy`, `maintain`. The same for every project so they can be added up; not editable and
+  not chosen per project, so it does not grow into a custom taxonomy (decided 2026-11-06).
+- **A session with no category is `build`.**
+- **Whether anything assigns categories automatically is open** (`plans/00-STATUS.md` §2): a
+  pattern on the name is likely to guess wrong. Assigning by hand from the row's menu is in either
+  way.
 - Shown as a tag on the row, and the list can be filtered and grouped by category.
 - **Never in the session's name**: it would break messaging between sessions by name.
 
-**Verification:** `claude -n lm-plan-200` appears as `execution` by itself; changing it by hand to
-`review` survives a restart; filtering by `delivery` in Confidential Core shows the sessions of the
-three repos.
+**Verification:** a new session shows `build`; changing it by hand to `test`
+survives a restart; filtering by one category in a project with sessions from three repos shows
+the sessions of the three. The rest is written once the open questions are answered.
 
 ### B6 — Cost and time per category (stub)
 
 - The same script from B4 appends one line per refresh to `~/.cache/agent-tablet/usage.jsonl`.
+  SQLite (standard library, no new dependency) is the alternative to weigh when designing B6: the
+  history grows every day and the report queries it by period; the app's other state is JSON.
 - `agent-tablet report --period 7d` (and a view in the app): a **project × category** table with
   estimated cost, duration and number of sessions.
 - **Two traps, to handle in the code:** a session's cost goes back to zero with `/clear` (add up
@@ -248,10 +221,10 @@ those sessions, and a `/clear` in the middle of a session does not lower the tot
 
 ## 5. Order and why
 
-**B0 → B1 → B2 → B3 → B4 → B5 → B6.** B2 first among the additions because without names the app
-is no use for the human's workflow ("if it doesn't pick up the name, it's no use to me"). B3 before
-B4 because it is the other everyday annoyance. B4 leaves the statusline script that B6 reuses. B5
-and B6 can be swapped. The toolchain baseline (plan 02) goes between B1 and B2, so the additions are
+**B0 → B1 → B2 → plan 04 → B4 → B5 → B6.** B2 first among the additions because without names the app
+is no use for the human's workflow ("if it doesn't pick up the name, it's no use to me"). Plan 04
+(which replaces B3) before B4 because it is the other everyday annoyance. B4 leaves the statusline script that B6 reuses. B5
+and B6 can be swapped. The toolchain baseline was delivered before B2 (2026-11-06), so the additions are
 written under the final rules; `plans/00-STATUS.md` holds the order.
 
 ## 6. Decided (2026-11-05)

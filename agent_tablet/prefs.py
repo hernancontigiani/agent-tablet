@@ -11,15 +11,24 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, Gtk, Pango  # noqa: E402
+gi.require_version("Vte", "3.91")
+from gi.repository import Adw, Gio, Gtk, Pango, Vte
 
 from .i18n import LANGUAGES, N_, _
 from .state import AppState
 from .themes import DEFAULT_THEME, DEFAULT_UI_STYLE, THEME_NAMES, get_theme
 
 
+def _terminal_default_font() -> Pango.FontDescription:
+    """The font a terminal tab uses when none is set: VTE's own default, read from VTE."""
+    terminal = Vte.Terminal()
+    terminal.set_font(None)
+    return terminal.get_font()
+
+
 def _hex_rgb(hex6: str) -> tuple[float, float, float]:
-    return tuple(int(hex6[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    red, green, blue = (int(hex6[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    return red, green, blue
 
 
 def _draw_swatch(_area, cr, width: int, height: int, name: str) -> None:
@@ -93,8 +102,9 @@ class PreferencesDialog(Adw.PreferencesDialog):
         font_row = Adw.ActionRow(title=_("Font"), subtitle=_("Applies to all terminal tabs"))
         self._font_button = Gtk.FontDialogButton(dialog=Gtk.FontDialog(), valign=Gtk.Align.CENTER)
         current_font = state.get_setting("font") or ""
-        if current_font:
-            self._font_button.set_font_desc(Pango.FontDescription.from_string(current_font))
+        self._font_button.set_font_desc(
+            Pango.FontDescription.from_string(current_font) if current_font else _terminal_default_font()
+        )
         self._font_button.connect("notify::font-desc", self._on_font_changed)
         font_row.add_suffix(self._font_button)
 
@@ -238,7 +248,10 @@ class PreferencesDialog(Adw.PreferencesDialog):
         self._on_change()
 
     def _on_font_reset(self, _button: Gtk.Button) -> None:
-        self._font_button.set_font_desc(None)
+        # Showing the default must not save it as the user's choice: "" is what follows the default.
+        self._font_button.handler_block_by_func(self._on_font_changed)
+        self._font_button.set_font_desc(_terminal_default_font())
+        self._font_button.handler_unblock_by_func(self._on_font_changed)
         self._state.set_setting("font", "")
         self._on_change()
 

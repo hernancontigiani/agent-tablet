@@ -1,5 +1,7 @@
 import io
 import json
+import subprocess
+from typing import cast
 
 from agent_tablet.chatsession import (
     ChatSession,
@@ -181,16 +183,17 @@ class _FakeProc:
         return self.returncode
 
 
-def _session_with_proc():
+def _session_with_proc() -> tuple[ChatSession, _FakeProc]:
     sess = ChatSession.__new__(ChatSession)
-    sess._proc = _FakeProc()
-    return sess
+    proc = _FakeProc()
+    sess._proc = cast(subprocess.Popen, proc)
+    return sess, proc
 
 
 def test_respond_permission_allow_envelope():
-    sess = _session_with_proc()
+    sess, proc = _session_with_proc()
     sess.respond_permission("rid-1", True, {"file_path": "/a", "content": "x"})
-    sent = json.loads(sess._proc.stdin.getvalue().decode())
+    sent = json.loads(proc.stdin.getvalue().decode())
     assert sent == {
         "type": "control_response",
         "response": {
@@ -202,9 +205,9 @@ def test_respond_permission_allow_envelope():
 
 
 def test_respond_permission_deny_envelope():
-    sess = _session_with_proc()
+    sess, proc = _session_with_proc()
     sess.respond_permission("rid-2", False, {"x": 1}, message="nope")
-    sent = json.loads(sess._proc.stdin.getvalue().decode())
+    sent = json.loads(proc.stdin.getvalue().decode())
     assert sent["response"]["response"] == {"behavior": "deny", "message": "nope"}
 
 

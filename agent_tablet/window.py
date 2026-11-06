@@ -12,7 +12,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
 from . import __version__, dialogs, themes
 from .chatsessionview import ChatSessionTab
@@ -411,7 +411,9 @@ class MainWindow(Adw.ApplicationWindow):
             folder = dialog.select_folder_finish(result)
         except GLib.Error:
             return  # cancelled
-        cwd = folder.get_path()
+        cwd = dialogs.require_local_path(folder, self, _("Choose a local folder"))
+        if cwd is None:
+            return
         self.state.set_setting("new_session_dir", cwd)  # remember for next time
         self._start_new_session(cwd, getattr(self, "_new_session_provider", None))
 
@@ -445,7 +447,9 @@ class MainWindow(Adw.ApplicationWindow):
             folder = dialog.select_folder_finish(result)
         except GLib.Error:
             return
-        cwd = folder.get_path()
+        cwd = dialogs.require_local_path(folder, self, _("Choose a local folder"))
+        if cwd is None:
+            return
         self.state.set_setting("new_session_dir", cwd)
         provider = getattr(self, "_adv_provider", None) or self._default_provider()
         dialogs.new_session_options_dialog(
@@ -465,7 +469,9 @@ class MainWindow(Adw.ApplicationWindow):
             folder = dialog.select_folder_finish(result)
         except GLib.Error:
             return
-        cwd = folder.get_path()
+        cwd = dialogs.require_local_path(folder, self, _("Choose a local folder"))
+        if cwd is None:
+            return
         self.state.set_setting("new_session_dir", cwd)
         provider = getattr(self, "_cont_provider", None) or self._default_provider()
         tab = TerminalTab(
@@ -518,7 +524,9 @@ class MainWindow(Adw.ApplicationWindow):
             folder = dialog.select_folder_finish(result)
         except GLib.Error:
             return  # cancelled
-        cwd = folder.get_path()
+        cwd = dialogs.require_local_path(folder, self, _("Choose a local folder"))
+        if cwd is None:
+            return
         self.state.set_setting("new_session_dir", cwd)
         self._start_new_chat_session(
             cwd,
@@ -542,7 +550,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
 
     def _on_resume_chat_action(self, _action, param: GLib.Variant) -> None:
-        variant_key, _, session_id = param.get_string().partition(":")
+        variant_key, _sep, session_id = param.get_string().partition(":")
         session = self.store.get_session(session_id)
         if session is None:
             return
@@ -720,8 +728,9 @@ class MainWindow(Adw.ApplicationWindow):
         if page in self._page_space:
             self._space_last[self._page_space[page][0]] = page
         self._mark_seen()
-        if isinstance(page.get_child(), PaneContainer):
-            GLib.idle_add(page.get_child().focused.grab_terminal_focus)
+        child = page.get_child()
+        if isinstance(child, PaneContainer):
+            GLib.idle_add(child.focused.grab_terminal_focus)
 
     def focus_session(self, target: str) -> None:
         """Select the tab of a session id (or, for unsaved tabs, a title)."""
@@ -756,7 +765,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _current_space(self) -> str | None:
         page = self.tab_view.get_selected_page()
-        return self._page_space[page][0] if page in self._page_space else None
+        return self._page_space[page][0] if page is not None and page in self._page_space else None
 
     def _on_select_space(self, _panel, space: str) -> None:
         page = self._space_last.get(space)
@@ -769,7 +778,7 @@ class MainWindow(Adw.ApplicationWindow):
         space = self._current_space()
         pages = [t.page for t in self._tab_infos() if t.space == space]
         selected = self.tab_view.get_selected_page()
-        if len(pages) > 1 and selected in pages:
+        if len(pages) > 1 and selected is not None and selected in pages:
             index = (pages.index(selected) + step) % len(pages)
             self.tab_view.set_selected_page(pages[index])
 
@@ -788,8 +797,12 @@ class MainWindow(Adw.ApplicationWindow):
         popover.set_has_arrow(False)
 
         def on_closed(p: Gtk.PopoverMenu) -> None:
-            # after the chosen action ran
-            GLib.idle_add(lambda: (p.unparent(), setattr(self, "_menu_page", None)))
+            def release() -> bool:  # after the chosen action ran
+                p.unparent()
+                self._menu_page = None
+                return GLib.SOURCE_REMOVE
+
+            GLib.idle_add(release)
 
         popover.connect("closed", on_closed)
         popover.popup()
@@ -918,14 +931,14 @@ class MainWindow(Adw.ApplicationWindow):
         if 0 < number <= len(pages):
             self.tab_view.set_selected_page(pages[number - 1])
 
-    def _prefix_commands(self) -> list[tuple[list[int], str, str, Callable[[int], None]]]:
+    def _prefix_commands(self) -> list[tuple[list[int], str, str, Callable[[int], object]]]:
         """What follows Ctrl+B (herdr's defaults): (keyvals, keys as shown in
         the help, description, callback(keyval))."""
 
-        def panes(method: str, *args) -> Callable[[int], None]:
+        def panes(method: str, *args) -> Callable[[int], object]:
             return lambda _kv: (p := self._panes()) is not None and getattr(p, method)(*args)
 
-        def act(name: str) -> Callable[[int], None]:
+        def act(name: str) -> Callable[[int], object]:
             return lambda _kv: self.activate_action(f"win.{name}", None)
 
         k = Gdk
@@ -1103,7 +1116,9 @@ class MainWindow(Adw.ApplicationWindow):
             gfile = dialog.save_finish(result)
         except GLib.Error:
             return  # cancelled
-        dest = gfile.get_path()
+        dest = dialogs.require_local_path(gfile, self, _("Choose a local file"))
+        if dest is None:
+            return
 
         def work() -> None:
             error = None
@@ -1199,7 +1214,10 @@ class MainWindow(Adw.ApplicationWindow):
             gfile = dialog.open_finish(result)
         except GLib.Error:
             return  # cancelled
-        session = session_from_file(Path(gfile.get_path()))
+        path = dialogs.require_local_path(gfile, self, _("Choose a local file"))
+        if path is None:
+            return
+        session = session_from_file(Path(path))
         if session is None:
             dialogs.error_dialog(
                 self,
@@ -1238,8 +1256,7 @@ class MainWindow(Adw.ApplicationWindow):
         if self._switcher is not None:  # already open — don't stack another
             return
         entries = []
-        for i in range(self.store.model.get_n_items()):
-            item = self.store.model.get_item(i)
+        for item in self.store.model_items():
             subtitle = item.session.project_name
             if item.session.preview:
                 subtitle += f" · {item.session.preview}"

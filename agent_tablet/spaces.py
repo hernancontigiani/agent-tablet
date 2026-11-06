@@ -10,18 +10,25 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import ClassVar
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, GLib, GObject, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, GLib, GObject, Gtk, Pango
 
 from .agentstate import rollup
 from .i18n import _
 from .sessions import git_branch
 
-_ELLIPSIZE_END = 3  # Pango.EllipsizeMode.END
+_ELLIPSIZE_END = Pango.EllipsizeMode.END
+
+
+class _KeyedRow(Gtk.ListBoxRow):
+    """A row that carries what activating it selects: a space's path or a tab's page."""
+
+    key: object = None
 
 
 @dataclass
@@ -98,7 +105,7 @@ class SectionHeader(Gtk.Box):
 class SpacesPanel(Gtk.Box):
     """Top of the sidebar: the open spaces, then every running agent."""
 
-    __gsignals__ = {
+    __gsignals__: ClassVar[dict] = {
         "select-space": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
         "select-page": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
     }
@@ -152,7 +159,9 @@ class SpacesPanel(Gtk.Box):
             hint.set_margin_start(12)
             hint.set_margin_bottom(6)
             self._spaces.append(hint)
-            hint.get_parent().set_activatable(False)
+            hint_row = hint.get_parent()
+            if isinstance(hint_row, Gtk.ListBoxRow):
+                hint_row.set_activatable(False)
         for space, members in spaces.items():
             # a blocked agent makes its space blocked, a working one active…
             status = rollup([t.status for t in members])
@@ -172,7 +181,7 @@ class SpacesPanel(Gtk.Box):
             self._agents.append(row)
 
     @staticmethod
-    def _row(title: str, subtitle: str, status: str, is_current: bool) -> Gtk.ListBoxRow:
+    def _row(title: str, subtitle: str, status: str, is_current: bool) -> _KeyedRow:
         top = Gtk.Box(spacing=8)
         top.append(_dot(status))
         label = Gtk.Label(label=title, xalign=0.0, hexpand=True)
@@ -186,7 +195,7 @@ class SpacesPanel(Gtk.Box):
             sub.add_css_class("dim-label")
             sub.set_margin_start(16)  # align under the title, past the dot
             box.append(sub)
-        row = Gtk.ListBoxRow(child=box)
+        row = _KeyedRow(child=box)
         if is_current:
             row.add_css_class("current")
         return row
@@ -195,7 +204,7 @@ class SpacesPanel(Gtk.Box):
 class TabStrip(Gtk.Box):
     """Flat tab row for the current space, with a trailing "+"."""
 
-    __gsignals__ = {
+    __gsignals__: ClassVar[dict] = {
         "select": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "close": (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "menu": (GObject.SignalFlags.RUN_FIRST, None, (object, object)),  # page, widget
@@ -243,7 +252,7 @@ class TabStrip(Gtk.Box):
         """Where a page's tab sits, in strip coordinates (to anchor popovers)."""
         button = self._buttons.get(page)
         ok, rect = button.compute_bounds(self) if button is not None else (False, None)
-        if not ok:
+        if not ok or rect is None:
             return None
         bounds = Gdk.Rectangle()
         bounds.x, bounds.y = int(rect.get_x()), int(rect.get_y())

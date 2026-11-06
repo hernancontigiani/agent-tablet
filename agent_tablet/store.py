@@ -12,12 +12,14 @@ from __future__ import annotations
 import threading
 from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gio, GLib, GObject  # noqa: E402
+from gi.repository import Gio, GLib, GObject
 
+from . import clock
 from .models import FAV_GROUP, SessionItem
 from .providers import available_providers
 from .sessions import Session, discover_sessions
@@ -27,7 +29,7 @@ _DEBOUNCE_MS = 2000
 
 
 def _relative_time(dt: datetime) -> str:
-    delta = datetime.now() - dt
+    delta = clock.now() - dt
     seconds = int(delta.total_seconds())
     if seconds < 60:
         return "just now"
@@ -41,7 +43,7 @@ def _relative_time(dt: datetime) -> str:
 
 
 class SessionStore(GObject.Object):
-    __gsignals__ = {
+    __gsignals__: ClassVar[dict] = {
         # order_changed: True when rows were re-spliced (UI must rebuild rows)
         "refreshed": (GObject.SignalFlags.RUN_FIRST, None, (bool,)),
     }
@@ -61,6 +63,15 @@ class SessionStore(GObject.Object):
         self._scanning = False
 
     # -- discovery -----------------------------------------------------------
+
+    def model_items(self) -> list[SessionItem]:
+        """The model's rows, in order. The model only ever holds SessionItems."""
+        items = []
+        for i in range(self.model.get_n_items()):
+            item = self.model.get_item(i)
+            assert isinstance(item, SessionItem)
+            items.append(item)
+        return items
 
     def start(self) -> None:
         self.refresh()
@@ -119,7 +130,7 @@ class SessionStore(GObject.Object):
             if session_id not in wanted_ids:
                 del self._items[session_id]
 
-        current_ids = [self.model.get_item(i).session_id for i in range(self.model.get_n_items())]
+        current_ids = [item.session_id for item in self.model_items()]
         order_changed = current_ids != [item.session_id for item in items]
         if order_changed:
             self.model.splice(0, self.model.get_n_items(), items)

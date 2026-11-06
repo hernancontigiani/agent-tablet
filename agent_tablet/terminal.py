@@ -6,19 +6,22 @@ import os
 import signal
 import threading
 from pathlib import Path
+from typing import ClassVar
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Vte", "3.91")
-from gi.repository import Gdk, Gio, GLib, GObject, Gtk, Pango, Vte  # noqa: E402
+import contextlib
 
-from . import agentstate, themes  # noqa: E402
-from .i18n import _  # noqa: E402
-from .promptcard import build_question_card  # noqa: E402
-from .providers import Provider, get_provider  # noqa: E402
-from .transcript import TranscriptModel  # noqa: E402
+from gi.repository import Gdk, Gio, GLib, GObject, Gtk, Pango, Vte
+
+from . import agentstate, themes
+from .i18n import _
+from .promptcard import build_question_card
+from .providers import Provider, get_provider
+from .transcript import TranscriptModel
 
 _TRANSCRIPT_DEBOUNCE_MS = 400
 _PROMPT_POLL_MS = 1000  # backstop poll for detecting the agent's prompts
@@ -32,7 +35,7 @@ _SEARCH_FLAGS = _PCRE2_CASELESS | _PCRE2_MULTILINE
 class TerminalTab(Gtk.Box):
     """Embeds Vte.Terminal (with a find bar) and spawns an agent CLI into it."""
 
-    __gsignals__ = {
+    __gsignals__: ClassVar[dict] = {
         # Emitted when the agent process exits (int = exit status).
         "process-exited": (GObject.SignalFlags.RUN_FIRST, None, (int,)),
         # The agent's detected state changed ("working" | "blocked" | "idle").
@@ -86,7 +89,7 @@ class TerminalTab(Gtk.Box):
         self._search_bar = self._build_search_bar()
         self.append(self._search_bar)
 
-        scrolled = Gtk.ScrolledWindow(child=self.terminal, vexpand=True)
+        scrolled = Gtk.ScrolledWindow(child=self.terminal, vexpand=True)  # pyright: ignore[reportArgumentType]  # VTE's stubs: Terminal is a Gtk.Widget
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
 
         # The terminal is the single live view. When the agent asks a structured
@@ -106,7 +109,7 @@ class TerminalTab(Gtk.Box):
         # Ctrl+Shift+C / Ctrl+Shift+V / Ctrl+Shift+G, terminal-style
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key_pressed)
-        self.terminal.add_controller(keys)
+        self.terminal.add_controller(keys)  # pyright: ignore[reportAttributeAccessIssue]  # VTE's stubs lack GTK4's Widget API
 
         if settings:
             self.apply_settings(settings)
@@ -147,6 +150,8 @@ class TerminalTab(Gtk.Box):
         shell = os.environ.get("SHELL") or "/bin/bash"
         argv = [shell]
 
+        # The stubs omit child_setup_data, so from there on they read every argument one slot off;
+        # PyGObject takes them in this order.
         self.terminal.spawn_async(
             Vte.PtyFlags.DEFAULT,
             cwd,
@@ -154,8 +159,8 @@ class TerminalTab(Gtk.Box):
             None,  # envv: inherit
             GLib.SpawnFlags.DEFAULT,
             None,  # child_setup
-            None,  # child_setup_data
-            -1,  # timeout
+            None,  # child_setup_data  # pyright: ignore[reportArgumentType]
+            -1,  # timeout  # pyright: ignore[reportArgumentType]
             None,  # cancellable
             self._on_spawned,
         )
@@ -175,10 +180,8 @@ class TerminalTab(Gtk.Box):
     def hangup(self) -> None:
         """End the shell (a closed split pane), as closing a terminal would."""
         if self._child_pid is not None:
-            try:
+            with contextlib.suppress(OSError):
                 os.kill(self._child_pid, signal.SIGHUP)
-            except OSError:
-                pass
 
     # -- agent state ---------------------------------------------------------
 
@@ -195,7 +198,7 @@ class TerminalTab(Gtk.Box):
             # only returns the first line for a tab that isn't on screen.
             _col, row = self.terminal.get_cursor_position()
             screen = (
-                self.terminal.get_text_range_format(
+                self.terminal.get_text_range_format(  # pyright: ignore[reportAttributeAccessIssue]  # VTE ≥ 0.76, absent from the stubs
                     Vte.Format.TEXT,
                     max(0, row - self.terminal.get_row_count()),
                     0,
@@ -331,10 +334,8 @@ class TerminalTab(Gtk.Box):
         self._updating = True
 
         def work() -> None:
-            try:
+            with contextlib.suppress(Exception):
                 self._transcript.update()
-            except Exception:
-                pass
             GLib.idle_add(self._apply_update)
 
         threading.Thread(target=work, daemon=True).start()
@@ -421,12 +422,12 @@ class TerminalTab(Gtk.Box):
     def apply_settings(self, settings: dict) -> None:
         font = settings.get("font") or ""
         self.terminal.set_font(Pango.FontDescription.from_string(font) if font else None)
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             self.terminal.set_scrollback_lines(int(settings.get("scrollback") or 10_000))
-        except (TypeError, ValueError):
-            pass
         themes.apply_terminal_theme(self.terminal, settings)
-        self._frame.get_label_widget().set_visible(settings.get("ui_style", themes.DEFAULT_UI_STYLE) == "tui")
+        label = self._frame.get_label_widget()
+        if label is not None:
+            label.set_visible(settings.get("ui_style", themes.DEFAULT_UI_STYLE) == "tui")
 
     def feed_message(self, text: str) -> None:
         self.terminal.feed(f"\r\n\x1b[1;33m[session manager]\x1b[0m {text}\r\n".encode())

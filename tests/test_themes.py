@@ -1,11 +1,19 @@
-from agent_tablet.themes import effective_theme, tui_css
+from agent_tablet.themes import effective_theme as _effective_theme
+from agent_tablet.themes import tui_css
+
+
+def effective_theme(settings: dict, dark: bool) -> dict:
+    """The palette, for settings that must resolve to one."""
+    theme = _effective_theme(settings, dark)
+    assert theme is not None, settings
+    return theme
 
 
 def test_default_theme_resolves_per_style_and_scheme():
     tui = {"terminal_theme": "Default", "ui_style": "tui"}
     assert effective_theme(tui, dark=True)["name"] == "Catppuccin Mocha"
     assert effective_theme(tui, dark=False)["name"] == "Catppuccin Latte"
-    assert effective_theme({"terminal_theme": "Default", "ui_style": "classic"}, True) is None
+    assert _effective_theme({"terminal_theme": "Default", "ui_style": "classic"}, True) is None
     assert effective_theme({"terminal_theme": "Nord", "ui_style": "classic"}, True)["name"] == "Nord"
 
 

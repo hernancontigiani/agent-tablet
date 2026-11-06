@@ -79,26 +79,33 @@ Each one is broken by an ordinary-looking line of code.
 - **Paths are resolved when called, not at import.** A module-level `Path.home() / ...` cannot be
   pointed elsewhere by setting the environment, so a test that forgets to patch it reads the
   user's real files. Existing modules do it at import; new code does not.
-- **Time is injected.** Code that reads "now" takes it as a parameter or from one clock module,
-  never `datetime.now()` / `time.time()` inline: "idle for 5 minutes", timers and cost windows must
-  be testable at 23:59 and across midnight.
+- **Time is read only through `agent_tablet/clock.py`**, or passed in as a parameter: "idle for 5
+  minutes", timers and cost windows must be testable at 23:59 and across midnight. A test walks
+  the AST and fails on `datetime.now()`, `time.time()` and their kin anywhere else.
 - **Errors are handled at the boundary they come from, once.** No `except Exception: pass`; a
   broad `except` names what it expects and logs what it swallows.
 - **Logging is configured in one place**, and nothing else calls `basicConfig`. Identifiers go in
   `extra={...}`, not in the message.
 - **Enums that are serialized are `(str, Enum)`**, not `StrEnum`: it changes what `str(member)`
   returns.
-- **Type hints on every signature.** A rule about the shape of the code (never call X, never import
-  Y) is enforced by a test that walks the AST, not by `grep`: comments and strings fool a grep.
+- **Type hints on every signature, and pyright (basic) stays at zero errors.** An ignore is
+  line-scoped, names its rule and the gap it covers — today only the VTE stubs, which lack GTK4's
+  `Gtk.Widget` API on `Vte.Terminal`. A `None` pyright points at is either ruled out by the code
+  (narrow it, behaviour unchanged) or a real defect (say so; do not paper over it).
+- **A rule about the shape of the code** (never call X, never rebind `_` where it translates) is
+  enforced by a test that walks the AST (`tests/test_code_rules.py`), not by `grep`: comments and
+  strings fool a grep.
 - Writing a test: `.claude/rules/python-tests.md` loads on its own when a test file is touched.
 
 ## Local CI
 
 **There is no hosted CI, and that is a decision: no `.github/workflows/`.** `make ci` is the gate,
-and a change is not done until it passes: `ruff check`, `pytest -n auto`, and
+and a change is not done until it passes: `ruff check` (the rule set in `pyproject.toml`, each
+ignore with its reason), `ruff format --check`, `pyright`, `pytest -n auto`, and
 `docs/history/nothing_lost.py` (no line left a decision document without reaching its history).
-Report the result with
-its output when a change is reported done; a skipped step is said to be skipped.
+Report the result with its output when a change is reported done; a skipped step is said to be
+skipped. Outside the gate: `make test-midnight` (the suite at 23:30, in UTC) for anything that
+reads the time, `make ui-check` for anything the user sees, `make coverage` as a report.
 
 `make fmt FILES="..."` formats only the paths given (see the shared-tree rules below).
 

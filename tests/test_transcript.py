@@ -68,7 +68,8 @@ def test_latest_unanswered_wins(tmp_path):
     _write(p, [_question_line("q1"), _answer_line("q1"), _question_line("q2")])
     m = TranscriptModel(p, "claude")
     m.update()
-    assert m.pending_question().tool_use_id == "q2"
+    question = m.pending_question()
+    assert question is not None and question.tool_use_id == "q2"
 
 
 def test_incremental_resolution(tmp_path):

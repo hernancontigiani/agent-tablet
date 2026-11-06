@@ -33,17 +33,20 @@ out of date.
 ## The environment
 
 - **Never read the developer's machine**: not `~/.claude`, not `~/.claude.json`, not
-  `~/.config`, not a running instance of the app. **The existing modules resolve those paths at
-  import**, so setting `HOME` or `XDG_CONFIG_HOME` inside a test changes nothing: use the
-  `projects_dir`, `cursor_projects_dir` and `app_state` fixtures, which patch the module constants.
-  New code resolves paths when called, so its tests can point it at `tmp_path` directly.
+  `~/.config`, not a running instance of the app. `tests/conftest.py` points `HOME`, the XDG
+  variables and the `CSM_*` paths at a temporary directory before anything imports the app, so a
+  forgotten patch reads an empty directory, not the human's files. **The existing modules resolve
+  those paths at import**, so setting the environment inside a test changes nothing: a test that
+  needs data uses the `projects_dir`, `cursor_projects_dir` and `app_state` fixtures, which patch
+  the module constants. New code resolves paths when called, so its tests point it at `tmp_path`.
 - **No GTK main loop and no display** in a unit test. Logic that a widget calls lives in a function
   that can be tested without one; a test that truly needs a display skips with the reason and how to
   run it.
 - **No `datetime.now()`, `time.time()` or absolute date that feeds a path reading the real clock.**
   Inject the time and build the scenario from a fixed instant with offsets; a fixed date the code
   compares against "now" turns red the day it passes. Cover the edges: midnight, a session spanning
-  two days, `TZ` other than the developer's.
+  two days, `TZ` other than the developer's. **`make test-midnight`** runs the whole suite as if it
+  were 23:30 today in UTC (`tests/clock_plugin.py`): run it when a change reads the time.
 
 ## What the test asserts
 

@@ -15,6 +15,7 @@ loop, so this module stays GTK-free.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import signal
 import subprocess
@@ -222,7 +223,8 @@ class ChatSession:
 
     def _read(self) -> None:
         assert self._proc is not None and self._proc.stdout is not None
-        for chunk in iter(lambda: self._proc.stdout.read(4096), b""):
+        stdout = self._proc.stdout
+        for chunk in iter(lambda: stdout.read(4096), b""):
             for event in self._parser.feed(chunk):
                 if event.kind == "init" and event.session_id:
                     self.session_id = event.session_id
@@ -268,10 +270,8 @@ class ChatSession:
 
     def interrupt(self) -> None:
         if self._proc and self._proc.poll() is None:
-            try:
+            with contextlib.suppress(OSError):
                 self._proc.send_signal(signal.SIGINT)
-            except OSError:
-                pass
 
     def close(self) -> None:
         if self._proc and self._proc.poll() is None:
@@ -333,8 +333,9 @@ class SpawnResumeChatSession:
     def _read_turn(self, proc: subprocess.Popen) -> None:
         parser = CursorStreamParser()
         saw_end = False
-        if proc.stdout is not None:
-            for chunk in iter(lambda: proc.stdout.read(4096), b""):
+        stdout = proc.stdout
+        if stdout is not None:
+            for chunk in iter(lambda: stdout.read(4096), b""):
                 for event in parser.feed(chunk):
                     if event.kind == "init" and event.session_id:
                         self.session_id = event.session_id
@@ -360,10 +361,8 @@ class SpawnResumeChatSession:
             proc = self._proc
         if proc and proc.poll() is None:
             self._interrupted = True
-            try:
+            with contextlib.suppress(OSError):
                 proc.send_signal(signal.SIGINT)
-            except OSError:
-                pass
 
     def close(self) -> None:
         with self._lock:

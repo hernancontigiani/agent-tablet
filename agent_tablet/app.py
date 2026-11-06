@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Vte", "3.91")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from . import themes
 from .prefs import apply_color_scheme
@@ -141,6 +141,7 @@ class App(Adw.Application):
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
         display = Gdk.Display.get_default()
+        assert display is not None  # a GTK app has started a display before do_startup
         provider = Gtk.CssProvider()
         provider.load_from_data(_CSS)
         Gtk.StyleContext.add_provider_for_display(display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
@@ -183,7 +184,7 @@ class App(Adw.Application):
             return
         window.present()
         session_id = param.get_string()
-        if session_id and hasattr(window, "focus_session"):
+        if session_id and isinstance(window, MainWindow):
             window.focus_session(session_id)
 
     def do_activate(self) -> None:

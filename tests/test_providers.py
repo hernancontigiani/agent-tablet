@@ -104,7 +104,7 @@ def test_commands_none_when_cli_missing(monkeypatch):
 
 def test_chat_variants(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
-    claude = [v for v in ClaudeProvider().chat_variants()]
+    claude = list(ClaudeProvider().chat_variants())
     assert [(v.key, v.transport, v.writeable, v.gated) for v in claude] == [
         ("default", "stdin_stream", True, True)
     ]
@@ -185,9 +185,10 @@ def test_provider_option_lists():
 def test_claude_chat_command_resume(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda cli: f"/usr/bin/{cli}")
     cmd = ClaudeProvider().chat_command("sess-42")
-    assert cmd[-2:] == ["--resume", "sess-42"]
+    assert cmd is not None and cmd[-2:] == ["--resume", "sess-42"]
     # no resume id → no --resume flag
-    assert "--resume" not in ClaudeProvider().chat_command()
+    fresh = ClaudeProvider().chat_command()
+    assert fresh is not None and "--resume" not in fresh
 
 
 def test_get_provider_default():

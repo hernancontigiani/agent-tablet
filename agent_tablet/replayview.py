@@ -10,12 +10,12 @@ from __future__ import annotations
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Gtk  # noqa: E402
+from gi.repository import GLib, Gtk
 
-from .chatbubbles import make_bubble, make_tool_chip  # noqa: E402
-from .i18n import _  # noqa: E402
-from .replaymodel import Turn, read_session_turns  # noqa: E402
-from .sessions import Session  # noqa: E402
+from .chatbubbles import make_bubble, make_tool_chip
+from .i18n import _
+from .replaymodel import Turn, read_session_turns
+from .sessions import Session
 
 _PLAY_INTERVAL_MS = 800
 

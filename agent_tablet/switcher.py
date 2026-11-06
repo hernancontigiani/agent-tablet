@@ -5,15 +5,24 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gtk, Pango
 
 _MAX_RESULTS = 50
-_ELLIPSIZE_END = 3  # Pango.EllipsizeMode.END
+
+
+class _SwitchRow(Gtk.ListBoxRow):
+    def __init__(self, payload: object) -> None:
+        super().__init__()
+        self.payload = payload
+
+
+_ELLIPSIZE_END = Pango.EllipsizeMode.END
 
 
 @dataclass
@@ -27,7 +36,7 @@ class SwitchEntry:
 
 class QuickSwitcher(Adw.Dialog):
     def __init__(
-        self, entries: list[SwitchEntry], on_choose: Callable[[object], None], title: str, placeholder: str
+        self, entries: list[SwitchEntry], on_choose: Callable[[Any], None], title: str, placeholder: str
     ) -> None:
         super().__init__(title=title)
         self._entries = entries
@@ -82,8 +91,7 @@ class QuickSwitcher(Adw.Dialog):
             self._list.select_row(first)
 
     def _make_row(self, entry: SwitchEntry) -> Gtk.ListBoxRow:
-        row = Gtk.ListBoxRow()
-        row.payload = entry.payload
+        row = _SwitchRow(entry.payload)
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.set_margin_top(7)
@@ -141,6 +149,6 @@ class QuickSwitcher(Adw.Dialog):
         self._choose(self._list.get_selected_row())
 
     def _choose(self, row: Gtk.ListBoxRow | None) -> None:
-        if row is not None and getattr(row, "payload", None) is not None:
+        if isinstance(row, _SwitchRow) and row.payload is not None:
             self._on_choose(row.payload)
             self.close()

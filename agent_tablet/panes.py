@@ -11,7 +11,7 @@ from __future__ import annotations
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Gtk  # noqa: E402
+from gi.repository import GLib, Gtk
 
 from .terminal import TerminalTab
 
@@ -33,7 +33,7 @@ class PaneContainer(Gtk.Box):
     def panes(self) -> list[TerminalTab]:
         """Every terminal pane, in layout order."""
 
-        def leaves(widget: Gtk.Widget) -> list[TerminalTab]:
+        def leaves(widget: Gtk.Widget | None) -> list[TerminalTab]:
             if isinstance(widget, TerminalTab):
                 return [widget]
             if isinstance(widget, Gtk.Paned):
@@ -62,7 +62,7 @@ class PaneContainer(Gtk.Box):
     def _watch(self, pane: TerminalTab) -> None:
         focus = Gtk.EventControllerFocus()
         focus.connect("enter", lambda *_: setattr(self, "_focused", pane))
-        pane.terminal.add_controller(focus)
+        pane.terminal.add_controller(focus)  # pyright: ignore[reportAttributeAccessIssue]  # VTE's stubs lack GTK4's Widget API
 
     # -- operations -----------------------------------------------------------
 
@@ -103,6 +103,7 @@ class PaneContainer(Gtk.Box):
             root.set_focus(None)  # the Paned objects to losing its focused child
         paned.set_start_child(None)
         paned.set_end_child(None)
+        assert sibling is not None  # a split always holds two panes
         self._replace(paned, sibling)
         self._focused = sibling if isinstance(sibling, TerminalTab) else self.panes()[0]
         GLib.idle_add(self.focused.grab_terminal_focus)

@@ -3,9 +3,9 @@
 
 PKG := agent_tablet
 
-.PHONY: ci venv lint format-check test history fmt run ui ui-watch ui-check clean
+.PHONY: ci venv lint format-check types test test-midnight coverage history fmt run ui ui-watch ui-check clean
 
-ci: lint format-check test history
+ci: lint format-check types test history
 
 # --system-site-packages is not optional: PyGObject, GTK, libadwaita and VTE come from the system
 # packages, and a venv without them imports nothing of the app.
@@ -18,15 +18,27 @@ venv: .venv/.stamp
 	@touch $@
 
 lint: venv
-	uv run --locked ruff check $(PKG)/ tests/ tools/
+	uv run --locked ruff check .
 
 format-check: venv
 	uv run --locked ruff format --check .
+
+types: venv
+	uv run --locked pyright
 
 # In parallel from day one: a test that passes only because of the order it runs in, or of state
 # another test left behind, shows up here instead of months later.
 test: venv
 	uv run --locked pytest -q -n auto
+
+# The whole suite as if it were 23:30 today, in UTC: finds the tests that pass only away from
+# midnight (tests/clock_plugin.py).
+test-midnight: venv
+	AT_TEST_CLOCK_AT=$(shell date +%Y-%m-%dT23:30:00%:z) TZ=UTC uv run --locked pytest -q -n auto
+
+# A report to read, never a threshold.
+coverage: venv
+	uv run --locked pytest -q -n auto --cov=agent_tablet --cov-report=term-missing:skip-covered
 
 # Every line that left a decision document since HEAD is in its history (docs/history/README.md).
 history:

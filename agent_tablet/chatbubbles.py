@@ -11,7 +11,7 @@ import re
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Gtk, Pango  # noqa: E402
+from gi.repository import GLib, Gtk, Pango
 
 _FENCE_RE = re.compile(r"```[^\n]*\n(.*?)```", re.S)
 _INLINE_CODE_RE = re.compile(r"`([^`]+)`")

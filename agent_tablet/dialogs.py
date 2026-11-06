@@ -9,7 +9,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GLib, Gtk
 
 from .formatting import format_size, format_timestamp, format_tokens
 from .i18n import _
@@ -57,7 +57,20 @@ def confirm_dialog(
     dialog.present(parent)
 
 
-def error_dialog(parent: Gtk.Widget, heading: str, body: str) -> None:
+def require_local_path(gfile: Gio.File, parent: Gtk.Widget | None, heading: str) -> str | None:
+    """The file's local path, or None after telling the user why nothing happens: a terminal
+    starts, and a transcript is read, only from a path on this computer."""
+    path = gfile.get_path()
+    if path is None:
+        error_dialog(
+            parent,
+            heading,
+            _("This location is not on this computer. Choose a folder or file on a local disk."),
+        )
+    return path
+
+
+def error_dialog(parent: Gtk.Widget | None, heading: str, body: str) -> None:
     dialog = Adw.AlertDialog(heading=heading, body=body)
     dialog.add_response("ok", _("OK"))
     dialog.present(parent)
@@ -99,10 +112,14 @@ def new_session_options_dialog(
                     folder = d.select_folder_finish(res)
                 except GLib.Error:
                     return
-                chosen_dir["path"] = folder.get_path()
-                dir_row.set_subtitle(folder.get_path())
+                path = require_local_path(folder, dir_row, _("Choose a local folder"))
+                if path is None:
+                    return
+                chosen_dir["path"] = path
+                dir_row.set_subtitle(path)
 
-            fd.select_folder(parent.get_root(), None, done)
+            root = parent.get_root()
+            fd.select_folder(root if isinstance(root, Gtk.Window) else None, None, done)
 
         choose.connect("clicked", pick)
         dir_row.add_suffix(choose)

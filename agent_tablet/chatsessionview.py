@@ -13,12 +13,12 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gdk, GLib, Gtk  # noqa: E402
+from gi.repository import Gdk, GLib, Gtk
 
-from .chatbubbles import make_bubble, make_label, make_tool_chip, set_bubble_text  # noqa: E402
-from .chatsession import Event, make_chat_session  # noqa: E402
-from .i18n import _  # noqa: E402
-from .providers import ChatVariant, Provider  # noqa: E402
+from .chatbubbles import make_bubble, make_label, make_tool_chip, set_bubble_text
+from .chatsession import Event, make_chat_session
+from .i18n import _
+from .providers import ChatVariant, Provider
 
 
 class ChatSessionTab(Gtk.Box):
@@ -114,12 +114,10 @@ class ChatSessionTab(Gtk.Box):
         return row
 
     def _on_key(self, _ctrl, keyval, _keycode, state) -> bool:
-        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_ISO_Enter) and not (
-            state & Gdk.ModifierType.SHIFT_MASK
-        ):
-            if self._entry.get_text().strip():
-                self._send()
-                return True
+        enter = keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_ISO_Enter)
+        if enter and not (state & Gdk.ModifierType.SHIFT_MASK) and self._entry.get_text().strip():
+            self._send()
+            return True
         return False
 
     def _send(self) -> None:

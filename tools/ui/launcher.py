@@ -13,7 +13,7 @@ import sys
 import gi
 
 gi.require_version("Gtk", "4.0")
-from gi.repository import GLib, Gtk  # noqa: E402
+from gi.repository import GLib, Gtk
 
 TREE = os.environ["AT_UI_TREE"]
 REQUEST = TREE + ".req"
@@ -35,6 +35,8 @@ def _describe(widget: Gtk.Widget, natives: dict) -> dict:
     # Bounds relative to the widget's own native: a popover is a surface of its own, placed by the
     # compositor, and bounds computed against the window miss it by the popover's offset.
     native = widget.get_native()
+    # Every GtkNative is a widget (a window or a popover); the stubs type it as the bare interface.
+    assert isinstance(native, Gtk.Widget)
     # Keyed by order of discovery: a PyGObject wrapper's id() changes from one dump to the next, and
     # two equal trees must compare equal.
     key = next((k for k, seen in natives.items() if seen["object"] is native), f"n{len(natives)}")
@@ -79,7 +81,8 @@ def dump() -> list[dict]:
         _walk(top, natives, widgets)
         for native in natives.values():
             del native["object"]
-        windows.append({"title": top.get_title() or "", "natives": natives, "widgets": widgets})
+        title = top.get_title() if isinstance(top, Gtk.Window) else None
+        windows.append({"title": title or "", "natives": natives, "widgets": widgets})
     return windows
 
 

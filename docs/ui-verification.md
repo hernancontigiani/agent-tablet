@@ -49,12 +49,14 @@ ambiguous one lists the candidates.
   priority, and `settle()` waits for two equal dumps; screenshots go through it.
 - **A click is held for a moment.** A press and release in the same instant toggles a menu button
   open and shut before it paints.
-- **Under Broadway, once a key has reached the app, popovers stop opening** — the main menu and
-  "More Options" ignore clicks for the rest of the run, while ordinary buttons still work;
-  reloading the page does not help. **The native app does not do this** (checked by the human on
-  2026-11-06: text in the search, then the gear, and the menu opens), so it is Broadway's, not a
-  bug to fix in the app. Event timestamps were checked and are monotonic; the cause is not found.
-  A walk opens menus before it types (`check.py`'s step order).
+- **Under Broadway, input goes unreliable once a key or a click inside a dialog has reached the
+  app**: popovers stop opening (the main menu, "More Options") and a click no longer focuses a text
+  entry, for the rest of that process; reloading the page does not help. **The native app does not
+  do this** (checked by the human on 2026-11-06: text in the search, then the gear, and the menu
+  opens), so it is Broadway's, not a bug to fix in the app. Event timestamps were checked and are
+  monotonic; the cause is not found. **`ui.restart_app()` gives a clean process** in the same page:
+  a walk orders its steps by what they disturb, and restarts the app before a step that needs input
+  after one that used a dialog (`check.py`).
 - **Dialogs come out narrower than on the desktop**, so their text wraps (the About title on two
   lines, Preferences' labels letter by letter). Do not judge a dialog's width from Broadway.
 - **A killed `gtk4-broadwayd` leaves its socket file**; a display counts as taken only if something

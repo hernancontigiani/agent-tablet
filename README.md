@@ -47,7 +47,7 @@ The workspace model and look are inspired by [herdr](https://herdr.dev), a termi
 
 ## Requirements
 
-Python ≥ 3.10, GTK 4, libadwaita ≥ 1.5, VTE (GTK 4 build), PyGObject — from your distro's packages:
+Python ≥ 3.12, GTK 4, libadwaita ≥ 1.5, VTE (GTK 4 build), PyGObject — from your distro's packages:
 
 ```bash
 # Ubuntu / Debian

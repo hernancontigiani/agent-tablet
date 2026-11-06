@@ -1,7 +1,27 @@
 import json
+import os
+import tempfile
 import uuid
+from pathlib import Path
 
 import pytest
+
+# Before anything imports the app: its modules resolve ~/.claude and ~/.config when imported, so
+# these must already point away from the developer's files. One directory per process (xdist
+# workers are processes); a test that needs its own still patches the module constants.
+_ISOLATED = Path(tempfile.mkdtemp(prefix="agent-tablet-tests-"))
+for _var, _sub in {
+    "HOME": "home",
+    "XDG_CONFIG_HOME": "config",
+    "XDG_CACHE_HOME": "cache",
+    "XDG_DATA_HOME": "data",
+    "XDG_STATE_HOME": "state",
+    "CSM_PROJECTS_DIR": "projects",
+}.items():
+    os.environ[_var] = str(_ISOLATED / _sub)
+os.environ["CSM_CLAUDE_CONFIG"] = str(_ISOLATED / "claude.json")
+
+pytest_plugins = ["tests.clock_plugin"]
 
 
 def make_transcript_lines(cwd: str, user_text: str, model: str = "claude-opus-4-8") -> list[dict]:

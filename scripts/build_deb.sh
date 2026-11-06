@@ -55,7 +55,7 @@ Version: $VERSION
 Section: utils
 Priority: optional
 Architecture: all
-Depends: python3 (>= 3.10), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-vte-3.91
+Depends: python3 (>= 3.12), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gir1.2-vte-3.91
 Recommends: gir1.2-glib-2.0
 Installed-Size: $INSTALLED_SIZE
 Maintainer: Hernan Contigiani <hernan4790@gmail.com>
