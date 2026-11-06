@@ -72,3 +72,20 @@ would go, consented to and removable like the statusline.
 **Trigger:** a feature needs an event the statusline and the transcript cannot give (for example,
 knowing the instant a permission prompt appears). First question: can it ride `--settings` for the
 sessions the app starts, before asking for a global install?
+
+### A usage history that outlives the transcripts
+
+The usage database (`usage.sqlite`) is a cache under `$XDG_CACHE_HOME`, rebuilt from the
+transcripts whenever its schema changes, and Claude Code deletes transcripts after
+`cleanupPeriodDays` (30 by default): every rebuild loses what is older. A session's project and
+category are read from `projects.json` when the report is built, not stored with its time and
+tokens, so moving a session to another project moves its whole past with it. Neither matters for
+the Today / 7 days / 30 days report; both break a comparison across months, per project or per
+category. Keeping it would mean a database under `$XDG_DATA_HOME` with migrations instead of
+rebuilds, rows kept after their transcript is gone, and the project and category each span had
+when it happened — an exception to the rule that the app's state is JSON, which is the human's
+to record.
+
+**Trigger:** sessions carry a category (the plan that assigns them), or the human wants to compare
+a period older than 30 days. First question: whether the project and category stamped on a span
+are the ones at the time, or are corrected when the human reassigns a session.
