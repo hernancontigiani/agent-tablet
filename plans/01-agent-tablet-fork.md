@@ -44,7 +44,8 @@ by hand; nothing here depends on it being accepted.
 - **The agents' data is read, never rewritten**, and the app's own state lives in
   `~/.config/agent-tablet/` and `~/.cache/agent-tablet/`. (The original already moves transcripts
   to the trash and deletes them on the user's confirmation; that stays. Anything new that writes
-  under `~/.claude` is a human decision first — B4's statusline install is one.)
+  under `~/.claude` is a human decision first; what goes into Claude's settings goes through the
+  integrations menu, `CLAUDE.md`.)
 - **A session's name is Claude's.** The app does not invent a second name to keep in sync (B2).
 - **License:** GPL-3.0-or-later, like the original. `LICENSE`, Máté Molnár's copyright and the line
   in `debian/copyright` are kept; our own line is added for what is new.
@@ -195,8 +196,9 @@ window, that one is focused instead of opening another.
    number, in green, yellow (60 %) and red (80 %).
 3. **With no statusline configured**, it is estimated from the token usage of the last message in
    the conversation file and marked as approximate (the context window size is not in the file). In
-   Preferences, a button installs the script into `~/.claude/settings.json` — **a write under
-   `~/.claude`, open for the human's decision** (`plans/00-STATUS.md`).
+   the integrations menu, the user can install the script into `~/.claude/settings.json` — one
+   piece, consented to and removable on its own (`CLAUDE.md`, decided 2026-11-06). The menu itself
+   is designed with B4 or before it, whichever first needs a write there.
 
 **Verification:** with two sessions open, the % in the list matches each one's statusline (±1
 point) and updates within 5 seconds of each reply. A closed session shows its last known value,

@@ -46,6 +46,10 @@ Each one is broken by an ordinary-looking line of code.
   anything else an agent owns. The only writes under `~/.claude` are the ones the user starts and
   confirms (moving a transcript to the trash, deleting it). **Any new write there is a decision for
   the human, recorded in `plans/00-STATUS.md` before the code** that does it exists.
+- **What the app adds to Claude's settings (`~/.claude/settings.json`) — a statusline, hooks —
+  goes through one integrations menu** (decided 2026-11-06): nothing is installed by default or as
+  a side effect, each piece is accepted on its own with the user's explicit consent, and each one
+  can be removed on its own at any time, leaving the rest of the file as the user had it.
 - **The app's own state lives in its own directories** (`$XDG_CONFIG_HOME/agent-tablet/`,
   `$XDG_CACHE_HOME/agent-tablet/` once the identity changes), never next to an agent's files.
 - **A session's name is the one Claude has** (`claude -n`, `/rename`). The app never keeps a second

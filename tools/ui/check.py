@@ -108,7 +108,7 @@ def step_no_traceback(ui: UiSession, shot: Callable[[], None]) -> str:
 
 
 # Typing goes after the menus: once a key has reached the app under Broadway, popovers stop
-# opening (2026-11-05, cause not found; docs/ui-verification.md).
+# opening for the rest of the run. The native app does not do this; it is Broadway's.
 STEPS = (
     ("title", step_title),
     ("history", step_history),

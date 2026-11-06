@@ -11,6 +11,13 @@
 > Left §1 on 2026-11-05: plan 03 was delivered and its decision lives in its doc.
 | 1.11 | UI checks by a session go through Playwright on an isolated instance; never the Chrome MCP tool or the human's instance | 2026-11-05 | `CLAUDE.md` · plan 03 |
 
+## 2. Open
+
+> Left §2 on 2026-11-06: decided — nothing installed for now; an integrations menu later (§1 1.12).
+| 2.1 | Whether the app may install its statusline script into `~/.claude/settings.json` from Preferences (plan 01, B4) — the first write under `~/.claude` the app would start itself | Human | B4 |
+> Left §2 on 2026-11-06: answered — the native app opens the menu after typing; it is Broadway's.
+| 2.3 | Under Broadway, popovers stop opening once a key has reached the app (`docs/ui-verification.md`). Does the native app do the same — type in the search, then click the gear? | Human (a 10-second check); then whoever investigates | Menu steps after typing in `make ui-check` |
+
 ## 3. Roadmap and plans in flight
 
 > Left §3 on 2026-11-05.
@@ -28,6 +35,9 @@
 > surfaces of their own); the tree is read after layout and once stable; a click is held 120 ms;
 > stale Broadway socket files; dialogs render narrower than on the desktop. Left open: popovers
 > stop opening once a key has reached the app (§2.3), so the walk types last.
+
+> Left §3 on 2026-11-06.
+| 3 | `02-toolchain-baseline.md` | Stub — needs `/design-plan` |
 
 ## 4. Next plan number
 
